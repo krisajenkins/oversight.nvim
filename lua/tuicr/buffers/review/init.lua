@@ -211,15 +211,8 @@ end
 ---Handle toggling reviewed status from diff view
 ---@param file table File that was toggled
 function ReviewBuffer:_on_toggle_reviewed(file)
-	-- Update file in file list's array
-	for _, f in ipairs(self.file_list.files) do
-		if f.path == file.path then
-			f.reviewed = file.reviewed
-			break
-		end
-	end
-	-- Re-render file list to reflect new status
-	self.file_list:render()
+	-- Update file in file list using proper encapsulation
+	self.file_list:update_file_reviewed(file.path, file.reviewed)
 end
 
 ---Handle adding a comment

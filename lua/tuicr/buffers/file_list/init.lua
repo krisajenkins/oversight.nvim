@@ -155,6 +155,19 @@ function FileListBuffer:set_files(files)
 	self:render()
 end
 
+---Update reviewed status for a file by path
+---@param path string File path to update
+---@param reviewed boolean New reviewed status
+function FileListBuffer:update_file_reviewed(path, reviewed)
+	for _, file in ipairs(self.files) do
+		if file.path == path then
+			file.reviewed = reviewed
+			self:render()
+			return
+		end
+	end
+end
+
 ---Get current file
 ---@return table|nil file Current file or nil
 function FileListBuffer:get_current_file()
