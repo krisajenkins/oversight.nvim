@@ -1,5 +1,5 @@
 {
-  description = "tuicr-nvim - Neovim plugin for code review";
+  description = "NeoJJ - Neovim plugin for Jujutsu VCS";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/25.11";
@@ -12,6 +12,7 @@
         pkgs = import nixpkgs {
           inherit system;
           config.allowUnfree = true;
+          overlays = [ (import ./overlays/jujutsu.nix) ];
         };
       in
       {
@@ -22,20 +23,21 @@
             stylua
             neovim
             git
+            jujutsu
           ];
 
           shellHook = ''
-            echo "tuicr-nvim development environment"
+            echo "NeoJJ development environment"
             echo "Available tools:"
             echo "  - lua-language-server (type checking)"
             echo "  - luacheck (static analysis)"
             echo "  - stylua (code formatting)"
             echo "  - neovim (testing)"
             echo ""
-            echo "Run 'make' to run all checks and tests"
-            echo "Run 'make test' to run tests only"
+            echo "Run 'make typecheck' to run all checks"
           '';
         };
       }
     );
 }
+
