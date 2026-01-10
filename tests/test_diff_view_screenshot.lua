@@ -78,6 +78,103 @@ function mock_data.session_code(root)
 	)
 end
 
+---Create mock diff data based on comment/init.lua changes
+---This diff has multiple hunks with pure additions (no corresponding deletes)
+---which can expose column alignment issues in the side-by-side view
+---@return string lua_code Lua code for mock diff
+function mock_data.comment_init_diff()
+	return [[{
+		path = "lua/tuicr/buffers/comment/init.lua",
+		old_path = nil,
+		status = "M",
+		is_binary = false,
+		hunks = {
+			{
+				header = "@@ -2,6 +2,7 @@",
+				old_start = 2,
+				old_count = 6,
+				new_start = 2,
+				new_count = 7,
+				lines = {
+					{ line_no_old = 2, line_no_new = 2, content_old = "", content_new = "", type = "context" },
+					{ line_no_old = 3, line_no_new = 3, content_old = "---@class CommentInputOpts", content_new = "---@class CommentInputOpts", type = "context" },
+					{ line_no_old = 4, line_no_new = 4, content_old = "---@field context CommentContext Comment context (file, line, side)", content_new = "---@field context CommentContext Comment context (file, line, side)", type = "context" },
+					{ line_no_old = nil, line_no_new = 5, content_old = "", content_new = "---@field existing_comment? Comment Optional existing comment for editing", type = "add" },
+					{ line_no_old = 5, line_no_new = 6, content_old = "---@field on_submit? fun(comment: CommentData): nil Callback when comment is submitted", content_new = "---@field on_submit? fun(comment: CommentData): nil Callback when comment is submitted", type = "context" },
+					{ line_no_old = 6, line_no_new = 7, content_old = "---@field on_cancel? fun(): nil Callback when input is cancelled", content_new = "---@field on_cancel? fun(): nil Callback when input is cancelled", type = "context" },
+				},
+			},
+			{
+				header = "@@ -10,6 +11,7 @@",
+				old_start = 10,
+				old_count = 6,
+				new_start = 11,
+				new_count = 7,
+				lines = {
+					{ line_no_old = 10, line_no_new = 11, content_old = "---@field win number Window handle", content_new = "---@field win number Window handle", type = "context" },
+					{ line_no_old = 11, line_no_new = 12, content_old = "---@field context CommentContext Comment context (file, line, side)", content_new = "---@field context CommentContext Comment context (file, line, side)", type = "context" },
+					{ line_no_old = 12, line_no_new = 13, content_old = '---@field comment_type "note"|"suggestion"|"issue"|"praise" Current comment type', content_new = '---@field comment_type "note"|"suggestion"|"issue"|"praise" Current comment type', type = "context" },
+					{ line_no_old = nil, line_no_new = 14, content_old = "", content_new = "---@field existing_comment? Comment Optional existing comment being edited", type = "add" },
+					{ line_no_old = 13, line_no_new = 15, content_old = "---@field on_submit? fun(comment: CommentData): nil Callback when comment is submitted", content_new = "---@field on_submit? fun(comment: CommentData): nil Callback when comment is submitted", type = "context" },
+					{ line_no_old = 14, line_no_new = 16, content_old = "---@field on_cancel? fun(): nil Callback when input is cancelled", content_new = "---@field on_cancel? fun(): nil Callback when input is cancelled", type = "context" },
+				},
+			},
+			{
+				header = "@@ -21,9 +23,11 @@",
+				old_start = 21,
+				old_count = 9,
+				new_start = 23,
+				new_count = 11,
+				lines = {
+					{ line_no_old = 21, line_no_new = 23, content_old = "---@param opts CommentInputOpts Options", content_new = "---@param opts CommentInputOpts Options", type = "context" },
+					{ line_no_old = 22, line_no_new = 24, content_old = "---@return CommentInput instance", content_new = "---@return CommentInput instance", type = "context" },
+					{ line_no_old = 23, line_no_new = 25, content_old = "function CommentInput.new(opts)", content_new = "function CommentInput.new(opts)", type = "context" },
+					{ line_no_old = nil, line_no_new = 26, content_old = "", content_new = "\tlocal existing = opts.existing_comment", type = "add" },
+					{ line_no_old = 24, line_no_new = 27, content_old = "\tlocal instance = setmetatable({", content_new = "\tlocal instance = setmetatable({", type = "context" },
+					{ line_no_old = 25, line_no_new = 28, content_old = "\t\tcontext = opts.context,", content_new = "\t\tcontext = opts.context,", type = "context" },
+					{ line_no_old = 26, line_no_new = nil, content_old = '\t\tcomment_type = "note",', content_new = "", type = "delete" },
+					{ line_no_old = nil, line_no_new = 29, content_old = "", content_new = "\t\tcomment_type = existing and existing.type or \"note\",", type = "add" },
+					{ line_no_old = nil, line_no_new = 30, content_old = "", content_new = "\t\texisting_comment = existing,", type = "add" },
+					{ line_no_old = 27, line_no_new = 31, content_old = "\t\ton_submit = opts.on_submit,", content_new = "\t\ton_submit = opts.on_submit,", type = "context" },
+					{ line_no_old = 28, line_no_new = 32, content_old = "\t\ton_cancel = opts.on_cancel,", content_new = "\t\ton_cancel = opts.on_cancel,", type = "context" },
+				},
+			},
+			{
+				header = "@@ -49,6 +53,7 @@",
+				old_start = 49,
+				old_count = 6,
+				new_start = 53,
+				new_count = 7,
+				lines = {
+					{ line_no_old = 49, line_no_new = 53, content_old = "\tlocal col = math.floor((vim.o.columns - width) / 2)", content_new = "\tlocal col = math.floor((vim.o.columns - width) / 2)", type = "context" },
+					{ line_no_old = 50, line_no_new = 54, content_old = "", content_new = "", type = "context" },
+					{ line_no_old = 51, line_no_new = 55, content_old = "\t-- Create window", content_new = "\t-- Create window", type = "context" },
+					{ line_no_old = nil, line_no_new = 56, content_old = "", content_new = '\tlocal title = self.existing_comment and " Edit Comment " or " Add Comment "', type = "add" },
+					{ line_no_old = 52, line_no_new = 57, content_old = "\tself.win = vim.api.nvim_open_win(self.buf, true, {", content_new = "\tself.win = vim.api.nvim_open_win(self.buf, true, {", type = "context" },
+					{ line_no_old = 53, line_no_new = 58, content_old = '\t\trelative = "editor",', content_new = '\t\trelative = "editor",', type = "context" },
+				},
+			},
+			{
+				header = "@@ -57,7 +62,7 @@",
+				old_start = 57,
+				old_count = 7,
+				new_start = 62,
+				new_count = 7,
+				lines = {
+					{ line_no_old = 57, line_no_new = 62, content_old = "\t\tcol = col,", content_new = "\t\tcol = col,", type = "context" },
+					{ line_no_old = 58, line_no_new = 63, content_old = '\t\tstyle = "minimal",', content_new = '\t\tstyle = "minimal",', type = "context" },
+					{ line_no_old = 59, line_no_new = 64, content_old = '\t\tborder = "rounded",', content_new = '\t\tborder = "rounded",', type = "context" },
+					{ line_no_old = 60, line_no_new = nil, content_old = '\t\ttitle = " Add Comment ",', content_new = "", type = "delete" },
+					{ line_no_old = nil, line_no_new = 65, content_old = "", content_new = "\t\ttitle = title,", type = "add" },
+					{ line_no_old = 61, line_no_new = 66, content_old = '\t\ttitle_pos = "center",', content_new = '\t\ttitle_pos = "center",', type = "context" },
+					{ line_no_old = 62, line_no_new = 67, content_old = "\t})", content_new = "\t})", type = "context" },
+					{ line_no_old = 63, line_no_new = 68, content_old = "", content_new = "", type = "context" },
+				},
+			},
+		},
+	}]]
+end
+
 ---Create mock diff data based on actual diff_view/ui.lua changes
 ---This is a real-world diff with multiple hunks of type annotation changes
 ---@return string lua_code Lua code for mock diff
@@ -329,6 +426,52 @@ T["DiffViewBuffer Screenshots"]["renders real diff_view/ui.lua changes"] = funct
 	]],
 		mock_data.repo_code("/tmp/test-repo"),
 		mock_data.ui_lua_diff()
+	))
+
+	-- Wait for render
+	child.lua([[vim.cmd('redraw')]])
+
+	expect.reference_screenshot(child.get_screenshot())
+end
+
+T["DiffViewBuffer Screenshots"]["renders comment/init.lua diff with pure additions"] = function()
+	-- Load the plugin
+	child.lua([[
+		vim.cmd("set rtp+=.")
+		require("tuicr").setup()
+	]])
+
+	-- This test uses diff data from lua/tuicr/buffers/comment/init.lua
+	-- which has hunks with pure additions (no corresponding deletes)
+	-- that can expose column alignment issues
+	child.lua(string.format(
+		[[
+		local DiffViewBuffer = require("tuicr.buffers.diff_view")
+		local Session = require("tuicr.lib.storage.session")
+
+		-- Create mock repo and session
+		local mock_repo = %s
+		local session = Session.new(mock_repo:get_root(), mock_repo:get_head())
+
+		-- Create diff view buffer
+		_G.diff_view = DiffViewBuffer.new({
+			repo = mock_repo,
+			session = session,
+			on_comment = function() end,
+			on_toggle_reviewed = function() end,
+			on_quit = function() end,
+		})
+
+		-- Inject mock diff data (based on comment/init.lua changes)
+		local mock_diff = %s
+		_G.diff_view.file_diffs["lua/tuicr/buffers/comment/init.lua"] = mock_diff
+
+		-- Set current file and render
+		_G.diff_view.current_file = { path = "lua/tuicr/buffers/comment/init.lua", status = "M", reviewed = false }
+		_G.diff_view:show()
+	]],
+		mock_data.repo_code("/tmp/test-repo"),
+		mock_data.comment_init_diff()
 	))
 
 	-- Wait for render

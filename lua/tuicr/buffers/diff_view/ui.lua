@@ -4,12 +4,35 @@ local Ui = require("tuicr.lib.ui")
 
 local M = {}
 
+---Expand tabs to spaces for consistent rendering
+---@param str string Input string
+---@param tabstop? number Tab width (default 4)
+---@return string result String with tabs expanded
+local function expand_tabs(str, tabstop)
+	tabstop = tabstop or 4
+	local result = ""
+	local col = 0
+	for char in str:gmatch(".") do
+		if char == "\t" then
+			local spaces_needed = tabstop - (col % tabstop)
+			result = result .. string.rep(" ", spaces_needed)
+			col = col + spaces_needed
+		else
+			result = result .. char
+			col = col + 1
+		end
+	end
+	return result
+end
+
 ---Pad or truncate a string to a specific display width
 ---Handles multi-byte UTF-8 characters correctly
 ---@param str string Input string
 ---@param width number Target display width
 ---@return string result Padded/truncated string
 local function pad_to_width(str, width)
+	-- Expand tabs first for consistent alignment
+	str = expand_tabs(str)
 	local display_width = vim.fn.strdisplaywidth(str)
 	if display_width >= width then
 		-- Truncate with ellipsis if too long
