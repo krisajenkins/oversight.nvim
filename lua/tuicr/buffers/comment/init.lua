@@ -134,16 +134,17 @@ function CommentInput:_setup_mappings()
 		self:_submit()
 	end, opts)
 
-	-- Cancel with Escape (in both modes) or q (normal only)
+	-- Escape saves if there's content, otherwise discards
 	vim.keymap.set("i", "<Esc>", function()
 		vim.cmd("stopinsert")
-		self:_cancel()
+		self:_save_or_discard()
 	end, opts)
 
 	vim.keymap.set("n", "<Esc>", function()
-		self:_cancel()
+		self:_save_or_discard()
 	end, opts)
 
+	-- q always cancels (explicit discard)
 	vim.keymap.set("n", "q", function()
 		self:_cancel()
 	end, opts)
@@ -193,6 +194,21 @@ end
 function CommentInput:_set_type(comment_type)
 	self.comment_type = comment_type
 	self:_update_content()
+end
+
+---Save comment if there's content, otherwise discard
+function CommentInput:_save_or_discard()
+	-- Get comment text (lines after the separator)
+	local lines = vim.api.nvim_buf_get_lines(self.buf, 3, -1, false)
+	local text = vim.trim(table.concat(lines, "\n"))
+
+	if text == "" then
+		-- Empty comment, just discard silently
+		self:_cancel()
+	else
+		-- Has content, save it
+		self:_submit()
+	end
 end
 
 ---Submit the comment
