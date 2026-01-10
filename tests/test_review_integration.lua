@@ -484,21 +484,16 @@ T["Export Integration"]["export produces valid markdown with comments"] = functi
 	local markdown = Export.to_markdown(session, repo)
 
 	-- Check header
-	expect.equality(markdown:match("# Code Review Feedback") ~= nil, true)
-	expect.equality(markdown:match("Branch: main") ~= nil, true)
+	expect.equality(markdown:match("# Code Review:") ~= nil, true)
 
 	-- Check file sections
-	expect.equality(markdown:match("### src/main%.lua") ~= nil, true)
-	expect.equality(markdown:match("### src/utils%.lua") ~= nil, true)
+	expect.equality(markdown:match("## src/main%.lua") ~= nil, true)
+	expect.equality(markdown:match("## src/utils%.lua") ~= nil, true)
 
 	-- Check comments appear
 	expect.equality(markdown:match("Fix this critical bug") ~= nil, true)
 	expect.equality(markdown:match("Consider using a constant") ~= nil, true)
 	expect.equality(markdown:match("Well structured file") ~= nil, true)
-
-	-- Check summary
-	expect.equality(markdown:match("Files reviewed: 1/2") ~= nil, true)
-	expect.equality(markdown:match("Total comments: 3") ~= nil, true)
 end
 
 T["Export Integration"]["export handles empty session"] = function()
@@ -511,8 +506,7 @@ T["Export Integration"]["export handles empty session"] = function()
 	local markdown = Export.to_markdown(session, repo)
 
 	-- Should still have header
-	expect.equality(markdown:match("# Code Review Feedback") ~= nil, true)
-	expect.equality(markdown:match("Total comments: 0") ~= nil, true)
+	expect.equality(markdown:match("# Code Review:") ~= nil, true)
 end
 
 T["DiffView Integration"] = MiniTest.new_set()
@@ -793,7 +787,6 @@ T["Full Workflow"]["complete review workflow simulation"] = function()
 	local markdown = Export.to_markdown(session, repo)
 	expect.equality(markdown:match("Fix this bug") ~= nil, true)
 	expect.equality(markdown:match("Consider refactoring") ~= nil, true)
-	expect.equality(markdown:match("Files reviewed: 2/3") ~= nil, true)
 
 	-- Step 9: Session can be serialized
 	local json_data = session:to_json()

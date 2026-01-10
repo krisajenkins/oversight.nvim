@@ -29,24 +29,7 @@ T["Export"]["generates markdown header"] = function()
 
 	local markdown = Export.to_markdown(session, repo)
 
-	expect.equality(markdown:match("# Code Review Feedback") ~= nil, true)
-	expect.equality(markdown:match("Repository: test%-repo") ~= nil, true)
-	expect.equality(markdown:match("Branch: main") ~= nil, true)
-end
-
-T["Export"]["includes comment types explanation"] = function()
-	local Export = require("tuicr.lib.export")
-	local Session = require("tuicr.lib.storage.session")
-
-	local session = Session.new("/tmp/test-repo", "abc123")
-	local repo = create_mock_repo()
-
-	local markdown = Export.to_markdown(session, repo)
-
-	expect.equality(markdown:match("ISSUE") ~= nil, true)
-	expect.equality(markdown:match("SUGGESTION") ~= nil, true)
-	expect.equality(markdown:match("NOTE") ~= nil, true)
-	expect.equality(markdown:match("PRAISE") ~= nil, true)
+	expect.equality(markdown:match("# Code Review: test%-repo @ abc123de") ~= nil, true)
 end
 
 T["Export"]["formats comments by file"] = function()
@@ -60,8 +43,8 @@ T["Export"]["formats comments by file"] = function()
 	local repo = create_mock_repo()
 	local markdown = Export.to_markdown(session, repo)
 
-	expect.equality(markdown:match("### src/main%.lua") ~= nil, true)
-	expect.equality(markdown:match("### src/utils%.lua") ~= nil, true)
+	expect.equality(markdown:match("## src/main%.lua") ~= nil, true)
+	expect.equality(markdown:match("## src/utils%.lua") ~= nil, true)
 	expect.equality(markdown:match("Fix this bug") ~= nil, true)
 	expect.equality(markdown:match("Consider refactoring") ~= nil, true)
 end
@@ -104,28 +87,6 @@ T["Export"]["handles file-level comments"] = function()
 
 	expect.equality(markdown:match("file%-level") ~= nil, true)
 	expect.equality(markdown:match("General comment about this file") ~= nil, true)
-end
-
-T["Export"]["includes summary with counts"] = function()
-	local Export = require("tuicr.lib.export")
-	local Session = require("tuicr.lib.storage.session")
-
-	local session = Session.new("/tmp/test-repo", "abc123")
-	session:ensure_file("file1.lua", "M")
-	session:ensure_file("file2.lua", "A")
-	session:set_file_reviewed("file1.lua", true)
-
-	session:add_comment("file1.lua", 1, "new", "issue", "Issue 1")
-	session:add_comment("file1.lua", 2, "new", "issue", "Issue 2")
-	session:add_comment("file1.lua", 3, "new", "suggestion", "Suggestion 1")
-
-	local repo = create_mock_repo()
-	local markdown = Export.to_markdown(session, repo)
-
-	expect.equality(markdown:match("Files reviewed: 1/2") ~= nil, true)
-	expect.equality(markdown:match("Total comments: 3") ~= nil, true)
-	expect.equality(markdown:match("Issues: 2") ~= nil, true)
-	expect.equality(markdown:match("Suggestions: 1") ~= nil, true)
 end
 
 return T
