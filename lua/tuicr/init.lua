@@ -37,7 +37,7 @@ end
 --- Close any open review buffers
 function M.close()
 	local ReviewBuffer = require("tuicr.buffers.review")
-	ReviewBuffer.close()
+	ReviewBuffer:close()
 end
 
 return M

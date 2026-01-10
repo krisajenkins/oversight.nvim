@@ -1,3 +1,16 @@
+# Instructions
+
+For each change:
+
+- `jj new` to start a new commit.
+- Do the work.
+- Run the tests.
+- `jj describe` to describe the change.
+- Tick off the item in this file.
+- `jj new` again, and so on.
+
+# Misc
+
 - [x] When you tab across to the main window, the cursor should start on the first file header, not on the keyboard reminder.
 - [x] In the main window, the usual keybindings should apply. So pressing `r` should mark the file reviewed (instead I think it enters replace mode).
 - [x] File headers should be a single line. `=== [tick if reviewed] FILENAME  (VCS STATUS M/R/D) ===`
@@ -36,10 +49,10 @@
 
 ## Testing
 
-- [ ] Add tests for Buffer abstraction (`lib/buffer.lua`)
-- [ ] Add tests for Git CLI/Repository modules (`lib/git/*.lua`)
+- [x] Add tests for Buffer abstraction (`lib/buffer.lua`)
+- [x] Add tests for Git CLI/Repository modules (`lib/git/*.lua`)
 - [ ] Add integration tests for ReviewBuffer workflow
 
 ## Documentation
 
-- [ ] Add vimdoc in `doc/` directory
+- [x] Add vimdoc in `doc/` directory

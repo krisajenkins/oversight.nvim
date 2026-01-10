@@ -47,16 +47,17 @@ end
 local function generate_uuid()
 	ensure_seeded()
 	local template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-	return string.gsub(template, "[xy]", function(c)
+	local result = string.gsub(template, "[xy]", function(c)
 		local v = (c == "x") and math.random(0, 0xf) or math.random(8, 0xb)
 		return string.format("%x", v)
 	end)
+	return result
 end
 
 ---Get current ISO 8601 timestamp
 ---@return string timestamp ISO 8601 formatted timestamp
 local function iso_timestamp()
-	return os.date("!%Y-%m-%dT%H:%M:%SZ")
+	return os.date("!%Y-%m-%dT%H:%M:%SZ") --[[@as string]]
 end
 
 ---Create a new session
