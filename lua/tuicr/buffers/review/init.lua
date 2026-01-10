@@ -238,6 +238,8 @@ function ReviewBuffer:_toggle_focus()
 	local current_win = vim.api.nvim_get_current_win()
 	if current_win == self.file_list_win then
 		vim.api.nvim_set_current_win(self.diff_view_win)
+		-- Position cursor on first file header (skip keybindings hint)
+		self.diff_view:jump_to_first_content()
 	else
 		vim.api.nvim_set_current_win(self.file_list_win)
 	end

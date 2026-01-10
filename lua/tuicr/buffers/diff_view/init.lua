@@ -284,6 +284,23 @@ function DiffViewBuffer:delete_comment()
 	end
 end
 
+---Jump to first content line (skipping keybindings hint)
+function DiffViewBuffer:jump_to_first_content()
+	-- Line 1 is the keybindings hint, line 2+ is content
+	-- Find the first file header line (starts with "===")
+	local lines = self.buffer:get_lines(0, 10)
+	for i, line in ipairs(lines) do
+		if line:match("^===") then
+			self.buffer:set_cursor(i, 0)
+			return
+		end
+	end
+	-- Fallback to line 2 if no header found
+	if #lines >= 2 then
+		self.buffer:set_cursor(2, 0)
+	end
+end
+
 ---Show the buffer in the current window
 function DiffViewBuffer:show()
 	self.buffer:show()
