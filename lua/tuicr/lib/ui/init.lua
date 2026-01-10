@@ -34,9 +34,9 @@ function Ui.get_comment_type_display(comment_type)
 end
 
 ---Create a column (vertical container)
----@param children table[] List of child components
----@param options? table Component options
----@return table component Column component
+---@param children Component[] List of child components
+---@param options? ComponentOptions Component options
+---@return Component component Column component
 function Ui.col(children, options)
 	return Component.new(function(props)
 		return {
@@ -49,9 +49,9 @@ function Ui.col(children, options)
 end
 
 ---Create a row (horizontal container)
----@param children table[] List of child components
----@param options? table Component options
----@return table component Row component
+---@param children Component[] List of child components
+---@param options? ComponentOptions Component options
+---@return Component component Row component
 function Ui.row(children, options)
 	return Component.new(function(props)
 		return {
@@ -65,8 +65,8 @@ end
 
 ---Create a text component
 ---@param value string Text content
----@param options? table Component options
----@return table component Text component
+---@param options? ComponentOptions Component options
+---@return Component component Text component
 function Ui.text(value, options)
 	return Component.new(function(props)
 		-- Sanitize value to remove any newlines that could cause rendering issues
@@ -81,7 +81,7 @@ function Ui.text(value, options)
 end
 
 ---Create an empty line component
----@return table component Empty line component
+---@return Component component Empty line component
 function Ui.empty_line()
 	return Ui.text("", {})
 end
@@ -89,8 +89,8 @@ end
 ---Create a section header component
 ---@param title string Section title
 ---@param count? number Optional item count
----@param options? table Component options
----@return table component Section header component
+---@param options? ComponentOptions Component options
+---@return Component component Section header component
 function Ui.section_header(title, count, options)
 	local display_title = title
 	if count and count > 0 then
@@ -109,8 +109,8 @@ end
 ---@param status string Git status (A, M, D, etc.)
 ---@param path string File path
 ---@param reviewed boolean Whether file is reviewed
----@param options? table Component options
----@return table component File item component
+---@param options? ComponentOptions Component options
+---@return Component component File item component
 function Ui.file_item(status, path, reviewed, options)
 	local status_hl = Ui.get_status_highlight(status)
 	local review_icon = reviewed and "[x]" or "[ ]"
@@ -131,8 +131,8 @@ end
 ---@param content_old string Old content
 ---@param content_new string New content
 ---@param line_type string "add"|"delete"|"context"|"empty"
----@param options? table Component options
----@return table component Diff line component
+---@param options? ComponentOptions Component options
+---@return Component component Diff line component
 function Ui.diff_line(line_no_old, line_no_new, content_old, content_new, line_type, options)
 	local old_hl = "TuicrDiffContext"
 	local new_hl = "TuicrDiffContext"
@@ -159,8 +159,8 @@ end
 
 ---Create a hunk header component
 ---@param header string Hunk header text (e.g., "@@ -1,3 +1,4 @@")
----@param options? table Component options
----@return table component Hunk header component
+---@param options? ComponentOptions Component options
+---@return Component component Hunk header component
 function Ui.hunk_header(header, options)
 	return Ui.text(
 		header,
@@ -173,8 +173,8 @@ end
 ---Create a file header component for diff view
 ---@param path string File path
 ---@param status string Git status
----@param options? table Component options
----@return table component File header component
+---@param options? ComponentOptions Component options
+---@return Component component File header component
 function Ui.file_header(path, status, options)
 	local status_hl = Ui.get_status_highlight(status)
 	local separator = string.rep("=", 3)
@@ -189,10 +189,10 @@ function Ui.file_header(path, status, options)
 end
 
 ---Create a comment display component
----@param comment_type string "note"|"suggestion"|"issue"|"praise"
+---@param comment_type "note"|"suggestion"|"issue"|"praise" Comment type
 ---@param text string Comment text
----@param options? table Component options
----@return table component Comment component
+---@param options? ComponentOptions Component options
+---@return Component component Comment component
 function Ui.comment(comment_type, text, options)
 	local type_hl, type_label = Ui.get_comment_type_display(comment_type)
 
@@ -210,9 +210,9 @@ end
 
 ---Create a section component
 ---@param title string Section title
----@param items table[] Section items
----@param options? table Component options
----@return table component Section component
+---@param items Component[] Section items
+---@param options? ComponentOptions Component options
+---@return Component component Section component
 function Ui.section(title, items, options)
 	local section_options = vim.tbl_extend("force", options or {}, {
 		foldable = true,

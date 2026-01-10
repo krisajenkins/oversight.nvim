@@ -3,19 +3,28 @@
 local Buffer = require("tuicr.lib.buffer")
 local FileListUI = require("tuicr.buffers.file_list.ui")
 
+---@class FileListBufferOpts
+---@field files File[] List of files
+---@field session ReviewSession Review session
+---@field branch? string Current branch name
+---@field on_file_select? fun(file: File, index: number): nil Callback when file is selected
+---@field on_toggle_reviewed? fun(file: File, index: number): nil Callback when file is toggled
+---@field on_open_file? fun(file: File, index: number): nil Callback when file should be opened in editor
+
 ---@class FileListBuffer
 ---@field buffer Buffer Buffer instance
----@field files table[] List of files
+---@field files File[] List of files
 ---@field current_index number Currently selected file index
----@field session table Review session
----@field on_file_select function Callback when file is selected
----@field on_toggle_reviewed function Callback when file is toggled
----@field on_open_file function Callback when file should be opened in editor
+---@field session ReviewSession Review session
+---@field branch? string Current branch name
+---@field on_file_select? fun(file: File, index: number): nil Callback when file is selected
+---@field on_toggle_reviewed? fun(file: File, index: number): nil Callback when file is toggled
+---@field on_open_file? fun(file: File, index: number): nil Callback when file should be opened in editor
 local FileListBuffer = {}
 FileListBuffer.__index = FileListBuffer
 
 ---Create a new file list buffer
----@param opts table Options
+---@param opts FileListBufferOpts Options
 ---@return FileListBuffer instance
 function FileListBuffer.new(opts)
 	local instance = setmetatable({
@@ -162,7 +171,7 @@ function FileListBuffer:toggle_reviewed()
 end
 
 ---Update files list
----@param files table[] New files list
+---@param files File[] New files list
 function FileListBuffer:set_files(files)
 	self.files = files
 	self.current_index = math.min(self.current_index, math.max(1, #files))
@@ -183,7 +192,7 @@ function FileListBuffer:update_file_reviewed(path, reviewed)
 end
 
 ---Get current file
----@return table|nil file Current file or nil
+---@return File|nil file Current file or nil
 function FileListBuffer:get_current_file()
 	return self.files[self.current_index]
 end

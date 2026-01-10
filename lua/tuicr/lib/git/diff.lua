@@ -262,7 +262,7 @@ function M.get_file_diff(repo_root, file_path)
 end
 
 ---Get all file diffs in the repository
----@param repo table Repository instance
+---@param repo GitRepository Repository instance
 ---@return FileDiff[] diffs List of file diffs
 function M.get_all_diffs(repo)
 	local files = repo:get_changed_files()

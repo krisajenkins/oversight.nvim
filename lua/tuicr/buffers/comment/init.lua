@@ -1,19 +1,24 @@
 -- Comment input floating window
 
+---@class CommentInputOpts
+---@field context CommentContext Comment context (file, line, side)
+---@field on_submit? fun(comment: CommentData): nil Callback when comment is submitted
+---@field on_cancel? fun(): nil Callback when input is cancelled
+
 ---@class CommentInput
 ---@field buf number Buffer handle
 ---@field win number Window handle
----@field context table Comment context (file, line, side)
----@field comment_type string Current comment type
----@field on_submit function Callback when comment is submitted
----@field on_cancel function Callback when input is cancelled
+---@field context CommentContext Comment context (file, line, side)
+---@field comment_type "note"|"suggestion"|"issue"|"praise" Current comment type
+---@field on_submit? fun(comment: CommentData): nil Callback when comment is submitted
+---@field on_cancel? fun(): nil Callback when input is cancelled
 local CommentInput = {}
 CommentInput.__index = CommentInput
 
 local COMMENT_TYPES = { "note", "suggestion", "issue", "praise" }
 
 ---Create a new comment input window
----@param opts table Options
+---@param opts CommentInputOpts Options
 ---@return CommentInput instance
 function CommentInput.new(opts)
 	local instance = setmetatable({

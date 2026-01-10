@@ -9,8 +9,8 @@ local CommentInput = require("tuicr.buffers.comment")
 local HelpOverlay = require("tuicr.buffers.help")
 
 ---@class ReviewBuffer
----@field repo table Git repository
----@field session table Review session
+---@field repo GitRepository Git repository
+---@field session ReviewSession Review session
 ---@field file_list FileListBuffer File list buffer
 ---@field diff_view DiffViewBuffer Diff view buffer
 ---@field tab_page number Tab page handle
@@ -57,7 +57,7 @@ function ReviewBuffer.open(dir)
 end
 
 ---Create a new review buffer
----@param repo table Git repository
+---@param repo GitRepository Git repository
 ---@return ReviewBuffer instance
 function ReviewBuffer.new(repo)
 	local instance = setmetatable({
@@ -89,7 +89,7 @@ function ReviewBuffer.new(repo)
 end
 
 ---Create the two-panel layout
----@param files table[] List of files
+---@param files File[] List of files
 function ReviewBuffer:_create_layout(files)
 	-- Create new tab
 	vim.cmd("tabnew")
@@ -212,13 +212,13 @@ function ReviewBuffer:_setup_tab_mappings()
 end
 
 ---Handle file selection
----@param file table Selected file
+---@param file File Selected file
 function ReviewBuffer:_on_file_select(file)
 	self.diff_view:show_file(file)
 end
 
 ---Handle opening file in editor
----@param file table File to open
+---@param file File File to open
 function ReviewBuffer:_on_open_file(file)
 	-- Get the full path
 	local full_path = self.repo:get_root() .. "/" .. file.path
@@ -228,14 +228,14 @@ function ReviewBuffer:_on_open_file(file)
 end
 
 ---Handle toggling reviewed status from diff view
----@param file table File that was toggled
+---@param file File File that was toggled
 function ReviewBuffer:_on_toggle_reviewed(file)
 	-- Update file in file list using proper encapsulation
 	self.file_list:update_file_reviewed(file.path, file.reviewed)
 end
 
 ---Handle adding a comment
----@param context table Comment context
+---@param context CommentContext Comment context
 function ReviewBuffer:_on_add_comment(context)
 	CommentInput.new({
 		context = context,

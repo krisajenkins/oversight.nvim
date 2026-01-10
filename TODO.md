@@ -33,8 +33,8 @@ For each change:
 
 - [x] Fix the `make typecheck` warnings.
 - [x] Add lua-language-server type checking to Makefile (currently only runs luacheck, which is a linter not a type checker)
-- [ ] Define proper type aliases for UI components instead of generic `table` types
-- [ ] Add typed callback signatures (e.g., `fun(file: FileInfo, index: number): nil` instead of `function`)
+- [x] Define proper type aliases for UI components instead of generic `table` types
+- [x] Add typed callback signatures (e.g., `fun(file: FileInfo, index: number): nil` instead of `function`)
 
 ## DRY Improvements
 

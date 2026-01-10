@@ -17,6 +17,31 @@ local logger = require("tuicr.logger")
 ---@field git_status string Git status (A, M, D, R)
 ---@field reviewed boolean Whether file has been reviewed
 
+---@class File
+---@field path string File path relative to repo root
+---@field status string Git status (A, M, D, R, C)
+---@field reviewed boolean Whether file has been reviewed
+---@field old_path? string Original path for renamed files
+
+---@class CommentContext
+---@field file string File path
+---@field line? number Line number (nil for file-level comments)
+---@field side? "old"|"new" Which side of the diff (nil for file-level)
+
+---@class CommentData
+---@field file string File path
+---@field line? number Line number
+---@field side? "old"|"new" Diff side
+---@field type "note"|"suggestion"|"issue"|"praise" Comment type
+---@field text string Comment text
+
+---@class LineInfo
+---@field type string Line type ("diff_line", "comment", "hunk_header", etc.)
+---@field line_no_old? number Old line number
+---@field line_no_new? number New line number
+---@field file? string File path
+---@field comment_id? string Comment ID (for comment lines)
+
 ---@class ReviewSession
 ---@field id string UUID
 ---@field version string Session format version

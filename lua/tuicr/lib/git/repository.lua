@@ -114,8 +114,13 @@ function Repository:refresh()
 	end
 end
 
+---@class GitFileChange
+---@field status string Git status (A, M, D, R, C)
+---@field path string File path
+---@field old_path? string Original path for renamed files
+
 ---Get list of changed files (working tree vs HEAD)
----@return table[] files List of {status, path} tables
+---@return GitFileChange[] files List of changed files
 function Repository:get_changed_files()
 	local git = require("tuicr.lib.git.cli")
 

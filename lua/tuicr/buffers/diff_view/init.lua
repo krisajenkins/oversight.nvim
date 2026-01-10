@@ -4,19 +4,27 @@ local Buffer = require("tuicr.lib.buffer")
 local DiffViewUI = require("tuicr.buffers.diff_view.ui")
 local Diff = require("tuicr.lib.git.diff")
 
+---@class DiffViewBufferOpts
+---@field repo GitRepository Git repository
+---@field session ReviewSession Review session
+---@field on_comment? fun(context: CommentContext): nil Callback for adding comments
+---@field on_toggle_reviewed? fun(file: File): nil Callback when file is toggled reviewed
+---@field on_quit? fun(): nil Callback when quitting
+
 ---@class DiffViewBuffer
 ---@field buffer Buffer Buffer instance
----@field repo table Git repository
----@field session table Review session
----@field current_file table|nil Current file being displayed
----@field file_diffs table<string, table> Cached file diffs
----@field on_comment function Callback for adding comments
----@field on_toggle_reviewed function Callback when file is toggled reviewed
+---@field repo GitRepository Git repository
+---@field session ReviewSession Review session
+---@field current_file File|nil Current file being displayed
+---@field file_diffs table<string, FileDiff> Cached file diffs
+---@field on_comment? fun(context: CommentContext): nil Callback for adding comments
+---@field on_toggle_reviewed? fun(file: File): nil Callback when file is toggled reviewed
+---@field on_quit? fun(): nil Callback when quitting
 local DiffViewBuffer = {}
 DiffViewBuffer.__index = DiffViewBuffer
 
 ---Create a new diff view buffer
----@param opts table Options
+---@param opts DiffViewBufferOpts Options
 ---@return DiffViewBuffer instance
 function DiffViewBuffer.new(opts)
 	local instance = setmetatable({
@@ -110,7 +118,7 @@ function DiffViewBuffer:_setup_mappings()
 end
 
 ---Show diff for a specific file
----@param file table File info {path, status}
+---@param file File File info
 function DiffViewBuffer:show_file(file)
 	self.current_file = file
 
@@ -229,7 +237,7 @@ function DiffViewBuffer:jump_to_hunk(direction)
 end
 
 ---Get line info at cursor
----@return table|nil info Line info or nil
+---@return LineInfo|nil info Line info or nil
 function DiffViewBuffer:_get_line_at_cursor()
 	local component = self.buffer:get_component_at_cursor()
 	if component and component:is_interactive() then

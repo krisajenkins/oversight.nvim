@@ -42,7 +42,7 @@ end
 ---@param path string File path
 ---@param status string Git status
 ---@param reviewed boolean Whether file has been reviewed
----@return table component File header component
+---@return Component component File header component
 function M.create_file_header(path, status, reviewed)
 	local status_hl = Ui.get_status_highlight(status)
 	local reviewed_mark = reviewed and "✓" or " "
@@ -62,10 +62,10 @@ function M.create_file_header(path, status, reviewed)
 end
 
 ---Create side-by-side diff line component
----@param line table DiffLine {line_no_old, line_no_new, content_old, content_new, type}
+---@param line DiffLine Diff line data
 ---@param col_width number Width for each content column
----@param opts? table Additional options (interactive, item)
----@return table component Diff line component
+---@param opts? ComponentOptions Additional options (interactive, item)
+---@return Component component Diff line component
 function M.create_diff_line(line, col_width, opts)
 	opts = opts or {}
 
@@ -102,7 +102,7 @@ end
 
 ---Create binary file notice
 ---@param path string File path
----@return table component Binary notice component
+---@return Component component Binary notice component
 function M.create_binary_notice(path)
 	return Ui.col({
 		Ui.empty_line(),
@@ -113,7 +113,7 @@ function M.create_binary_notice(path)
 end
 
 ---Create no changes notice
----@return table component No changes component
+---@return Component component No changes component
 function M.create_no_changes()
 	return Ui.col({
 		Ui.empty_line(),
@@ -123,8 +123,8 @@ function M.create_no_changes()
 end
 
 ---Create comment display component
----@param comment table Comment {type, text, line, side}
----@return table component Comment component
+---@param comment Comment Comment data
+---@return Component component Comment component
 function M.create_comment(comment)
 	local type_hl, type_label = Ui.get_comment_type_display(comment.type)
 
@@ -141,11 +141,11 @@ function M.create_comment(comment)
 end
 
 ---Create the full diff view for a file
----@param file_diff table FileDiff
----@param comments table[] Comments for this file
+---@param file_diff FileDiff Diff data for the file
+---@param comments Comment[] Comments for this file
 ---@param col_width number Column width
 ---@param reviewed boolean Whether file has been reviewed
----@return table[] components UI components
+---@return Component[] components UI components
 function M.create_file_diff(file_diff, comments, col_width, reviewed)
 	local components = {}
 
@@ -225,7 +225,7 @@ function M.create_file_diff(file_diff, comments, col_width, reviewed)
 end
 
 ---Create header showing keybindings hint
----@return table component Header component
+---@return Component component Header component
 function M.create_keybindings_hint()
 	return Ui.row({
 		Ui.text("j/k:scroll  {/}:file  [/]:hunk  c:comment  r:reviewed  y:yank  ?:help  q:quit", {

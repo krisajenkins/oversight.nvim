@@ -5,9 +5,9 @@ local Ui = require("tuicr.lib.ui")
 local M = {}
 
 ---Create the file list UI
----@param files table[] List of {status, path, reviewed} entries
+---@param files File[] List of files
 ---@param current_index number Currently selected file index (1-indexed)
----@return table[] components UI components
+---@return Component[] components UI components
 function M.create(files, current_index)
 	local components = {}
 
@@ -56,7 +56,7 @@ end
 ---@param reviewed number Number of reviewed files
 ---@param total number Total number of files
 ---@param branch string|nil Current branch name
----@return table component Header component
+---@return Component component Header component
 function M.create_header(reviewed, total, branch)
 	local branch_text = branch and ("[" .. branch .. "]") or "[detached]"
 	local progress_text = string.format("%d/%d reviewed", reviewed, total)

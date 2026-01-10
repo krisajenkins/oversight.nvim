@@ -3,8 +3,8 @@
 local M = {}
 
 ---Convert a session to markdown format optimized for LLM feedback
----@param session table Review session
----@param repo table Git repository
+---@param session ReviewSession Review session
+---@param repo GitRepository Git repository
 ---@return string markdown Markdown string
 function M.to_markdown(session, repo)
 	local lines = {}
@@ -123,8 +123,8 @@ function M.to_markdown(session, repo)
 end
 
 ---Export session to a file
----@param session table Review session
----@param repo table Git repository
+---@param session ReviewSession Review session
+---@param repo GitRepository Git repository
 ---@param output_path string Output file path
 ---@return boolean success True if export succeeded
 function M.to_file(session, repo, output_path)

@@ -1,14 +1,22 @@
+---@class ComponentOptions
+---@field highlight? string Highlight group name
+---@field foldable? boolean Whether component can be folded
+---@field folded? boolean Whether component is currently folded
+---@field interactive? boolean Whether component supports interactions
+---@field section? string Section name for folding state persistence
+---@field item? any Item data (e.g., LineInfo for diff lines)
+
 ---@class Component
----@field tag string
----@field children table[]
----@field options table
----@field value any
+---@field tag string Component type identifier
+---@field children Component[] Child components
+---@field options ComponentOptions Component options
+---@field value any Component value (e.g., text content)
 local Component = {}
 Component.__index = Component
 
 ---Create a new component factory
----@param render_fn function Function that takes props and returns a component definition
----@return function component_factory Component constructor function
+---@param render_fn fun(props: table): {tag: string, children?: Component[], options?: ComponentOptions, value?: any} Render function
+---@return fun(props?: table): Component component_factory Component constructor function
 function Component.new(render_fn)
 	return function(props)
 		local component = render_fn(props or {})
@@ -36,13 +44,13 @@ function Component:get_tag()
 end
 
 ---Get the component's children
----@return table[] children The component's children
+---@return Component[] children The component's children
 function Component:get_children()
 	return self.children
 end
 
 ---Get the component's options
----@return table options The component's options
+---@return ComponentOptions options The component's options
 function Component:get_options()
 	return self.options
 end
@@ -91,7 +99,7 @@ end
 
 ---Create a component with a specific tag
 ---@param tag string The component tag
----@return function component_factory Tagged component constructor
+---@return fun(children?: Component[], options?: ComponentOptions): Component component_factory Tagged component constructor
 function Component.with_tag(tag)
 	return function(children, options)
 		return Component.new(function(props)
