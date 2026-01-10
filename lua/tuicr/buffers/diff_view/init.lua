@@ -11,6 +11,7 @@ local Diff = require("tuicr.lib.git.diff")
 ---@field current_file table|nil Current file being displayed
 ---@field file_diffs table<string, table> Cached file diffs
 ---@field on_comment function Callback for adding comments
+---@field on_toggle_reviewed function Callback when file is toggled reviewed
 local DiffViewBuffer = {}
 DiffViewBuffer.__index = DiffViewBuffer
 
@@ -24,6 +25,7 @@ function DiffViewBuffer.new(opts)
 		current_file = nil,
 		file_diffs = {},
 		on_comment = opts.on_comment,
+		on_toggle_reviewed = opts.on_toggle_reviewed,
 		on_quit = opts.on_quit,
 	}, DiffViewBuffer)
 
@@ -93,6 +95,11 @@ function DiffViewBuffer:_setup_mappings()
 	buf:map("n", "dd", function()
 		self:delete_comment()
 	end, { desc = "Delete comment" })
+
+	-- Review actions
+	buf:map("n", "r", function()
+		self:toggle_reviewed()
+	end, { desc = "Toggle file reviewed" })
 
 	-- Quit
 	buf:map("n", "q", function()
@@ -281,6 +288,30 @@ function DiffViewBuffer:delete_comment()
 		self.session:save()
 		self:render()
 		vim.notify("Comment deleted", vim.log.levels.INFO)
+	end
+end
+
+---Toggle reviewed status for current file
+function DiffViewBuffer:toggle_reviewed()
+	if not self.current_file then
+		return
+	end
+
+	-- Toggle in session
+	if self.session then
+		local new_status = self.session:toggle_file_reviewed(self.current_file.path)
+		self.session:save()
+
+		-- Update local file state
+		self.current_file.reviewed = new_status
+
+		-- Notify callback (to update file list)
+		if self.on_toggle_reviewed then
+			self.on_toggle_reviewed(self.current_file)
+		end
+
+		local status_text = new_status and "reviewed" or "not reviewed"
+		vim.notify(self.current_file.path .. " marked as " .. status_text, vim.log.levels.INFO)
 	end
 end
 
