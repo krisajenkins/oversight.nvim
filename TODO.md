@@ -10,23 +10,23 @@ In the file list, pressing enter should open the file as a regular buffer.
 
 # Bugs
 
-- [ ] You can enter insert mode in the main window, and start entering arbitrary text. That makes no sense. These buffers shouldn't be editable.
-- [ ] When you're entering a comment, escape shouldn't discard it. It should save it. Only discard the comment if it's empty (or all-whitespace).
+- [x] You can enter insert mode in the main window, and start entering arbitrary text. That makes no sense. These buffers shouldn't be editable.
+- [x] When you're entering a comment, escape shouldn't discard it. It should save it. Only discard the comment if it's empty (or all-whitespace).
 
 # Refactoring Tasks
 
 ## Type Safety
 
-- [ ] Fix the `make typecheck` warnings.
+- [x] Fix the `make typecheck` warnings.
 - [x] Add lua-language-server type checking to Makefile (currently only runs luacheck, which is a linter not a type checker)
 - [ ] Define proper type aliases for UI components instead of generic `table` types
 - [ ] Add typed callback signatures (e.g., `fun(file: FileInfo, index: number): nil` instead of `function`)
 
 ## DRY Improvements
 
-- [ ] Extract git status → highlight mapping to shared function (duplicated in 4 places: `lib/ui/init.lua`, `buffers/file_list/ui.lua`, `buffers/diff_view/ui.lua`)
-- [ ] Extract comment type → highlight/label mapping to shared function (duplicated in 3 places)
-- [ ] Add missing "C" (copied) status handling in `buffers/diff_view/ui.lua:47-54`
+- [x] Extract git status → highlight mapping to shared function (duplicated in 4 places: `lib/ui/init.lua`, `buffers/file_list/ui.lua`, `buffers/diff_view/ui.lua`)
+- [x] Extract comment type → highlight/label mapping to shared function (duplicated in 3 places)
+- [x] Add missing "C" (copied) status handling in `buffers/diff_view/ui.lua:47-54`
 
 ## Architecture
 
