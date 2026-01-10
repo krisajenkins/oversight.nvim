@@ -44,15 +44,7 @@ end
 ---@param reviewed boolean Whether file has been reviewed
 ---@return table component File header component
 function M.create_file_header(path, status, reviewed)
-	local status_hl = "TuicrFileModified"
-	if status == "A" then
-		status_hl = "TuicrFileAdded"
-	elseif status == "D" then
-		status_hl = "TuicrFileDeleted"
-	elseif status == "R" then
-		status_hl = "TuicrFileRenamed"
-	end
-
+	local status_hl = Ui.get_status_highlight(status)
 	local reviewed_mark = reviewed and "✓" or " "
 	local reviewed_hl = reviewed and "TuicrReviewed" or "TuicrSeparator"
 
@@ -134,19 +126,7 @@ end
 ---@param comment table Comment {type, text, line, side}
 ---@return table component Comment component
 function M.create_comment(comment)
-	local type_hl = "TuicrCommentNote"
-	local type_label = "[NOTE]"
-
-	if comment.type == "suggestion" then
-		type_hl = "TuicrCommentSuggestion"
-		type_label = "[SUGGESTION]"
-	elseif comment.type == "issue" then
-		type_hl = "TuicrCommentIssue"
-		type_label = "[ISSUE]"
-	elseif comment.type == "praise" then
-		type_hl = "TuicrCommentPraise"
-		type_label = "[PRAISE]"
-	end
+	local type_hl, type_label = Ui.get_comment_type_display(comment.type)
 
 	return Ui.col({
 		Ui.row({

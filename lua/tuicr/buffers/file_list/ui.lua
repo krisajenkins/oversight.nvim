@@ -35,17 +35,7 @@ function M.create(files, current_index)
 		-- Status and review indicators
 		local review_icon = file.reviewed and "[x]" or "[ ]"
 		local review_hl = file.reviewed and "TuicrReviewed" or "TuicrPending"
-
-		local status_hl = "TuicrFileModified"
-		if file.status == "A" then
-			status_hl = "TuicrFileAdded"
-		elseif file.status == "D" then
-			status_hl = "TuicrFileDeleted"
-		elseif file.status == "R" then
-			status_hl = "TuicrFileRenamed"
-		elseif file.status == "C" then
-			status_hl = "TuicrFileCopied"
-		end
+		local status_hl = Ui.get_status_highlight(file.status)
 
 		local row = Ui.row({
 			Ui.text(pointer, { highlight = pointer_hl }),

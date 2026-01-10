@@ -3,6 +3,36 @@ local Component = require("tuicr.lib.ui.component")
 ---@class Ui
 local Ui = {}
 
+---Get highlight group for git status
+---@param status string Git status (A, M, D, R, C, etc.)
+---@return string highlight Highlight group name
+function Ui.get_status_highlight(status)
+	if status == "A" then
+		return "TuicrFileAdded"
+	elseif status == "D" then
+		return "TuicrFileDeleted"
+	elseif status == "R" then
+		return "TuicrFileRenamed"
+	elseif status == "C" then
+		return "TuicrFileCopied"
+	end
+	return "TuicrFileModified"
+end
+
+---Get highlight group and label for comment type
+---@param comment_type string Comment type (note, suggestion, issue, praise)
+---@return string highlight, string label Highlight group and label text
+function Ui.get_comment_type_display(comment_type)
+	if comment_type == "suggestion" then
+		return "TuicrCommentSuggestion", "[SUGGESTION]"
+	elseif comment_type == "issue" then
+		return "TuicrCommentIssue", "[ISSUE]"
+	elseif comment_type == "praise" then
+		return "TuicrCommentPraise", "[PRAISE]"
+	end
+	return "TuicrCommentNote", "[NOTE]"
+end
+
 ---Create a column (vertical container)
 ---@param children table[] List of child components
 ---@param options? table Component options
@@ -82,17 +112,7 @@ end
 ---@param options? table Component options
 ---@return table component File item component
 function Ui.file_item(status, path, reviewed, options)
-	local status_hl = "TuicrFileModified"
-	if status == "A" then
-		status_hl = "TuicrFileAdded"
-	elseif status == "D" then
-		status_hl = "TuicrFileDeleted"
-	elseif status == "R" then
-		status_hl = "TuicrFileRenamed"
-	elseif status == "C" then
-		status_hl = "TuicrFileCopied"
-	end
-
+	local status_hl = Ui.get_status_highlight(status)
 	local review_icon = reviewed and "[x]" or "[ ]"
 	local review_hl = reviewed and "TuicrReviewed" or "TuicrPending"
 
@@ -156,15 +176,7 @@ end
 ---@param options? table Component options
 ---@return table component File header component
 function Ui.file_header(path, status, options)
-	local status_hl = "TuicrFileModified"
-	if status == "A" then
-		status_hl = "TuicrFileAdded"
-	elseif status == "D" then
-		status_hl = "TuicrFileDeleted"
-	elseif status == "R" then
-		status_hl = "TuicrFileRenamed"
-	end
-
+	local status_hl = Ui.get_status_highlight(status)
 	local separator = string.rep("=", 3)
 	return Ui.row({
 		Ui.text(separator .. " ", { highlight = "TuicrSeparator" }),
@@ -182,19 +194,7 @@ end
 ---@param options? table Component options
 ---@return table component Comment component
 function Ui.comment(comment_type, text, options)
-	local type_hl = "TuicrCommentNote"
-	local type_label = "[NOTE]"
-
-	if comment_type == "suggestion" then
-		type_hl = "TuicrCommentSuggestion"
-		type_label = "[SUGGESTION]"
-	elseif comment_type == "issue" then
-		type_hl = "TuicrCommentIssue"
-		type_label = "[ISSUE]"
-	elseif comment_type == "praise" then
-		type_hl = "TuicrCommentPraise"
-		type_label = "[PRAISE]"
-	end
+	local type_hl, type_label = Ui.get_comment_type_display(comment_type)
 
 	return Ui.col({
 		Ui.row({
