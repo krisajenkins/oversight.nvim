@@ -6,6 +6,7 @@ local Session = require("tuicr.lib.storage.session")
 local FileListBuffer = require("tuicr.buffers.file_list")
 local DiffViewBuffer = require("tuicr.buffers.diff_view")
 local CommentInput = require("tuicr.buffers.comment")
+local HelpOverlay = require("tuicr.buffers.help")
 
 ---@class ReviewBuffer
 ---@field repo table Git repository
@@ -311,76 +312,7 @@ end
 
 ---Show help overlay
 function ReviewBuffer:show_help()
-	local help_text = {
-		"tuicr - Code Review for AI Changes",
-		"",
-		"Navigation:",
-		"  j/k         Scroll up/down",
-		"  Ctrl-d/u    Half page down/up",
-		"  {/}         Previous/next file",
-		"  [/]         Previous/next hunk",
-		"  g/G         First/last file",
-		"  Tab         Switch panels",
-		"",
-		"Review:",
-		"  r           Toggle file reviewed",
-		"  c           Add line comment",
-		"  C           Add file comment",
-		"  dd          Delete comment",
-		"",
-		"Comment Dialog:",
-		"  Ctrl-s      Submit comment",
-		"  Esc         Cancel (works in insert mode)",
-		"  Ctrl-t/Tab  Cycle type (Note/Suggestion/Issue/Praise)",
-		"  1-4         Select type directly (normal mode)",
-		"",
-		"Export & Clear:",
-		"  y           Yank comments to clipboard",
-		"  X           Clear all comments",
-		"",
-		"Other:",
-		"  ?           Show this help",
-		"  q           Quit review",
-		"",
-		"Press any key to close...",
-	}
-
-	-- Create floating window
-	local buf = vim.api.nvim_create_buf(false, true)
-	vim.api.nvim_buf_set_lines(buf, 0, -1, false, help_text)
-	vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
-
-	local width = 50
-	local height = #help_text
-	local row = math.floor((vim.o.lines - height) / 2)
-	local col = math.floor((vim.o.columns - width) / 2)
-
-	local win = vim.api.nvim_open_win(buf, true, {
-		relative = "editor",
-		width = width,
-		height = height,
-		row = row,
-		col = col,
-		style = "minimal",
-		border = "rounded",
-		title = " Help ",
-		title_pos = "center",
-	})
-
-	-- Close on any key
-	vim.keymap.set("n", "<Esc>", function()
-		vim.api.nvim_win_close(win, true)
-	end, { buffer = buf })
-
-	vim.api.nvim_create_autocmd("BufLeave", {
-		buffer = buf,
-		once = true,
-		callback = function()
-			if vim.api.nvim_win_is_valid(win) then
-				vim.api.nvim_win_close(win, true)
-			end
-		end,
-	})
+	HelpOverlay.show()
 end
 
 ---Check if review is still valid
