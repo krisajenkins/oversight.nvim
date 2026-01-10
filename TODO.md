@@ -25,6 +25,7 @@ For each change:
 
 - [x] You can enter insert mode in the main window, and start entering arbitrary text. That makes no sense. These buffers shouldn't be editable.
 - [x] When you're entering a comment, escape shouldn't discard it. It should save it. Only discard the comment if it's empty (or all-whitespace).
+- [x] Any time you call `:Tuicr`, the status should be refreshed. Additionally there should be a refresh button. (Perhaps `R`?)
 
 # Refactoring Tasks
 
@@ -51,7 +52,7 @@ For each change:
 
 - [x] Add tests for Buffer abstraction (`lib/buffer.lua`)
 - [x] Add tests for Git CLI/Repository modules (`lib/git/*.lua`)
-- [ ] Add integration tests for ReviewBuffer workflow
+- [x] Add integration tests for ReviewBuffer workflow
 
 ## Documentation
 

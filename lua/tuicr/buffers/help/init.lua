@@ -40,6 +40,7 @@ local DEFAULT_HELP_TEXT = {
 	"  X           Clear all comments",
 	"",
 	"Other:",
+	"  R           Refresh status",
 	"  ?           Show this help",
 	"  q           Quit review",
 	"",

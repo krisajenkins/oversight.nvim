@@ -39,6 +39,7 @@ function ReviewBuffer.open(dir)
 	local root = repo:get_root()
 	if instances[root] and instances[root]:is_valid() then
 		instances[root]:focus()
+		instances[root]:refresh()
 		return instances[root]
 	end
 
@@ -191,6 +192,11 @@ function ReviewBuffer:_setup_tab_mappings()
 					self:clear_comments()
 				end, { buffer = buf, desc = "Clear all comments" })
 
+				-- Refresh
+				vim.keymap.set("n", "R", function()
+					self:refresh()
+				end, { buffer = buf, desc = "Refresh status" })
+
 				-- Help
 				vim.keymap.set("n", "?", function()
 					self:show_help()
@@ -319,6 +325,35 @@ end
 ---Show help overlay
 function ReviewBuffer:show_help()
 	HelpOverlay.show()
+end
+
+---Refresh the file list and diff view with latest git status
+function ReviewBuffer:refresh()
+	-- Re-fetch changed files from repository
+	local changed_files = self.repo:get_changed_files()
+
+	-- Build files list with reviewed status from session
+	local files = {}
+	for _, file in ipairs(changed_files) do
+		self.session:ensure_file(file.path, file.status)
+		local status = self.session:get_file_status(file.path)
+		table.insert(files, {
+			path = file.path,
+			status = file.status,
+			reviewed = status and status.reviewed or false,
+		})
+	end
+
+	-- Update file list
+	self.file_list:set_files(files)
+
+	-- Refresh diff view for current file
+	local current_file = self.file_list:get_current_file()
+	if current_file then
+		self.diff_view:show_file(current_file)
+	end
+
+	vim.notify("Refreshed", vim.log.levels.INFO)
 end
 
 ---Check if review is still valid

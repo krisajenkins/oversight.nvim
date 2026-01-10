@@ -133,6 +133,7 @@ Export & Clear~
                                                     *tuicr-keybindings-other*
 Other~
 
+    R                   Refresh status (re-fetch changes from git)
     ?                   Show help overlay
     q                   Quit review (closes tab)
 
