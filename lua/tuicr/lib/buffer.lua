@@ -256,7 +256,7 @@ end
 ---Get the component at the current cursor position
 ---@return table|nil component Component at cursor or nil
 function Buffer:get_component_at_cursor()
-	local line, _ = table.unpack(self:get_cursor())
+	local line, _ = unpack(self:get_cursor())
 	-- Convert to 0-indexed line number (renderer uses 0-indexed)
 	local line_idx = line - 1
 

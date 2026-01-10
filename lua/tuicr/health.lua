@@ -27,18 +27,6 @@ local function check_git_repo()
 	return not result:match("fatal:")
 end
 
----Check if there are changes to review
----@return boolean has_changes True if there are uncommitted changes
-local function check_has_changes()
-	local handle = io.popen("git status --porcelain 2>&1")
-	if not handle then
-		return false
-	end
-	local result = handle:read("*a")
-	handle:close()
-	return result ~= ""
-end
-
 ---Run health checks
 function M.check()
 	vim.health.start("tuicr")
