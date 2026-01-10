@@ -6,7 +6,7 @@
 
 # Features
 
-In the file list, pressing enter should open the file as a regular buffer.
+- [x] In the file list, pressing 'o' opens the file as a regular buffer (in new tab).
 
 # Bugs
 
@@ -30,9 +30,9 @@ In the file list, pressing enter should open the file as a regular buffer.
 
 ## Architecture
 
-- [ ] Extract HelpOverlay from ReviewBuffer into its own component
-- [ ] Fix encapsulation: ReviewBuffer directly mutates FileListBuffer's internal `files` array
-- [ ] Add health check module (`lua/tuicr/health.lua`) per nvim best practices
+- [x] Extract HelpOverlay from ReviewBuffer into its own component
+- [x] Fix encapsulation: ReviewBuffer directly mutates FileListBuffer's internal `files` array
+- [x] Add health check module (`lua/tuicr/health.lua`) per nvim best practices
 
 ## Testing
 
