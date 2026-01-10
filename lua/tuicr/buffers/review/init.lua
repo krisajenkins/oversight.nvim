@@ -178,10 +178,10 @@ function ReviewBuffer:_setup_tab_mappings()
 					self:_navigate_file(1)
 				end, { buffer = buf, desc = "Next file" })
 
-				-- Export
-				vim.keymap.set("n", "E", function()
+				-- Export (yank to clipboard)
+				vim.keymap.set("n", "y", function()
 					self:export_markdown()
-				end, { buffer = buf, desc = "Export to clipboard" })
+				end, { buffer = buf, desc = "Yank comments to clipboard" })
 
 				-- Clear all comments
 				vim.keymap.set("n", "X", function()
@@ -336,7 +336,7 @@ function ReviewBuffer:show_help()
 		"  1-4         Select type directly (normal mode)",
 		"",
 		"Export & Clear:",
-		"  E           Export to clipboard",
+		"  y           Yank comments to clipboard",
 		"  X           Clear all comments",
 		"",
 		"Other:",
