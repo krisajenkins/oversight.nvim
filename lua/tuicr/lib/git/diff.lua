@@ -104,9 +104,8 @@ function M.parse_unified_diff(diff_lines)
 				})
 				old_line_no = old_line_no + 1
 				new_line_no = new_line_no + 1
-			elseif prefix == "\\" then
-				-- "No newline at end of file" - skip
 			end
+			-- Note: prefix == "\\" ("No newline at end of file") is intentionally ignored
 		end
 	end
 

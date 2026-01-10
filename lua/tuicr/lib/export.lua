@@ -89,7 +89,7 @@ function M.to_markdown(session, repo)
 
 		for _, comment in ipairs(file_comments) do
 			-- Format location
-			local location = ""
+			local location
 			if comment.line then
 				if comment.side == "old" then
 					location = string.format("Line ~%d (deleted)", comment.line)

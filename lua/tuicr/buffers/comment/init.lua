@@ -1,7 +1,5 @@
 -- Comment input floating window
 
-local logger = require("tuicr.logger")
-
 ---@class CommentInput
 ---@field buf number Buffer handle
 ---@field win number Window handle

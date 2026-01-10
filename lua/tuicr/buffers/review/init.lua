@@ -6,7 +6,6 @@ local Session = require("tuicr.lib.storage.session")
 local FileListBuffer = require("tuicr.buffers.file_list")
 local DiffViewBuffer = require("tuicr.buffers.diff_view")
 local CommentInput = require("tuicr.buffers.comment")
-local logger = require("tuicr.logger")
 
 ---@class ReviewBuffer
 ---@field repo table Git repository
