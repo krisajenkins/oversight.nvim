@@ -41,8 +41,9 @@ end
 ---Create file header component
 ---@param path string File path
 ---@param status string Git status
+---@param reviewed boolean Whether file has been reviewed
 ---@return table component File header component
-function M.create_file_header(path, status)
+function M.create_file_header(path, status, reviewed)
 	local status_hl = "TuicrFileModified"
 	if status == "A" then
 		status_hl = "TuicrFileAdded"
@@ -52,24 +53,19 @@ function M.create_file_header(path, status)
 		status_hl = "TuicrFileRenamed"
 	end
 
-	local separator = string.rep("=", 60)
+	local reviewed_mark = reviewed and "✓" or " "
+	local reviewed_hl = reviewed and "TuicrReviewed" or "TuicrSeparator"
 
-	return Ui.col({
-		Ui.empty_line(),
-		Ui.row({
-			Ui.text(separator, { highlight = "TuicrSeparator" }),
-		}),
-		Ui.row({
-			Ui.text("  ", {}),
-			Ui.text(path, { highlight = "TuicrHeader" }),
-			Ui.text(" [", { highlight = "TuicrSeparator" }),
-			Ui.text(status, { highlight = status_hl }),
-			Ui.text("]", { highlight = "TuicrSeparator" }),
-		}),
-		Ui.row({
-			Ui.text(separator, { highlight = "TuicrSeparator" }),
-		}),
-		Ui.empty_line(),
+	-- Single line format: === [✓] filename (M) ===
+	return Ui.row({
+		Ui.text("=== [", { highlight = "TuicrSeparator" }),
+		Ui.text(reviewed_mark, { highlight = reviewed_hl }),
+		Ui.text("] ", { highlight = "TuicrSeparator" }),
+		Ui.text(path, { highlight = "TuicrHeader" }),
+		Ui.text(" (", { highlight = "TuicrSeparator" }),
+		Ui.text(status, { highlight = status_hl }),
+		Ui.text(") ", { highlight = "TuicrSeparator" }),
+		Ui.text("===", { highlight = "TuicrSeparator" }),
 	})
 end
 
@@ -168,12 +164,13 @@ end
 ---@param file_diff table FileDiff
 ---@param comments table[] Comments for this file
 ---@param col_width number Column width
+---@param reviewed boolean Whether file has been reviewed
 ---@return table[] components UI components
-function M.create_file_diff(file_diff, comments, col_width)
+function M.create_file_diff(file_diff, comments, col_width, reviewed)
 	local components = {}
 
 	-- File header
-	table.insert(components, M.create_file_header(file_diff.path, file_diff.status))
+	table.insert(components, M.create_file_header(file_diff.path, file_diff.status, reviewed))
 
 	-- Binary file handling
 	if file_diff.is_binary then

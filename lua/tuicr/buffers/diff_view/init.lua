@@ -166,8 +166,11 @@ function DiffViewBuffer:render()
 		comments = self.session:get_file_comments(self.current_file.path)
 	end
 
+	-- Get reviewed status
+	local reviewed = self.current_file.reviewed or false
+
 	local col_width = self:_get_col_width()
-	local components = DiffViewUI.create_file_diff(diff, comments, col_width)
+	local components = DiffViewUI.create_file_diff(diff, comments, col_width, reviewed)
 
 	-- Add keybindings hint at the top
 	table.insert(components, 1, DiffViewUI.create_keybindings_hint())
@@ -304,6 +307,9 @@ function DiffViewBuffer:toggle_reviewed()
 
 		-- Update local file state
 		self.current_file.reviewed = new_status
+
+		-- Re-render to update header
+		self:render()
 
 		-- Notify callback (to update file list)
 		if self.on_toggle_reviewed then
