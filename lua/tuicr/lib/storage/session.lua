@@ -29,6 +29,7 @@ local logger = require("tuicr.logger")
 ---@field side? "old"|"new" Which side of the diff (nil for file-level)
 
 ---@class CommentData
+---@field id? string Comment ID (present when editing existing comment)
 ---@field file string File path
 ---@field line? number Line number
 ---@field side? "old"|"new" Diff side
@@ -276,6 +277,34 @@ function Session:delete_comment(comment_id)
 	for i, comment in ipairs(self.comments) do
 		if comment.id == comment_id then
 			table.remove(self.comments, i)
+			return true
+		end
+	end
+	return false
+end
+
+---Get a comment by ID
+---@param comment_id string Comment ID
+---@return Comment|nil comment The comment or nil if not found
+function Session:get_comment(comment_id)
+	for _, comment in ipairs(self.comments) do
+		if comment.id == comment_id then
+			return comment
+		end
+	end
+	return nil
+end
+
+---Update an existing comment
+---@param comment_id string Comment ID
+---@param comment_type "note"|"suggestion"|"issue"|"praise" Comment type
+---@param text string Comment text
+---@return boolean success True if comment was updated
+function Session:update_comment(comment_id, comment_type, text)
+	for _, comment in ipairs(self.comments) do
+		if comment.id == comment_id then
+			comment.type = comment_type
+			comment.text = text
 			return true
 		end
 	end

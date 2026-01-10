@@ -8,6 +8,7 @@ local Diff = require("tuicr.lib.git.diff")
 ---@field repo GitRepository Git repository
 ---@field session ReviewSession Review session
 ---@field on_comment? fun(context: CommentContext): nil Callback for adding comments
+---@field on_edit_comment? fun(comment: Comment): nil Callback for editing comments
 ---@field on_toggle_reviewed? fun(file: File): nil Callback when file is toggled reviewed
 ---@field on_quit? fun(): nil Callback when quitting
 
@@ -18,6 +19,7 @@ local Diff = require("tuicr.lib.git.diff")
 ---@field current_file File|nil Current file being displayed
 ---@field file_diffs table<string, FileDiff> Cached file diffs
 ---@field on_comment? fun(context: CommentContext): nil Callback for adding comments
+---@field on_edit_comment? fun(comment: Comment): nil Callback for editing comments
 ---@field on_toggle_reviewed? fun(file: File): nil Callback when file is toggled reviewed
 ---@field on_quit? fun(): nil Callback when quitting
 local DiffViewBuffer = {}
@@ -33,6 +35,7 @@ function DiffViewBuffer.new(opts)
 		current_file = nil,
 		file_diffs = {},
 		on_comment = opts.on_comment,
+		on_edit_comment = opts.on_edit_comment,
 		on_toggle_reviewed = opts.on_toggle_reviewed,
 		on_quit = opts.on_quit,
 	}, DiffViewBuffer)
@@ -93,8 +96,11 @@ function DiffViewBuffer:_setup_mappings()
 
 	-- Comment actions
 	buf:map("n", "c", function()
-		self:add_line_comment()
-	end, { desc = "Add line comment" })
+		-- If on a comment, edit it; otherwise add a new comment
+		if not self:edit_comment() then
+			self:add_line_comment()
+		end
+	end, { desc = "Add/edit comment" })
 
 	buf:map("n", "C", function()
 		self:add_file_comment()
@@ -300,6 +306,23 @@ function DiffViewBuffer:delete_comment()
 		self:render()
 		vim.notify("Comment deleted", vim.log.levels.INFO)
 	end
+end
+
+---Edit comment under cursor
+function DiffViewBuffer:edit_comment()
+	local item = self:_get_line_at_cursor()
+	if not item or item.type ~= "comment" then
+		return false
+	end
+
+	if self.session and item.comment_id and self.on_edit_comment then
+		local comment = self.session:get_comment(item.comment_id)
+		if comment then
+			self.on_edit_comment(comment)
+			return true
+		end
+	end
+	return false
 end
 
 ---Toggle reviewed status for current file

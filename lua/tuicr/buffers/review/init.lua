@@ -134,6 +134,9 @@ function ReviewBuffer:_create_layout(files)
 		on_comment = function(context)
 			self:_on_add_comment(context)
 		end,
+		on_edit_comment = function(comment)
+			self:_on_edit_comment(comment)
+		end,
 		on_toggle_reviewed = function(file)
 			self:_on_toggle_reviewed(file)
 		end,
@@ -250,6 +253,28 @@ function ReviewBuffer:_on_add_comment(context)
 			self.session:save()
 			self.diff_view:render()
 			vim.notify("Comment added", vim.log.levels.INFO)
+		end,
+		on_cancel = function()
+			-- Nothing to do
+		end,
+	})
+end
+
+---Handle editing an existing comment
+---@param comment Comment Comment to edit
+function ReviewBuffer:_on_edit_comment(comment)
+	CommentInput.new({
+		context = {
+			file = comment.file,
+			line = comment.line,
+			side = comment.side,
+		},
+		existing_comment = comment,
+		on_submit = function(comment_data)
+			self.session:update_comment(comment_data.id, comment_data.type, comment_data.text)
+			self.session:save()
+			self.diff_view:render()
+			vim.notify("Comment updated", vim.log.levels.INFO)
 		end,
 		on_cancel = function()
 			-- Nothing to do

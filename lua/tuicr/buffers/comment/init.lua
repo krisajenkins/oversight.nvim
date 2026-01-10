@@ -2,6 +2,7 @@
 
 ---@class CommentInputOpts
 ---@field context CommentContext Comment context (file, line, side)
+---@field existing_comment? Comment Optional existing comment for editing
 ---@field on_submit? fun(comment: CommentData): nil Callback when comment is submitted
 ---@field on_cancel? fun(): nil Callback when input is cancelled
 
@@ -10,6 +11,7 @@
 ---@field win number Window handle
 ---@field context CommentContext Comment context (file, line, side)
 ---@field comment_type "note"|"suggestion"|"issue"|"praise" Current comment type
+---@field existing_comment? Comment Optional existing comment being edited
 ---@field on_submit? fun(comment: CommentData): nil Callback when comment is submitted
 ---@field on_cancel? fun(): nil Callback when input is cancelled
 local CommentInput = {}
@@ -21,9 +23,11 @@ local COMMENT_TYPES = { "note", "suggestion", "issue", "praise" }
 ---@param opts CommentInputOpts Options
 ---@return CommentInput instance
 function CommentInput.new(opts)
+	local existing = opts.existing_comment
 	local instance = setmetatable({
 		context = opts.context,
-		comment_type = "note",
+		comment_type = existing and existing.type or "note",
+		existing_comment = existing,
 		on_submit = opts.on_submit,
 		on_cancel = opts.on_cancel,
 	}, CommentInput)
@@ -49,6 +53,7 @@ function CommentInput:_create_window()
 	local col = math.floor((vim.o.columns - width) / 2)
 
 	-- Create window
+	local title = self.existing_comment and " Edit Comment " or " Add Comment "
 	self.win = vim.api.nvim_open_win(self.buf, true, {
 		relative = "editor",
 		width = width,
@@ -57,7 +62,7 @@ function CommentInput:_create_window()
 		col = col,
 		style = "minimal",
 		border = "rounded",
-		title = " Add Comment ",
+		title = title,
 		title_pos = "center",
 	})
 
@@ -116,6 +121,11 @@ function CommentInput:_update_content()
 	-- Add existing comment text or empty line
 	if #existing_lines > 0 and existing_lines[1] ~= "" then
 		vim.list_extend(lines, existing_lines)
+	elseif self.existing_comment then
+		-- Pre-fill with existing comment text when editing
+		for line in vim.gsplit(self.existing_comment.text, "\n", { plain = true }) do
+			table.insert(lines, line)
+		end
 	else
 		table.insert(lines, "")
 	end
@@ -233,6 +243,7 @@ function CommentInput:_submit()
 	-- Call callback
 	if self.on_submit then
 		self.on_submit({
+			id = self.existing_comment and self.existing_comment.id or nil,
 			file = self.context.file,
 			line = self.context.line,
 			side = self.context.side,

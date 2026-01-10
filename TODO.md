@@ -20,6 +20,7 @@ For each change:
 # Features
 
 - [x] In the file list, pressing 'o' opens the file as a regular buffer (in new tab).
+- [x] If you press 'c' when you're on a comment, it should open up that comment for editing.
 
 # Bugs
 
