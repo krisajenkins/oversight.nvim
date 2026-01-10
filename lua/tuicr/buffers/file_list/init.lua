@@ -10,6 +10,7 @@ local FileListUI = require("tuicr.buffers.file_list.ui")
 ---@field session table Review session
 ---@field on_file_select function Callback when file is selected
 ---@field on_toggle_reviewed function Callback when file is toggled
+---@field on_open_file function Callback when file should be opened in editor
 local FileListBuffer = {}
 FileListBuffer.__index = FileListBuffer
 
@@ -23,6 +24,7 @@ function FileListBuffer.new(opts)
 		session = opts.session,
 		on_file_select = opts.on_file_select,
 		on_toggle_reviewed = opts.on_toggle_reviewed,
+		on_open_file = opts.on_open_file,
 		branch = opts.branch,
 	}, FileListBuffer)
 
@@ -62,6 +64,10 @@ function FileListBuffer:_setup_mappings()
 	buf:map("n", "<CR>", function()
 		self:select_file()
 	end, { desc = "Select file" })
+
+	buf:map("n", "o", function()
+		self:open_file()
+	end, { desc = "Open file in editor" })
 
 	-- Review actions
 	buf:map("n", "r", function()
@@ -124,6 +130,14 @@ function FileListBuffer:select_file()
 		if file then
 			self.on_file_select(file, self.current_index)
 		end
+	end
+end
+
+---Open current file in editor
+function FileListBuffer:open_file()
+	local file = self.files[self.current_index]
+	if file and self.on_open_file then
+		self.on_open_file(file, self.current_index)
 	end
 end
 

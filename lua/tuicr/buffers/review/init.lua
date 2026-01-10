@@ -119,6 +119,9 @@ function ReviewBuffer:_create_layout(files)
 		on_toggle_reviewed = function(_file, _index)
 			-- Session already saved in FileListBuffer
 		end,
+		on_open_file = function(file, _index)
+			self:_on_open_file(file)
+		end,
 	})
 	self.file_list:show()
 
@@ -206,6 +209,16 @@ end
 ---@param file table Selected file
 function ReviewBuffer:_on_file_select(file)
 	self.diff_view:show_file(file)
+end
+
+---Handle opening file in editor
+---@param file table File to open
+function ReviewBuffer:_on_open_file(file)
+	-- Get the full path
+	local full_path = self.repo:get_root() .. "/" .. file.path
+
+	-- Open in a new tab to not disrupt the review layout
+	vim.cmd("tabnew " .. vim.fn.fnameescape(full_path))
 end
 
 ---Handle toggling reviewed status from diff view
