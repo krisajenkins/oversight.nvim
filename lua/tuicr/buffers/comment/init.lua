@@ -97,8 +97,12 @@ function CommentInput:_update_content()
 		context_line = context_line .. " (file-level comment)"
 	end
 
-	-- Get existing text (preserve user input)
-	local existing_lines = vim.api.nvim_buf_get_lines(self.buf, 3, -1, false)
+	-- Get existing text (preserve user input) - only if buffer has content
+	local existing_lines = {}
+	local line_count = vim.api.nvim_buf_line_count(self.buf)
+	if line_count > 3 then
+		existing_lines = vim.api.nvim_buf_get_lines(self.buf, 3, -1, false)
+	end
 
 	local lines = {
 		type_line,
@@ -114,7 +118,8 @@ function CommentInput:_update_content()
 	end
 
 	vim.api.nvim_set_option_value("modifiable", true, { buf = self.buf })
-	vim.api.nvim_buf_set_lines(self.buf, 0, 3, false, { lines[1], lines[2], lines[3] })
+	-- Write all lines including the input area
+	vim.api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
 	vim.api.nvim_set_option_value("modifiable", true, { buf = self.buf })
 end
 
@@ -122,12 +127,21 @@ end
 function CommentInput:_setup_mappings()
 	local opts = { buffer = self.buf, silent = true }
 
-	-- Submit with Ctrl+Enter or Ctrl+S
+	-- Submit with Ctrl+S or Ctrl+Enter (works in both modes)
 	vim.keymap.set({ "n", "i" }, "<C-s>", function()
 		self:_submit()
 	end, opts)
 
-	-- Cancel with Escape
+	vim.keymap.set({ "n", "i" }, "<C-CR>", function()
+		self:_submit()
+	end, opts)
+
+	-- Cancel with Escape (in both modes) or q (normal only)
+	vim.keymap.set("i", "<Esc>", function()
+		vim.cmd("stopinsert")
+		self:_cancel()
+	end, opts)
+
 	vim.keymap.set("n", "<Esc>", function()
 		self:_cancel()
 	end, opts)
@@ -136,8 +150,13 @@ function CommentInput:_setup_mappings()
 		self:_cancel()
 	end, opts)
 
-	-- Cycle comment type with Tab
-	vim.keymap.set({ "n", "i" }, "<Tab>", function()
+	-- Cycle comment type with Ctrl+t (Tab is for indenting in insert mode)
+	vim.keymap.set({ "n", "i" }, "<C-t>", function()
+		self:_cycle_type()
+	end, opts)
+
+	-- Also allow Tab in normal mode
+	vim.keymap.set("n", "<Tab>", function()
 		self:_cycle_type()
 	end, opts)
 

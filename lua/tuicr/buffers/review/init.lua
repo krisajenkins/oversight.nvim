@@ -180,6 +180,11 @@ function ReviewBuffer:_setup_tab_mappings()
 					self:export_markdown()
 				end, { buffer = buf, desc = "Export to clipboard" })
 
+				-- Clear all comments
+				vim.keymap.set("n", "X", function()
+					self:clear_comments()
+				end, { buffer = buf, desc = "Clear all comments" })
+
 				-- Help
 				vim.keymap.set("n", "?", function()
 					self:show_help()
@@ -263,6 +268,29 @@ function ReviewBuffer:export_markdown()
 	vim.notify(string.format("Exported %d comments to clipboard", total), vim.log.levels.INFO)
 end
 
+---Clear all comments with confirmation
+function ReviewBuffer:clear_comments()
+	if not self.session:has_comments() then
+		vim.notify("No comments to clear", vim.log.levels.INFO)
+		return
+	end
+
+	local counts = self.session:get_comment_counts()
+	local total = counts.note + counts.suggestion + counts.issue + counts.praise
+
+	-- Confirm before clearing
+	vim.ui.select({ "Yes", "No" }, {
+		prompt = string.format("Clear all %d comments? ", total),
+	}, function(choice)
+		if choice == "Yes" then
+			self.session.comments = {}
+			self.session:save()
+			self.diff_view:render()
+			vim.notify(string.format("Cleared %d comments", total), vim.log.levels.INFO)
+		end
+	end)
+end
+
 ---Show help overlay
 function ReviewBuffer:show_help()
 	local help_text = {
@@ -282,14 +310,15 @@ function ReviewBuffer:show_help()
 		"  C           Add file comment",
 		"  dd          Delete comment",
 		"",
-		"Comment Types (in comment dialog):",
-		"  Tab         Cycle type",
-		"  1-4         Select type directly",
+		"Comment Dialog:",
 		"  Ctrl-s      Submit comment",
-		"  Esc/q       Cancel",
+		"  Esc         Cancel (works in insert mode)",
+		"  Ctrl-t/Tab  Cycle type (Note/Suggestion/Issue/Praise)",
+		"  1-4         Select type directly (normal mode)",
 		"",
-		"Export:",
+		"Export & Clear:",
 		"  E           Export to clipboard",
+		"  X           Clear all comments",
 		"",
 		"Other:",
 		"  ?           Show this help",

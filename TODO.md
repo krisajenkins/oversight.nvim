@@ -1,0 +1,5 @@
+- [ ] When you tab across to the main window, the cursor should start on the first file header, not on the keyboard reminder.
+- [ ] In the main window, the usual keybindings should apply. So pressing `r` should mark the file reviewed (instead I think it enters replace mode).
+- [ ] File headers should be a single line. `=== [tick if reviewed] FILENAME  (VCS STATUS M/R/D) ===`
+- [ ] When a file is reviewed, it should be folded away in the main window, just showing the header.
+- [ ] The key bindings aren't very vim-ish. For example, 'Ctrl+E' for export should really be 'y' for yank.
