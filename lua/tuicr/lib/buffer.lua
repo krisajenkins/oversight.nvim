@@ -114,6 +114,14 @@ end
 
 ---Setup key mappings for the buffer
 function Buffer:_setup_mappings()
+	-- Block insert mode if buffer is non-modifiable
+	if self.config.modifiable == false then
+		local insert_keys = { "i", "I", "a", "A", "o", "O", "s", "S", "c", "C", "R" }
+		for _, key in ipairs(insert_keys) do
+			vim.keymap.set("n", key, "<Nop>", { buffer = self.handle, silent = true })
+		end
+	end
+
 	for mode, mode_mappings in pairs(self.mappings) do
 		for key, mapping in pairs(mode_mappings) do
 			local opts = {
