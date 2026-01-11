@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-tuicr-nvim is a Neovim plugin for interactive code review. It provides a two-panel interface (file list + diff view) for reviewing uncommitted git changes, adding comments (note/suggestion/issue/praise), and exporting reviews to markdown.
+oversight-nvim is a Neovim plugin for interactive code review. It provides a two-panel interface (file list + diff view) for reviewing uncommitted git changes, adding comments (note/suggestion/issue/praise), and exporting reviews to markdown.
 
 ## Commands
 
@@ -31,8 +31,8 @@ Dependencies (`deps/mini.nvim` and `deps/plenary.nvim`) are auto-cloned by make.
 
 ### Entry Points
 
-- `lua/tuicr/init.lua` - Public API: `setup()`, `open_review()`, `:Tuicr` command
-- `plugin/tuicr.lua` - Plugin initialization, auto-loaded by Neovim
+- `lua/oversight/init.lua` - Public API: `setup()`, `open_review()`, `:Oversight` command
+- `plugin/oversight.lua` - Plugin initialization, auto-loaded by Neovim
 
 ### Core Abstractions
 
@@ -53,7 +53,7 @@ Dependencies (`deps/mini.nvim` and `deps/plenary.nvim`) are auto-cloned by make.
 **Storage** (`lib/storage/`):
 
 - `session.lua` - ReviewSession: tracks file review status and comments
-- `json.lua` - JSON persistence to `$XDG_DATA_HOME/tuicr/sessions/`
+- `json.lua` - JSON persistence to `$XDG_DATA_HOME/oversight/sessions/`
 
 ### Buffer Types (`buffers/`)
 

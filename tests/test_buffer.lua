@@ -6,39 +6,39 @@ local expect = MiniTest.expect
 T["Buffer"] = MiniTest.new_set()
 
 T["Buffer"]["creates buffer with name"] = function()
-	local Buffer = require("tuicr.lib.buffer")
+	local Buffer = require("oversight.lib.buffer")
 
 	local buf = Buffer.new({
-		name = "tuicr://test-buffer",
-		filetype = "tuicr-test",
+		name = "oversight://test-buffer",
+		filetype = "oversight-test",
 	})
 
-	expect.equality(buf:get_name(), "tuicr://test-buffer")
+	expect.equality(buf:get_name(), "oversight://test-buffer")
 	expect.equality(buf:is_valid(), true)
 
 	buf:close()
 end
 
 T["Buffer"]["creates buffer with filetype"] = function()
-	local Buffer = require("tuicr.lib.buffer")
+	local Buffer = require("oversight.lib.buffer")
 
 	local buf = Buffer.new({
-		name = "tuicr://test-filetype",
-		filetype = "tuicr-custom",
+		name = "oversight://test-filetype",
+		filetype = "oversight-custom",
 	})
 
 	local ft = vim.api.nvim_get_option_value("filetype", { buf = buf:get_handle() })
-	expect.equality(ft, "tuicr-custom")
+	expect.equality(ft, "oversight-custom")
 
 	buf:close()
 end
 
 T["Buffer"]["get_handle returns valid handle"] = function()
-	local Buffer = require("tuicr.lib.buffer")
+	local Buffer = require("oversight.lib.buffer")
 
 	local buf = Buffer.new({
-		name = "tuicr://test-handle",
-		filetype = "tuicr-test",
+		name = "oversight://test-handle",
+		filetype = "oversight-test",
 	})
 
 	local handle = buf:get_handle()
@@ -49,11 +49,11 @@ T["Buffer"]["get_handle returns valid handle"] = function()
 end
 
 T["Buffer"]["close invalidates buffer"] = function()
-	local Buffer = require("tuicr.lib.buffer")
+	local Buffer = require("oversight.lib.buffer")
 
 	local buf = Buffer.new({
-		name = "tuicr://test-close",
-		filetype = "tuicr-test",
+		name = "oversight://test-close",
+		filetype = "oversight-test",
 	})
 
 	local handle = buf:get_handle()
@@ -65,12 +65,12 @@ T["Buffer"]["close invalidates buffer"] = function()
 end
 
 T["Buffer"]["renders components to buffer"] = function()
-	local Buffer = require("tuicr.lib.buffer")
-	local Ui = require("tuicr.lib.ui")
+	local Buffer = require("oversight.lib.buffer")
+	local Ui = require("oversight.lib.ui")
 
 	local buf = Buffer.new({
-		name = "tuicr://test-render",
-		filetype = "tuicr-test",
+		name = "oversight://test-render",
+		filetype = "oversight-test",
 	})
 
 	buf:render({
@@ -86,12 +86,12 @@ T["Buffer"]["renders components to buffer"] = function()
 end
 
 T["Buffer"]["line_count returns correct count"] = function()
-	local Buffer = require("tuicr.lib.buffer")
-	local Ui = require("tuicr.lib.ui")
+	local Buffer = require("oversight.lib.buffer")
+	local Ui = require("oversight.lib.ui")
 
 	local buf = Buffer.new({
-		name = "tuicr://test-linecount",
-		filetype = "tuicr-test",
+		name = "oversight://test-linecount",
+		filetype = "oversight-test",
 	})
 
 	buf:render({
@@ -106,12 +106,12 @@ T["Buffer"]["line_count returns correct count"] = function()
 end
 
 T["Buffer"]["get_lines returns buffer content"] = function()
-	local Buffer = require("tuicr.lib.buffer")
-	local Ui = require("tuicr.lib.ui")
+	local Buffer = require("oversight.lib.buffer")
+	local Ui = require("oversight.lib.ui")
 
 	local buf = Buffer.new({
-		name = "tuicr://test-getlines",
-		filetype = "tuicr-test",
+		name = "oversight://test-getlines",
+		filetype = "oversight-test",
 	})
 
 	buf:render({
@@ -135,16 +135,16 @@ T["Buffer"]["get_lines returns buffer content"] = function()
 end
 
 T["Buffer"]["respects modifiable config"] = function()
-	local Buffer = require("tuicr.lib.buffer")
+	local Buffer = require("oversight.lib.buffer")
 
 	local buf = Buffer.new({
-		name = "tuicr://test-modifiable",
-		filetype = "tuicr-test",
+		name = "oversight://test-modifiable",
+		filetype = "oversight-test",
 		modifiable = false,
 	})
 
 	-- After render, modifiable should be restored to false
-	local Ui = require("tuicr.lib.ui")
+	local Ui = require("oversight.lib.ui")
 	buf:render({ Ui.text("Test") })
 
 	local modifiable = vim.api.nvim_get_option_value("modifiable", { buf = buf:get_handle() })
@@ -154,11 +154,11 @@ T["Buffer"]["respects modifiable config"] = function()
 end
 
 T["Buffer"]["respects readonly config"] = function()
-	local Buffer = require("tuicr.lib.buffer")
+	local Buffer = require("oversight.lib.buffer")
 
 	local buf = Buffer.new({
-		name = "tuicr://test-readonly",
-		filetype = "tuicr-test",
+		name = "oversight://test-readonly",
+		filetype = "oversight-test",
 		readonly = true,
 	})
 
@@ -169,12 +169,12 @@ T["Buffer"]["respects readonly config"] = function()
 end
 
 T["Buffer"]["refresh re-renders components"] = function()
-	local Buffer = require("tuicr.lib.buffer")
-	local Ui = require("tuicr.lib.ui")
+	local Buffer = require("oversight.lib.buffer")
+	local Ui = require("oversight.lib.ui")
 
 	local buf = Buffer.new({
-		name = "tuicr://test-refresh",
-		filetype = "tuicr-test",
+		name = "oversight://test-refresh",
+		filetype = "oversight-test",
 	})
 
 	buf:render({
@@ -194,19 +194,19 @@ T["Buffer"]["refresh re-renders components"] = function()
 end
 
 T["Buffer"]["reuses existing buffer with same name"] = function()
-	local Buffer = require("tuicr.lib.buffer")
+	local Buffer = require("oversight.lib.buffer")
 
 	local buf1 = Buffer.new({
-		name = "tuicr://test-reuse",
-		filetype = "tuicr-test",
+		name = "oversight://test-reuse",
+		filetype = "oversight-test",
 	})
 
 	local handle1 = buf1:get_handle()
 
 	-- Create another buffer with same name
 	local buf2 = Buffer.new({
-		name = "tuicr://test-reuse",
-		filetype = "tuicr-test",
+		name = "oversight://test-reuse",
+		filetype = "oversight-test",
 	})
 
 	local handle2 = buf2:get_handle()

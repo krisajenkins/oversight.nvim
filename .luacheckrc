@@ -1,4 +1,4 @@
--- Luacheck configuration for tuicr-nvim
+-- Luacheck configuration for oversight-nvim
 std = "luajit"
 
 -- Global variables that are allowed

@@ -83,9 +83,9 @@ end
 T["ReviewBuffer Integration"] = MiniTest.new_set()
 
 T["ReviewBuffer Integration"]["creates layout with two panels"] = function()
-	local Session = require("tuicr.lib.storage.session")
-	local FileListBuffer = require("tuicr.buffers.file_list")
-	local DiffViewBuffer = require("tuicr.buffers.diff_view")
+	local Session = require("oversight.lib.storage.session")
+	local FileListBuffer = require("oversight.buffers.file_list")
+	local DiffViewBuffer = require("oversight.buffers.diff_view")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -130,8 +130,8 @@ end
 T["FileList Navigation"] = MiniTest.new_set()
 
 T["FileList Navigation"]["move_cursor updates current index"] = function()
-	local Session = require("tuicr.lib.storage.session")
-	local FileListBuffer = require("tuicr.buffers.file_list")
+	local Session = require("oversight.lib.storage.session")
+	local FileListBuffer = require("oversight.buffers.file_list")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -180,8 +180,8 @@ T["FileList Navigation"]["move_cursor updates current index"] = function()
 end
 
 T["FileList Navigation"]["move_to jumps to specific index"] = function()
-	local Session = require("tuicr.lib.storage.session")
-	local FileListBuffer = require("tuicr.buffers.file_list")
+	local Session = require("oversight.lib.storage.session")
+	local FileListBuffer = require("oversight.buffers.file_list")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -225,8 +225,8 @@ end
 T["Reviewed Status"] = MiniTest.new_set()
 
 T["Reviewed Status"]["toggle_reviewed updates session and file state"] = function()
-	local Session = require("tuicr.lib.storage.session")
-	local FileListBuffer = require("tuicr.buffers.file_list")
+	local Session = require("oversight.lib.storage.session")
+	local FileListBuffer = require("oversight.buffers.file_list")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -284,8 +284,8 @@ T["Reviewed Status"]["toggle_reviewed updates session and file state"] = functio
 end
 
 T["Reviewed Status"]["update_file_reviewed syncs state from external source"] = function()
-	local Session = require("tuicr.lib.storage.session")
-	local FileListBuffer = require("tuicr.buffers.file_list")
+	local Session = require("oversight.lib.storage.session")
+	local FileListBuffer = require("oversight.buffers.file_list")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -316,7 +316,7 @@ T["Reviewed Status"]["update_file_reviewed syncs state from external source"] = 
 end
 
 T["Reviewed Status"]["progress calculation reflects reviewed files"] = function()
-	local Session = require("tuicr.lib.storage.session")
+	local Session = require("oversight.lib.storage.session")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -347,7 +347,7 @@ end
 T["Comments Integration"] = MiniTest.new_set()
 
 T["Comments Integration"]["comments are tracked per file in session"] = function()
-	local Session = require("tuicr.lib.storage.session")
+	local Session = require("oversight.lib.storage.session")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -372,7 +372,7 @@ T["Comments Integration"]["comments are tracked per file in session"] = function
 end
 
 T["Comments Integration"]["file-level comments work correctly"] = function()
-	local Session = require("tuicr.lib.storage.session")
+	local Session = require("oversight.lib.storage.session")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -393,7 +393,7 @@ T["Comments Integration"]["file-level comments work correctly"] = function()
 end
 
 T["Comments Integration"]["comment deletion works"] = function()
-	local Session = require("tuicr.lib.storage.session")
+	local Session = require("oversight.lib.storage.session")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -417,7 +417,7 @@ end
 T["Session Persistence"] = MiniTest.new_set()
 
 T["Session Persistence"]["session serializes and deserializes correctly"] = function()
-	local Session = require("tuicr.lib.storage.session")
+	local Session = require("oversight.lib.storage.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
@@ -449,7 +449,7 @@ T["Session Persistence"]["session serializes and deserializes correctly"] = func
 end
 
 T["Session Persistence"]["session preserves all comment types"] = function()
-	local Session = require("tuicr.lib.storage.session")
+	local Session = require("oversight.lib.storage.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
@@ -473,8 +473,8 @@ end
 T["Export Integration"] = MiniTest.new_set()
 
 T["Export Integration"]["export produces valid markdown with comments"] = function()
-	local Export = require("tuicr.lib.export")
-	local Session = require("tuicr.lib.storage.session")
+	local Export = require("oversight.lib.export")
+	local Session = require("oversight.lib.storage.session")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -505,8 +505,8 @@ T["Export Integration"]["export produces valid markdown with comments"] = functi
 end
 
 T["Export Integration"]["export handles empty session"] = function()
-	local Export = require("tuicr.lib.export")
-	local Session = require("tuicr.lib.storage.session")
+	local Export = require("oversight.lib.export")
+	local Session = require("oversight.lib.storage.session")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -520,8 +520,8 @@ end
 T["DiffView Integration"] = MiniTest.new_set()
 
 T["DiffView Integration"]["show_file updates current file state"] = function()
-	local Session = require("tuicr.lib.storage.session")
-	local DiffViewBuffer = require("tuicr.buffers.diff_view")
+	local Session = require("oversight.lib.storage.session")
+	local DiffViewBuffer = require("oversight.buffers.diff_view")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -549,8 +549,8 @@ T["DiffView Integration"]["show_file updates current file state"] = function()
 end
 
 T["DiffView Integration"]["toggle_reviewed notifies callback"] = function()
-	local Session = require("tuicr.lib.storage.session")
-	local DiffViewBuffer = require("tuicr.buffers.diff_view")
+	local Session = require("oversight.lib.storage.session")
+	local DiffViewBuffer = require("oversight.buffers.diff_view")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -595,9 +595,9 @@ end
 T["Panel Coordination"] = MiniTest.new_set()
 
 T["Panel Coordination"]["file selection triggers diff view update"] = function()
-	local Session = require("tuicr.lib.storage.session")
-	local FileListBuffer = require("tuicr.buffers.file_list")
-	local DiffViewBuffer = require("tuicr.buffers.diff_view")
+	local Session = require("oversight.lib.storage.session")
+	local FileListBuffer = require("oversight.buffers.file_list")
+	local DiffViewBuffer = require("oversight.buffers.diff_view")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -641,9 +641,9 @@ T["Panel Coordination"]["file selection triggers diff view update"] = function()
 end
 
 T["Panel Coordination"]["reviewed status syncs between panels"] = function()
-	local Session = require("tuicr.lib.storage.session")
-	local FileListBuffer = require("tuicr.buffers.file_list")
-	local DiffViewBuffer = require("tuicr.buffers.diff_view")
+	local Session = require("oversight.lib.storage.session")
+	local FileListBuffer = require("oversight.buffers.file_list")
+	local DiffViewBuffer = require("oversight.buffers.diff_view")
 
 	local repo = helpers.create_mock_repo()
 	local session = Session.new(repo:get_root(), repo:get_head())
@@ -706,10 +706,10 @@ end
 T["Full Workflow"] = MiniTest.new_set()
 
 T["Full Workflow"]["complete review workflow simulation"] = function()
-	local Session = require("tuicr.lib.storage.session")
-	local FileListBuffer = require("tuicr.buffers.file_list")
-	local DiffViewBuffer = require("tuicr.buffers.diff_view")
-	local Export = require("tuicr.lib.export")
+	local Session = require("oversight.lib.storage.session")
+	local FileListBuffer = require("oversight.buffers.file_list")
+	local DiffViewBuffer = require("oversight.buffers.diff_view")
+	local Export = require("oversight.lib.export")
 
 	local repo = helpers.create_mock_repo({
 		files = {

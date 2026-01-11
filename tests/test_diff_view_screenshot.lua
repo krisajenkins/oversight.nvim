@@ -71,7 +71,7 @@ end
 function mock_data.session_code(root)
 	return string.format(
 		[[
-		local Session = require("tuicr.lib.storage.session")
+		local Session = require("oversight.lib.storage.session")
 		return Session.new(%q, "abc123def456")
 	]],
 		root
@@ -84,7 +84,7 @@ end
 ---@return string lua_code Lua code for mock diff
 function mock_data.comment_init_diff()
 	return [[{
-		path = "lua/tuicr/buffers/comment/init.lua",
+		path = "lua/oversight/buffers/comment/init.lua",
 		old_path = nil,
 		status = "M",
 		is_binary = false,
@@ -179,10 +179,10 @@ end
 ---This is a real-world diff with multiple hunks of type annotation changes
 ---@return string lua_code Lua code for mock diff
 function mock_data.ui_lua_diff()
-	-- This is based on the actual diff for lua/tuicr/buffers/diff_view/ui.lua
+	-- This is based on the actual diff for lua/oversight/buffers/diff_view/ui.lua
 	-- Multiple hunks with @return Component -> @return table type changes
 	return [[{
-		path = "lua/tuicr/buffers/diff_view/ui.lua",
+		path = "lua/oversight/buffers/diff_view/ui.lua",
 		old_path = nil,
 		status = "M",
 		is_binary = false,
@@ -255,14 +255,14 @@ T["DiffViewBuffer Screenshots"]["renders standard diff with adds, deletes, conte
 	-- Load the plugin
 	child.lua([[
 		vim.cmd("set rtp+=.")
-		require("tuicr").setup()
+		require("oversight").setup()
 	]])
 
 	-- Create components in child
 	child.lua(string.format(
 		[[
-		local DiffViewBuffer = require("tuicr.buffers.diff_view")
-		local Session = require("tuicr.lib.storage.session")
+		local DiffViewBuffer = require("oversight.buffers.diff_view")
+		local Session = require("oversight.lib.storage.session")
 
 		-- Create mock repo and session
 		local mock_repo = %s
@@ -299,14 +299,14 @@ T["DiffViewBuffer Screenshots"]["renders diff with line comments"] = function()
 	-- Load the plugin
 	child.lua([[
 		vim.cmd("set rtp+=.")
-		require("tuicr").setup()
+		require("oversight").setup()
 	]])
 
 	-- Create components with comments
 	child.lua(string.format(
 		[[
-		local DiffViewBuffer = require("tuicr.buffers.diff_view")
-		local Session = require("tuicr.lib.storage.session")
+		local DiffViewBuffer = require("oversight.buffers.diff_view")
+		local Session = require("oversight.lib.storage.session")
 
 		-- Create mock repo and session
 		local mock_repo = %s
@@ -347,15 +347,15 @@ T["DiffViewBuffer Screenshots"]["renders real diff_view/ui.lua changes"] = funct
 	-- Load the plugin
 	child.lua([[
 		vim.cmd("set rtp+=.")
-		require("tuicr").setup()
+		require("oversight").setup()
 	]])
 
-	-- This test uses actual diff data from lua/tuicr/buffers/diff_view/ui.lua
+	-- This test uses actual diff data from lua/oversight/buffers/diff_view/ui.lua
 	-- to capture how multi-hunk type annotation changes render
 	child.lua(string.format(
 		[[
-		local DiffViewBuffer = require("tuicr.buffers.diff_view")
-		local Session = require("tuicr.lib.storage.session")
+		local DiffViewBuffer = require("oversight.buffers.diff_view")
+		local Session = require("oversight.lib.storage.session")
 
 		-- Create mock repo and session
 		local mock_repo = %s
@@ -372,10 +372,10 @@ T["DiffViewBuffer Screenshots"]["renders real diff_view/ui.lua changes"] = funct
 
 		-- Inject mock diff data (based on real diff_view/ui.lua changes)
 		local mock_diff = %s
-		_G.diff_view.file_diffs["lua/tuicr/buffers/diff_view/ui.lua"] = mock_diff
+		_G.diff_view.file_diffs["lua/oversight/buffers/diff_view/ui.lua"] = mock_diff
 
 		-- Set current file and render
-		_G.diff_view.current_file = { path = "lua/tuicr/buffers/diff_view/ui.lua", status = "M", reviewed = false }
+		_G.diff_view.current_file = { path = "lua/oversight/buffers/diff_view/ui.lua", status = "M", reviewed = false }
 		_G.diff_view:show()
 	]],
 		mock_data.repo_code("/tmp/test-repo"),
@@ -392,16 +392,16 @@ T["DiffViewBuffer Screenshots"]["renders comment/init.lua diff with pure additio
 	-- Load the plugin
 	child.lua([[
 		vim.cmd("set rtp+=.")
-		require("tuicr").setup()
+		require("oversight").setup()
 	]])
 
-	-- This test uses diff data from lua/tuicr/buffers/comment/init.lua
+	-- This test uses diff data from lua/oversight/buffers/comment/init.lua
 	-- which has hunks with pure additions (no corresponding deletes)
 	-- that can expose column alignment issues
 	child.lua(string.format(
 		[[
-		local DiffViewBuffer = require("tuicr.buffers.diff_view")
-		local Session = require("tuicr.lib.storage.session")
+		local DiffViewBuffer = require("oversight.buffers.diff_view")
+		local Session = require("oversight.lib.storage.session")
 
 		-- Create mock repo and session
 		local mock_repo = %s
@@ -418,10 +418,10 @@ T["DiffViewBuffer Screenshots"]["renders comment/init.lua diff with pure additio
 
 		-- Inject mock diff data (based on comment/init.lua changes)
 		local mock_diff = %s
-		_G.diff_view.file_diffs["lua/tuicr/buffers/comment/init.lua"] = mock_diff
+		_G.diff_view.file_diffs["lua/oversight/buffers/comment/init.lua"] = mock_diff
 
 		-- Set current file and render
-		_G.diff_view.current_file = { path = "lua/tuicr/buffers/comment/init.lua", status = "M", reviewed = false }
+		_G.diff_view.current_file = { path = "lua/oversight/buffers/comment/init.lua", status = "M", reviewed = false }
 		_G.diff_view:show()
 	]],
 		mock_data.repo_code("/tmp/test-repo"),

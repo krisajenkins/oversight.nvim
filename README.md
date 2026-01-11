@@ -1,11 +1,11 @@
-# tuicr.nvim
+# oversight.nvim
 
 A Neovim plugin for reviewing AI-generated code changes. Provides a focused,
 terminal-based interface for examining uncommitted git changes, adding
 contextual comments, and generating review summaries that can be fed back to AI
 agents.
 
-Rather than a full git UI, tuicr.nvim is a specialized tool for the code review
+Rather than a full git UI, oversight.nvim is a specialized tool for the code review
 workflow - particularly useful when you've asked an AI to generate code and
 want to review the changes before committing.
 
@@ -38,10 +38,10 @@ Rust - check it out if you prefer a standalone tool over a Neovim plugin.
 
 ```lua
 {
-    "krisajenkins/tuicr.nvim",
+    "krisajenkins/oversight.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
     config = function()
-        require("tuicr").setup()
+        require("oversight").setup()
     end,
 }
 ```
@@ -50,22 +50,22 @@ Rust - check it out if you prefer a standalone tool over a Neovim plugin.
 
 ```lua
 use {
-    "krisajenkins/tuicr.nvim",
+    "krisajenkins/oversight.nvim",
     requires = { "nvim-lua/plenary.nvim" },
     config = function()
-        require("tuicr").setup()
+        require("oversight").setup()
     end,
 }
 ```
 
-Verify your setup with `:checkhealth tuicr`
+Verify your setup with `:checkhealth oversight`
 
 ## Usage
 
 Open the review interface with:
 
 ```vim
-:Tuicr [directory]
+:Oversight [directory]
 ```
 
 If no directory is specified, it defaults to the current working directory.
@@ -108,7 +108,7 @@ When adding a comment:
 ### Workflow
 
 1. Have an AI generate code changes in your repository
-2. Run `:Tuicr` to open the review interface
+2. Run `:Oversight` to open the review interface
 3. Navigate through files and review the diffs
 4. Add comments with `c` (line-level) or `C` (file-level)
 5. Mark files as reviewed with `r`

@@ -26,7 +26,7 @@ For each change:
 
 - [x] You can enter insert mode in the main window, and start entering arbitrary text. That makes no sense. These buffers shouldn't be editable.
 - [x] When you're entering a comment, escape shouldn't discard it. It should save it. Only discard the comment if it's empty (or all-whitespace).
-- [x] Any time you call `:Tuicr`, the status should be refreshed. Additionally there should be a refresh button. (Perhaps `R`?)
+- [x] Any time you call `:Oversight`, the status should be refreshed. Additionally there should be a refresh button. (Perhaps `R`?)
 
 # Refactoring Tasks
 
@@ -47,7 +47,7 @@ For each change:
 
 - [x] Extract HelpOverlay from ReviewBuffer into its own component
 - [x] Fix encapsulation: ReviewBuffer directly mutates FileListBuffer's internal `files` array
-- [x] Add health check module (`lua/tuicr/health.lua`) per nvim best practices
+- [x] Add health check module (`lua/oversight/health.lua`) per nvim best practices
 
 ## Testing
 

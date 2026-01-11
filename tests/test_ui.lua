@@ -6,7 +6,7 @@ local expect = MiniTest.expect
 T["Component"] = MiniTest.new_set()
 
 T["Component"]["creates text component"] = function()
-	local Ui = require("tuicr.lib.ui")
+	local Ui = require("oversight.lib.ui")
 
 	local component = Ui.text("Hello", { highlight = "Normal" })
 
@@ -16,7 +16,7 @@ T["Component"]["creates text component"] = function()
 end
 
 T["Component"]["creates row component"] = function()
-	local Ui = require("tuicr.lib.ui")
+	local Ui = require("oversight.lib.ui")
 
 	local component = Ui.row({
 		Ui.text("A"),
@@ -28,7 +28,7 @@ T["Component"]["creates row component"] = function()
 end
 
 T["Component"]["creates col component"] = function()
-	local Ui = require("tuicr.lib.ui")
+	local Ui = require("oversight.lib.ui")
 
 	local component = Ui.col({
 		Ui.text("Line 1"),
@@ -40,7 +40,7 @@ T["Component"]["creates col component"] = function()
 end
 
 T["Component"]["creates file_item with correct highlights"] = function()
-	local Ui = require("tuicr.lib.ui")
+	local Ui = require("oversight.lib.ui")
 
 	local component = Ui.file_item("A", "src/main.lua", false)
 
@@ -50,7 +50,7 @@ T["Component"]["creates file_item with correct highlights"] = function()
 end
 
 T["Component"]["marks interactive components"] = function()
-	local Ui = require("tuicr.lib.ui")
+	local Ui = require("oversight.lib.ui")
 
 	local component = Ui.text("Click me", { interactive = true })
 
@@ -58,7 +58,7 @@ T["Component"]["marks interactive components"] = function()
 end
 
 T["Component"]["supports item data"] = function()
-	local Ui = require("tuicr.lib.ui")
+	local Ui = require("oversight.lib.ui")
 
 	local item_data = { path = "test.lua", status = "M" }
 	local component = Ui.text("Test", { item = item_data, interactive = true })
@@ -69,7 +69,7 @@ T["Component"]["supports item data"] = function()
 end
 
 T["Component"]["sanitizes newlines in text"] = function()
-	local Ui = require("tuicr.lib.ui")
+	local Ui = require("oversight.lib.ui")
 
 	-- \n is replaced with space, \r is removed
 	local component = Ui.text("Line1\nLine2\r")
