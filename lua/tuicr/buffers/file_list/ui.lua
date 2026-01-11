@@ -66,7 +66,13 @@ function M.create(unreviewed_files, reviewed_files, current_path)
 	-- Add separator if both sections have files
 	if #unreviewed_files > 0 and #reviewed_files > 0 then
 		line = line + 1
-		table.insert(components, Ui.text("─────────────────────────────────", { highlight = "Comment" }))
+		table.insert(
+			components,
+			Ui.text(
+				"─────────────────────────────────",
+				{ highlight = "Comment" }
+			)
+		)
 	end
 
 	-- Render reviewed files
