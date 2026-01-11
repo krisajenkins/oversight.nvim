@@ -1,4 +1,4 @@
-# oversight-nvim
+# oversight.nvim
 
 A Neovim plugin for reviewing AI-generated code changes. Provides a focused,
 terminal-based interface for examining uncommitted changes, adding contextual
@@ -7,7 +7,7 @@ comments, and generating review summaries that can be fed back to AI agents.
 Supports both **Git** and **Jujutsu (jj)** version control systems with
 automatic detection.
 
-Rather than a full VCS UI, oversight-nvim is a specialized tool for the code
+Rather than a full VCS UI, oversight.nvim is a specialized tool for the code
 review workflow - particularly useful when you've asked an AI to generate code
 and want to review the changes before committing.
 
@@ -41,7 +41,7 @@ Rust - check it out if you prefer a standalone tool over a Neovim plugin.
 
 ```lua
 {
-    "krisajenkins/oversight-nvim",
+    "krisajenkins/oversight.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
     config = function()
         require("oversight").setup()
@@ -53,7 +53,7 @@ Rust - check it out if you prefer a standalone tool over a Neovim plugin.
 
 ```lua
 use {
-    "krisajenkins/oversight-nvim",
+    "krisajenkins/oversight.nvim",
     requires = { "nvim-lua/plenary.nvim" },
     config = function()
         require("oversight").setup()
