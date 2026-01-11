@@ -188,7 +188,7 @@ function M.create_file_diff(file_diff, comments, col_width, reviewed)
 	end
 
 	-- Convert to side-by-side
-	local diff_module = require("oversight.lib.git.diff")
+	local diff_module = require("oversight.lib.diff")
 	local side_by_side = diff_module.to_side_by_side(file_diff.hunks)
 
 	-- Build comment lookup by line

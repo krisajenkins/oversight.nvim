@@ -1,3 +1,6 @@
+-- Git CLI command builder
+-- Fluent interface for constructing and executing git commands
+
 local Job = require("plenary.job")
 local logger = require("oversight.logger")
 

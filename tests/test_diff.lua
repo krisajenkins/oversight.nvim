@@ -6,7 +6,7 @@ local expect = MiniTest.expect
 T["Diff"] = MiniTest.new_set()
 
 T["Diff"]["parses unified diff"] = function()
-	local Diff = require("oversight.lib.git.diff")
+	local Diff = require("oversight.lib.diff")
 
 	local diff_lines = {
 		"@@ -1,3 +1,4 @@",
@@ -28,7 +28,7 @@ T["Diff"]["parses unified diff"] = function()
 end
 
 T["Diff"]["identifies line types correctly"] = function()
-	local Diff = require("oversight.lib.git.diff")
+	local Diff = require("oversight.lib.diff")
 
 	local diff_lines = {
 		"@@ -1,3 +1,3 @@",
@@ -46,7 +46,7 @@ T["Diff"]["identifies line types correctly"] = function()
 end
 
 T["Diff"]["tracks line numbers"] = function()
-	local Diff = require("oversight.lib.git.diff")
+	local Diff = require("oversight.lib.diff")
 
 	local diff_lines = {
 		"@@ -10,2 +10,2 @@",
@@ -72,7 +72,7 @@ T["Diff"]["tracks line numbers"] = function()
 end
 
 T["Diff"]["converts to side-by-side"] = function()
-	local Diff = require("oversight.lib.git.diff")
+	local Diff = require("oversight.lib.diff")
 
 	local diff_lines = {
 		"@@ -1,2 +1,2 @@",
@@ -102,7 +102,7 @@ T["Diff"]["converts to side-by-side"] = function()
 end
 
 T["Diff"]["handles multiple hunks"] = function()
-	local Diff = require("oversight.lib.git.diff")
+	local Diff = require("oversight.lib.diff")
 
 	local diff_lines = {
 		"@@ -1,1 +1,1 @@",
@@ -121,7 +121,7 @@ T["Diff"]["handles multiple hunks"] = function()
 end
 
 T["Diff"]["handles only additions"] = function()
-	local Diff = require("oversight.lib.git.diff")
+	local Diff = require("oversight.lib.diff")
 
 	local diff_lines = {
 		"@@ -0,0 +1,2 @@",
@@ -139,7 +139,7 @@ T["Diff"]["handles only additions"] = function()
 end
 
 T["Diff"]["handles only deletions"] = function()
-	local Diff = require("oversight.lib.git.diff")
+	local Diff = require("oversight.lib.diff")
 
 	local diff_lines = {
 		"@@ -1,2 +0,0 @@",

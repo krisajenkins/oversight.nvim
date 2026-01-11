@@ -6,7 +6,7 @@ local expect = MiniTest.expect
 T["Git CLI"] = MiniTest.new_set()
 
 T["Git CLI"]["builds diff command"] = function()
-	local git = require("oversight.lib.git.cli")
+	local git = require("oversight.lib.vcs.git.cli")
 
 	local builder = git.diff()
 
@@ -17,7 +17,7 @@ T["Git CLI"]["builds diff command"] = function()
 end
 
 T["Git CLI"]["builds status command"] = function()
-	local git = require("oversight.lib.git.cli")
+	local git = require("oversight.lib.vcs.git.cli")
 
 	local builder = git.status()
 
@@ -26,7 +26,7 @@ T["Git CLI"]["builds status command"] = function()
 end
 
 T["Git CLI"]["builds rev-parse command"] = function()
-	local git = require("oversight.lib.git.cli")
+	local git = require("oversight.lib.vcs.git.cli")
 
 	local builder = git.rev_parse()
 
@@ -35,7 +35,7 @@ T["Git CLI"]["builds rev-parse command"] = function()
 end
 
 T["Git CLI"]["arg() adds positional argument"] = function()
-	local git = require("oversight.lib.git.cli")
+	local git = require("oversight.lib.vcs.git.cli")
 
 	local builder = git.raw():arg("status"):arg("--porcelain")
 
@@ -44,7 +44,7 @@ T["Git CLI"]["arg() adds positional argument"] = function()
 end
 
 T["Git CLI"]["multiple arg() calls add arguments"] = function()
-	local git = require("oversight.lib.git.cli")
+	local git = require("oversight.lib.vcs.git.cli")
 
 	local builder = git.raw():arg("log"):arg("-n"):arg("5")
 
@@ -54,7 +54,7 @@ T["Git CLI"]["multiple arg() calls add arguments"] = function()
 end
 
 T["Git CLI"]["flag() adds flag with double dash"] = function()
-	local git = require("oversight.lib.git.cli")
+	local git = require("oversight.lib.vcs.git.cli")
 
 	local builder = git.raw():arg("status"):flag("porcelain")
 
@@ -62,7 +62,7 @@ T["Git CLI"]["flag() adds flag with double dash"] = function()
 end
 
 T["Git CLI"]["short_flag() adds flag with single dash"] = function()
-	local git = require("oversight.lib.git.cli")
+	local git = require("oversight.lib.vcs.git.cli")
 
 	local builder = git.raw():arg("log"):short_flag("n")
 
@@ -70,7 +70,7 @@ T["Git CLI"]["short_flag() adds flag with single dash"] = function()
 end
 
 T["Git CLI"]["option() adds key-value option"] = function()
-	local git = require("oversight.lib.git.cli")
+	local git = require("oversight.lib.vcs.git.cli")
 
 	local builder = git.raw():arg("log"):option("format", "%H")
 
@@ -79,7 +79,7 @@ T["Git CLI"]["option() adds key-value option"] = function()
 end
 
 T["Git CLI"]["cwd() sets working directory"] = function()
-	local git = require("oversight.lib.git.cli")
+	local git = require("oversight.lib.vcs.git.cli")
 
 	local builder = git.raw():cwd("/tmp")
 
@@ -87,7 +87,7 @@ T["Git CLI"]["cwd() sets working directory"] = function()
 end
 
 T["Git CLI"]["chaining works correctly"] = function()
-	local git = require("oversight.lib.git.cli")
+	local git = require("oversight.lib.vcs.git.cli")
 
 	local builder = git.diff():arg("HEAD"):flag("stat"):cwd("/tmp")
 
@@ -99,7 +99,7 @@ T["Git CLI"]["chaining works correctly"] = function()
 end
 
 T["Git CLI"]["call() executes and returns result"] = function()
-	local git = require("oversight.lib.git.cli")
+	local git = require("oversight.lib.vcs.git.cli")
 
 	-- Use rev-parse which should work in any git repo
 	local result = git.rev_parse():flag("git-dir"):call()
@@ -114,7 +114,7 @@ end
 T["Git Repository"] = MiniTest.new_set()
 
 T["Git Repository"]["instance() returns repository for current dir"] = function()
-	local Repository = require("oversight.lib.git.repository")
+	local Repository = require("oversight.lib.vcs.git")
 
 	-- Clear cache first
 	Repository.clear_cache()
@@ -126,7 +126,7 @@ T["Git Repository"]["instance() returns repository for current dir"] = function(
 end
 
 T["Git Repository"]["get_root() returns repository root"] = function()
-	local Repository = require("oversight.lib.git.repository")
+	local Repository = require("oversight.lib.vcs.git")
 	Repository.clear_cache()
 
 	local repo = Repository.instance()
@@ -139,7 +139,7 @@ T["Git Repository"]["get_root() returns repository root"] = function()
 end
 
 T["Git Repository"]["get_head() returns commit SHA"] = function()
-	local Repository = require("oversight.lib.git.repository")
+	local Repository = require("oversight.lib.vcs.git")
 	Repository.clear_cache()
 
 	local repo = Repository.instance()
@@ -152,7 +152,7 @@ T["Git Repository"]["get_head() returns commit SHA"] = function()
 end
 
 T["Git Repository"]["get_branch() returns branch name or nil"] = function()
-	local Repository = require("oversight.lib.git.repository")
+	local Repository = require("oversight.lib.vcs.git")
 	Repository.clear_cache()
 
 	local repo = Repository.instance()
@@ -163,7 +163,7 @@ T["Git Repository"]["get_branch() returns branch name or nil"] = function()
 end
 
 T["Git Repository"]["get_changed_files() returns table"] = function()
-	local Repository = require("oversight.lib.git.repository")
+	local Repository = require("oversight.lib.vcs.git")
 	Repository.clear_cache()
 
 	local repo = Repository.instance()
@@ -179,7 +179,7 @@ T["Git Repository"]["get_changed_files() returns table"] = function()
 end
 
 T["Git Repository"]["has_changes() returns boolean"] = function()
-	local Repository = require("oversight.lib.git.repository")
+	local Repository = require("oversight.lib.vcs.git")
 	Repository.clear_cache()
 
 	local repo = Repository.instance()
@@ -190,7 +190,7 @@ T["Git Repository"]["has_changes() returns boolean"] = function()
 end
 
 T["Git Repository"]["instance() caches repositories"] = function()
-	local Repository = require("oversight.lib.git.repository")
+	local Repository = require("oversight.lib.vcs.git")
 	Repository.clear_cache()
 
 	local repo1 = Repository.instance()
@@ -201,7 +201,7 @@ T["Git Repository"]["instance() caches repositories"] = function()
 end
 
 T["Git Repository"]["clear_cache() removes cached instances"] = function()
-	local Repository = require("oversight.lib.git.repository")
+	local Repository = require("oversight.lib.vcs.git")
 
 	local repo1 = Repository.instance()
 	Repository.clear_cache()
@@ -213,7 +213,7 @@ T["Git Repository"]["clear_cache() removes cached instances"] = function()
 end
 
 T["Git Repository"]["refresh() updates head and branch"] = function()
-	local Repository = require("oversight.lib.git.repository")
+	local Repository = require("oversight.lib.vcs.git")
 	Repository.clear_cache()
 
 	local repo = Repository.instance()

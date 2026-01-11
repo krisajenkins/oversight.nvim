@@ -2,10 +2,9 @@
 
 local Buffer = require("oversight.lib.buffer")
 local DiffViewUI = require("oversight.buffers.diff_view.ui")
-local Diff = require("oversight.lib.git.diff")
 
 ---@class DiffViewBufferOpts
----@field repo GitRepository Git repository
+---@field repo VcsBackend VCS backend (git or jj)
 ---@field session ReviewSession Review session
 ---@field on_comment? fun(context: CommentContext): nil Callback for adding comments
 ---@field on_edit_comment? fun(comment: Comment): nil Callback for editing comments
@@ -14,7 +13,7 @@ local Diff = require("oversight.lib.git.diff")
 
 ---@class DiffViewBuffer
 ---@field buffer Buffer Buffer instance
----@field repo GitRepository Git repository
+---@field repo VcsBackend VCS backend (git or jj)
 ---@field session ReviewSession Review session
 ---@field current_file File|nil Current file being displayed
 ---@field file_diffs table<string, FileDiff> Cached file diffs
@@ -130,7 +129,7 @@ function DiffViewBuffer:show_file(file)
 
 	-- Get or cache the diff
 	if not self.file_diffs[file.path] then
-		local diff = Diff.get_file_diff(self.repo:get_root(), file.path)
+		local diff = self.repo:get_file_diff(file.path)
 		if diff then
 			diff.status = file.status
 			self.file_diffs[file.path] = diff

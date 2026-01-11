@@ -1,19 +1,30 @@
-local logger = require("oversight.logger")
+-- Git VCS backend implementation
+-- Implements the VcsBackend interface for Git repositories
 
----@class GitRepository
+local logger = require("oversight.logger")
+local Diff = require("oversight.lib.diff")
+
+---@class GitBackend : VcsBackend
+---@field type "git"
 ---@field root string Repository root directory
----@field head string HEAD commit SHA
+---@field ref string HEAD commit SHA
 ---@field branch string|nil Current branch name
-local Repository = {}
-Repository.__index = Repository
+local GitBackend = {}
+GitBackend.__index = GitBackend
 
 -- Singleton instances per directory
 local instances = {}
 
----Get or create repository instance for a directory
+---Get the git CLI module
+---@return table git Git CLI module
+local function get_git()
+	return require("oversight.lib.vcs.git.cli")
+end
+
+---Get or create backend instance for a directory
 ---@param dir? string Directory (defaults to cwd)
----@return GitRepository|nil repo Repository instance or nil if not a git repo
-function Repository.instance(dir)
+---@return GitBackend|nil backend Backend instance or nil if not a git repo
+function GitBackend.instance(dir)
 	dir = dir or vim.fn.getcwd()
 
 	-- Resolve to absolute path
@@ -24,18 +35,18 @@ function Repository.instance(dir)
 		return instances[dir]
 	end
 
-	local repo = Repository.new(dir)
-	if repo then
-		instances[dir] = repo
+	local backend = GitBackend.new(dir)
+	if backend then
+		instances[dir] = backend
 	end
-	return repo
+	return backend
 end
 
----Create a new repository instance
+---Create a new backend instance
 ---@param dir string Directory
----@return GitRepository|nil repo Repository instance or nil
-function Repository.new(dir)
-	local git = require("oversight.lib.git.cli")
+---@return GitBackend|nil backend Backend instance or nil
+function GitBackend.new(dir)
+	local git = get_git()
 
 	-- Check if this is a git repository
 	local result = git.rev_parse():flag("git-dir"):cwd(dir):call()
@@ -54,9 +65,9 @@ function Repository.new(dir)
 
 	-- Get HEAD commit
 	local head_result = git.rev_parse():arg("HEAD"):cwd(root):call()
-	local head = ""
+	local ref = ""
 	if head_result.success then
-		head = vim.trim(head_result.stdout)
+		ref = vim.trim(head_result.stdout)
 	end
 
 	-- Get current branch
@@ -70,40 +81,41 @@ function Repository.new(dir)
 	end
 
 	local instance = setmetatable({
+		type = "git",
 		root = root,
-		head = head,
+		ref = ref,
 		branch = branch,
-	}, Repository)
+	}, GitBackend)
 
 	return instance
 end
 
 ---Get the repository root directory
 ---@return string root Repository root
-function Repository:get_root()
+function GitBackend:get_root()
 	return self.root
 end
 
----Get the HEAD commit SHA
----@return string head HEAD commit SHA
-function Repository:get_head()
-	return self.head
+---Get the current reference (HEAD commit SHA)
+---@return string ref Current commit SHA
+function GitBackend:get_ref()
+	return self.ref
 end
 
 ---Get the current branch name
 ---@return string|nil branch Branch name or nil if detached
-function Repository:get_branch()
+function GitBackend:get_branch()
 	return self.branch
 end
 
 ---Refresh repository state (HEAD, branch)
-function Repository:refresh()
-	local git = require("oversight.lib.git.cli")
+function GitBackend:refresh()
+	local git = get_git()
 
 	-- Refresh HEAD
 	local head_result = git.rev_parse():arg("HEAD"):cwd(self.root):call()
 	if head_result.success then
-		self.head = vim.trim(head_result.stdout)
+		self.ref = vim.trim(head_result.stdout)
 	end
 
 	-- Refresh branch
@@ -114,15 +126,10 @@ function Repository:refresh()
 	end
 end
 
----@class GitFileChange
----@field status string Git status (A, M, D, R, C)
----@field path string File path
----@field old_path? string Original path for renamed files
-
 ---Get list of changed files (working tree vs HEAD)
----@return GitFileChange[] files List of changed files
-function Repository:get_changed_files()
-	local git = require("oversight.lib.git.cli")
+---@return VcsFileChange[] files List of changed files
+function GitBackend:get_changed_files()
+	local git = get_git()
 
 	local result = git.diff():flag("name-status"):arg("HEAD"):cwd(self.root):call()
 	if not result.success then
@@ -155,14 +162,81 @@ end
 
 ---Check if there are uncommitted changes
 ---@return boolean has_changes True if there are changes
-function Repository:has_changes()
+function GitBackend:has_changes()
 	local files = self:get_changed_files()
 	return #files > 0
 end
 
----Clear cached repository instance
+---Get diff for a specific file
+---@param file_path string File path relative to repo root
+---@return FileDiff|nil diff File diff or nil on error
+function GitBackend:get_file_diff(file_path)
+	local git = get_git()
+
+	local result = git.diff():arg("HEAD"):arg("--"):arg(file_path):cwd(self.root):call()
+
+	if not result.success then
+		logger.error("Failed to get diff for %s: %s", file_path, result.stderr)
+		return nil
+	end
+
+	if result.stdout == "" then
+		-- No changes for this file
+		return {
+			path = file_path,
+			old_path = nil,
+			status = "M",
+			hunks = {},
+			is_binary = false,
+		}
+	end
+
+	-- Check for binary file
+	-- Match the actual binary file message format: "Binary files ... and ... differ"
+	-- Be specific to avoid matching code that contains "Binary files" as a string
+	if result.stdout:match("\nBinary files [^\n]+ differ") or result.stdout:match("^Binary files [^\n]+ differ") then
+		return {
+			path = file_path,
+			old_path = nil,
+			status = "M",
+			hunks = {},
+			is_binary = true,
+		}
+	end
+
+	local lines = vim.split(result.stdout, "\n")
+	local hunks = Diff.parse_unified_diff(lines)
+
+	return {
+		path = file_path,
+		old_path = nil,
+		status = "M",
+		hunks = hunks,
+		is_binary = false,
+	}
+end
+
+---Get all file diffs in the repository
+---@return FileDiff[] diffs List of file diffs
+function GitBackend:get_all_diffs()
+	local files = self:get_changed_files()
+	local diffs = {}
+
+	for _, file in ipairs(files) do
+		local diff = self:get_file_diff(file.path)
+		if diff then
+			diff.status = file.status
+			diff.old_path = file.old_path
+			table.insert(diffs, diff)
+		end
+	end
+
+	return diffs
+end
+
+---Clear cached backend instance
 ---@param dir? string Directory to clear (clears all if nil)
-function Repository.clear_cache(dir)
+function GitBackend.clear_cache(dir)
 	if dir then
 		instances[dir] = nil
 	else
@@ -170,4 +244,7 @@ function Repository.clear_cache(dir)
 	end
 end
 
-return Repository
+-- Backwards compatibility aliases
+GitBackend.get_head = GitBackend.get_ref
+
+return GitBackend

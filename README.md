@@ -1,13 +1,15 @@
-# oversight.nvim
+# oversight-nvim
 
 A Neovim plugin for reviewing AI-generated code changes. Provides a focused,
-terminal-based interface for examining uncommitted git changes, adding
-contextual comments, and generating review summaries that can be fed back to AI
-agents.
+terminal-based interface for examining uncommitted changes, adding contextual
+comments, and generating review summaries that can be fed back to AI agents.
 
-Rather than a full git UI, oversight.nvim is a specialized tool for the code review
-workflow - particularly useful when you've asked an AI to generate code and
-want to review the changes before committing.
+Supports both **Git** and **Jujutsu (jj)** version control systems with
+automatic detection.
+
+Rather than a full VCS UI, oversight-nvim is a specialized tool for the code
+review workflow - particularly useful when you've asked an AI to generate code
+and want to review the changes before committing.
 
 ## Features
 
@@ -19,6 +21,7 @@ want to review the changes before committing.
 - **File review status** - Mark files as reviewed (visually folded when complete)
 - **Session persistence** - Comments and review state survive editor restarts
 - **Export to markdown** - Generate formatted feedback summaries for AI agents
+- **Multi-VCS support** - Works with Git and Jujutsu (jj) repositories
 
 ## Credits
 
@@ -30,15 +33,15 @@ Rust - check it out if you prefer a standalone tool over a Neovim plugin.
 
 **Requirements:**
 
-- Neovim >= 0.9.0
-- git (must be in PATH)
+- Neovim >= 0.10.0
+- **git** or **jj (Jujutsu)** - at least one must be in PATH
 - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
 
 ### lazy.nvim
 
 ```lua
 {
-    "krisajenkins/oversight.nvim",
+    "krisajenkins/oversight-nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
     config = function()
         require("oversight").setup()
@@ -50,7 +53,7 @@ Rust - check it out if you prefer a standalone tool over a Neovim plugin.
 
 ```lua
 use {
-    "krisajenkins/oversight.nvim",
+    "krisajenkins/oversight-nvim",
     requires = { "nvim-lua/plenary.nvim" },
     config = function()
         require("oversight").setup()
@@ -65,10 +68,23 @@ Verify your setup with `:checkhealth oversight`
 Open the review interface with:
 
 ```vim
+:Oversight
+
+-- or
 :Oversight [directory]
 ```
 
-If no directory is specified, it defaults to the current working directory.
+If no directory is specified, it defaults to the repo of the current working directory.
+
+### Workflow
+
+1. Have an AI generate code changes in your repository
+2. Run `:Oversight` to open the review interface
+3. Navigate through files and review the diffs
+4. Add comments with `c` (line-level) or `C` (file-level)
+5. Mark files as reviewed with `r`
+6. Press `y` to copy your feedback as markdown
+7. Paste the feedback back to your AI agent
 
 ### Keybindings
 
@@ -89,7 +105,7 @@ If no directory is specified, it defaults to the current working directory.
 | `dd`                | Delete comment under cursor                |
 | `y`                 | Copy all comments to clipboard as markdown |
 | `X`                 | Clear all comments                         |
-| `R`                 | Refresh (re-fetch changes from git)        |
+| `R`                 | Refresh (re-fetch changes from VCS)        |
 | `?`                 | Show help                                  |
 | `q`                 | Quit review                                |
 
@@ -105,15 +121,6 @@ When adding a comment:
 | `Ctrl-t` / `Tab`        | Cycle comment type                                    |
 | `1`-`4`                 | Select type (1=Note, 2=Suggestion, 3=Issue, 4=Praise) |
 
-### Workflow
-
-1. Have an AI generate code changes in your repository
-2. Run `:Oversight` to open the review interface
-3. Navigate through files and review the diffs
-4. Add comments with `c` (line-level) or `C` (file-level)
-5. Mark files as reviewed with `r`
-6. Press `y` to copy your feedback as markdown
-7. Paste the feedback back to your AI agent
 
 ## License
 

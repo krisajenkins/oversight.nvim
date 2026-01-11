@@ -1,6 +1,8 @@
 -- Health check module for oversight
 -- Run with :checkhealth oversight
 
+local Vcs = require("oversight.lib.vcs")
+
 local M = {}
 
 ---Check if git is available and working
@@ -15,16 +17,43 @@ local function check_git()
 	return result:match("git version") ~= nil
 end
 
----Check if we're in a git repository
----@return boolean in_repo True if in a git repository
-local function check_git_repo()
-	local handle = io.popen("git rev-parse --git-dir 2>&1")
+---Check if jj is available and working
+---@return boolean available True if jj is available
+local function check_jj()
+	local handle = io.popen("jj --version 2>&1")
 	if not handle then
 		return false
 	end
 	local result = handle:read("*a")
 	handle:close()
-	return not result:match("fatal:")
+	return result:match("jj") ~= nil
+end
+
+---Check what VCS the current directory uses
+---@return "git"|"jj"|nil vcs_type VCS type or nil if not in a repo
+local function detect_current_vcs()
+	local cwd = vim.fn.getcwd()
+
+	-- Check for jj first (jj repos also have .git)
+	local current = cwd
+	while current and current ~= "" and current ~= "/" do
+		if vim.fn.isdirectory(current .. "/.jj") == 1 then
+			return "jj"
+		end
+		if vim.fn.isdirectory(current .. "/.git") == 1 then
+			return "git"
+		end
+		if vim.fn.filereadable(current .. "/.git") == 1 then
+			return "git"
+		end
+		local parent = vim.fn.fnamemodify(current, ":h")
+		if parent == current then
+			break
+		end
+		current = parent
+	end
+
+	return nil
 end
 
 ---Run health checks
@@ -42,20 +71,41 @@ function M.check()
 	end
 
 	-- Check git availability
-	if check_git() then
+	local git_available = check_git()
+	if git_available then
 		vim.health.ok("git is available")
 	else
-		vim.health.error("git not found", {
-			"oversight requires git to be installed and in PATH",
+		vim.health.warn("git not found", {
+			"oversight supports git repositories",
 			"Install git from https://git-scm.com/",
 		})
 	end
 
-	-- Check if in git repository (informational)
-	if check_git_repo() then
-		vim.health.ok("Current directory is a git repository")
+	-- Check jj availability
+	local jj_available = check_jj()
+	if jj_available then
+		vim.health.ok("jj (Jujutsu) is available")
 	else
-		vim.health.info("Current directory is not a git repository")
+		vim.health.info("jj (Jujutsu) not found", {
+			"oversight also supports Jujutsu repositories",
+			"Install jj from https://github.com/martinvonz/jj",
+		})
+	end
+
+	-- Check if at least one VCS is available
+	if not git_available and not jj_available then
+		vim.health.error("No supported VCS found", {
+			"oversight requires either git or jj to be installed",
+		})
+	end
+
+	-- Check current directory VCS
+	local current_vcs = detect_current_vcs()
+	if current_vcs then
+		local vcs_name = Vcs.display_name(current_vcs)
+		vim.health.ok("Current directory is a " .. vcs_name .. " repository")
+	else
+		vim.health.info("Current directory is not a version-controlled repository")
 	end
 
 	-- Check data directory

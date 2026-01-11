@@ -1,7 +1,7 @@
 -- Main review buffer orchestration
 -- Coordinates the file list and diff view panels
 
-local Repository = require("oversight.lib.git.repository")
+local Vcs = require("oversight.lib.vcs")
 local Session = require("oversight.lib.storage.session")
 local FileListBuffer = require("oversight.buffers.file_list")
 local DiffViewBuffer = require("oversight.buffers.diff_view")
@@ -9,7 +9,7 @@ local CommentInput = require("oversight.buffers.comment")
 local HelpOverlay = require("oversight.buffers.help")
 
 ---@class ReviewBuffer
----@field repo GitRepository Git repository
+---@field repo VcsBackend VCS backend (git or jj)
 ---@field session ReviewSession Review session
 ---@field file_list FileListBuffer File list buffer
 ---@field diff_view DiffViewBuffer Diff view buffer
@@ -28,10 +28,10 @@ local instances = {}
 function ReviewBuffer.open(dir)
 	dir = dir or vim.fn.getcwd()
 
-	-- Get repository
-	local repo = Repository.instance(dir)
+	-- Get VCS backend (git or jj)
+	local repo = Vcs.instance(dir)
 	if not repo then
-		vim.notify("Not a git repository: " .. dir, vim.log.levels.ERROR)
+		vim.notify("Not a version-controlled directory: " .. dir, vim.log.levels.ERROR)
 		return nil
 	end
 
@@ -57,7 +57,7 @@ function ReviewBuffer.open(dir)
 end
 
 ---Create a new review buffer
----@param repo GitRepository Git repository
+---@param repo VcsBackend VCS backend
 ---@return ReviewBuffer instance
 function ReviewBuffer.new(repo)
 	local instance = setmetatable({

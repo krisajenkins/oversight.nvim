@@ -1,7 +1,6 @@
--- Diff parsing module
+-- Shared diff parsing module
 -- Parses unified diff output and converts to side-by-side format
-
-local logger = require("oversight.logger")
+-- Works with any VCS that outputs unified diff format (git, jj, etc.)
 
 local M = {}
 
@@ -10,7 +9,7 @@ local M = {}
 ---@field line_no_new number|nil Line number in new file
 ---@field content_old string Content for old side
 ---@field content_new string Content for new side
----@field type "add"|"delete"|"context"|"empty" Line type
+---@field type "add"|"delete"|"context"|"empty"|"hunk_header"|"change" Line type
 
 ---@class DiffHunk
 ---@field header string Hunk header (@@ ... @@)
@@ -23,7 +22,7 @@ local M = {}
 ---@class FileDiff
 ---@field path string File path
 ---@field old_path string|nil Old path (for renames)
----@field status string Git status (A, M, D, R)
+---@field status string VCS status (A, M, D, R)
 ---@field hunks DiffHunk[] Diff hunks
 ---@field is_binary boolean Whether file is binary
 
@@ -43,7 +42,7 @@ local function parse_hunk_header(header)
 end
 
 ---Parse unified diff into side-by-side format
----@param diff_lines string[] Lines from git diff output
+---@param diff_lines string[] Lines from diff output
 ---@return DiffHunk[] hunks Parsed hunks
 function M.parse_unified_diff(diff_lines)
 	local hunks = {}
@@ -211,73 +210,6 @@ function M.to_side_by_side(hunks)
 	end
 
 	return result
-end
-
----Get diff for a specific file
----@param repo_root string Repository root directory
----@param file_path string File path relative to repo root
----@return FileDiff|nil diff File diff or nil on error
-function M.get_file_diff(repo_root, file_path)
-	local git = require("oversight.lib.git.cli")
-
-	local result = git.diff():arg("HEAD"):arg("--"):arg(file_path):cwd(repo_root):call()
-
-	if not result.success then
-		logger.error("Failed to get diff for %s: %s", file_path, result.stderr)
-		return nil
-	end
-
-	if result.stdout == "" then
-		-- No changes for this file
-		return {
-			path = file_path,
-			old_path = nil,
-			status = "M",
-			hunks = {},
-			is_binary = false,
-		}
-	end
-
-	-- Check for binary file
-	if result.stdout:match("Binary files") then
-		return {
-			path = file_path,
-			old_path = nil,
-			status = "M",
-			hunks = {},
-			is_binary = true,
-		}
-	end
-
-	local lines = vim.split(result.stdout, "\n")
-	local hunks = M.parse_unified_diff(lines)
-
-	return {
-		path = file_path,
-		old_path = nil,
-		status = "M",
-		hunks = hunks,
-		is_binary = false,
-	}
-end
-
----Get all file diffs in the repository
----@param repo GitRepository Repository instance
----@return FileDiff[] diffs List of file diffs
-function M.get_all_diffs(repo)
-	local files = repo:get_changed_files()
-	local diffs = {}
-
-	for _, file in ipairs(files) do
-		local diff = M.get_file_diff(repo:get_root(), file.path)
-		if diff then
-			diff.status = file.status
-			diff.old_path = file.old_path
-			table.insert(diffs, diff)
-		end
-	end
-
-	return diffs
 end
 
 return M
