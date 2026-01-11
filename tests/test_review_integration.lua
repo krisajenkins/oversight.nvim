@@ -257,19 +257,27 @@ T["Reviewed Status"]["toggle_reviewed updates session and file state"] = functio
 	expect.equality(file_list:get_current_file().reviewed, false)
 	expect.equality(session:is_file_reviewed("file1.lua"), false)
 
-	-- Toggle reviewed
+	-- Toggle reviewed - cursor stays at same position (now file2.lua)
+	-- Display was: [file1.lua, file2.lua]
+	-- After toggle: [file2.lua, ---, file1.lua]
+	-- Cursor at position 1 = file2.lua
 	file_list:toggle_reviewed()
 
-	expect.equality(file_list:get_current_file().reviewed, true)
 	expect.equality(session:is_file_reviewed("file1.lua"), true)
 	expect.equality(toggled_file.path, "file1.lua")
 	expect.equality(toggled_file.reviewed, true)
+	expect.equality(file_list:get_current_file().path, "file2.lua")
+	expect.equality(file_list:get_current_file().reviewed, false)
 
-	-- Toggle again
+	-- Toggle file2.lua - cursor stays at position 1
+	-- Display was: [file2.lua, ---, file1.lua]
+	-- After toggle: [file1.lua, file2.lua] (both reviewed, no separator)
+	-- Cursor at position 1 = file1.lua
 	file_list:toggle_reviewed()
 
-	expect.equality(file_list:get_current_file().reviewed, false)
-	expect.equality(session:is_file_reviewed("file1.lua"), false)
+	expect.equality(session:is_file_reviewed("file2.lua"), true)
+	expect.equality(file_list:get_current_file().path, "file1.lua")
+	expect.equality(file_list:get_current_file().reviewed, true)
 
 	-- Cleanup
 	file_list:close()
@@ -763,11 +771,15 @@ T["Full Workflow"]["complete review workflow simulation"] = function()
 	session:add_comment("src/main.lua", 10, "new", "issue", "Fix this bug")
 
 	-- Step 3: Mark file as reviewed
+	-- After toggling, src/main.lua moves to the "reviewed" section at the bottom
+	-- Display order becomes: [src/utils.lua, tests/test.lua, ---, src/main.lua]
 	file_list:toggle_reviewed()
 	expect.equality(session:is_file_reviewed("src/main.lua"), true)
 
-	-- Step 4: Navigate to next file
-	file_list:move_cursor(1)
+	-- Step 4: Navigate to first unreviewed file
+	-- Since src/main.lua is now in the reviewed section at the end,
+	-- we go to the first file in display order (src/utils.lua)
+	file_list:move_to(1)
 	expect.equality(diff_view.current_file.path, "src/utils.lua")
 
 	-- Step 5: Add another comment

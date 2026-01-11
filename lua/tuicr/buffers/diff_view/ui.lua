@@ -175,12 +175,6 @@ function M.create_file_diff(file_diff, comments, col_width, reviewed)
 	-- File header
 	table.insert(components, M.create_file_header(file_diff.path, file_diff.status, reviewed))
 
-	-- If reviewed, fold the diff (only show header)
-	if reviewed then
-		table.insert(components, Ui.text("  (reviewed - press r to unfold)", { highlight = "Comment" }))
-		return components
-	end
-
 	-- Binary file handling
 	if file_diff.is_binary then
 		table.insert(components, M.create_binary_notice(file_diff.path))

@@ -343,52 +343,6 @@ T["DiffViewBuffer Screenshots"]["renders diff with line comments"] = function()
 	expect.reference_screenshot(child.get_screenshot())
 end
 
-T["DiffViewBuffer Screenshots"]["renders reviewed file (folded)"] = function()
-	-- Load the plugin
-	child.lua([[
-		vim.cmd("set rtp+=.")
-		require("tuicr").setup()
-	]])
-
-	-- Create components with file marked as reviewed
-	child.lua(string.format(
-		[[
-		local DiffViewBuffer = require("tuicr.buffers.diff_view")
-		local Session = require("tuicr.lib.storage.session")
-
-		-- Create mock repo and session
-		local mock_repo = %s
-		local session = Session.new(mock_repo:get_root(), mock_repo:get_head())
-		session:ensure_file("src/example.lua", "M")
-		session:set_file_reviewed("src/example.lua", true)
-
-		-- Create diff view buffer
-		_G.diff_view = DiffViewBuffer.new({
-			repo = mock_repo,
-			session = session,
-			on_comment = function() end,
-			on_toggle_reviewed = function() end,
-			on_quit = function() end,
-		})
-
-		-- Inject mock diff data directly
-		local mock_diff = %s
-		_G.diff_view.file_diffs["src/example.lua"] = mock_diff
-
-		-- Set current file as reviewed and render
-		_G.diff_view.current_file = { path = "src/example.lua", status = "M", reviewed = true }
-		_G.diff_view:show()
-	]],
-		mock_data.repo_code("/tmp/test-repo"),
-		mock_data.standard_diff()
-	))
-
-	-- Wait for render
-	child.lua([[vim.cmd('redraw')]])
-
-	expect.reference_screenshot(child.get_screenshot())
-end
-
 T["DiffViewBuffer Screenshots"]["renders real diff_view/ui.lua changes"] = function()
 	-- Load the plugin
 	child.lua([[
