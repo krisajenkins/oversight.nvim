@@ -76,17 +76,20 @@ If no directory is specified, it defaults to the current working directory.
 | ------------------- | ------------------------------------------ |
 | `j` / `k`           | Scroll up/down                             |
 | `Ctrl-d` / `Ctrl-u` | Half page down/up                          |
+| `Ctrl-f` / `Ctrl-b` | Full page down/up (diff view)              |
 | `{` / `}`           | Previous/next file                         |
 | `[` / `]`           | Previous/next hunk                         |
+| `g` / `G`           | First/last file                            |
 | `Tab`               | Switch between file list and diff panels   |
 | `Enter`             | Select file (in file list)                 |
 | `o`                 | Open file in new tab for editing           |
 | `r`                 | Toggle file as reviewed                    |
-| `c`                 | Add line-level comment                     |
+| `c`                 | Add/edit comment (edits if on comment)     |
 | `C`                 | Add file-level comment                     |
 | `dd`                | Delete comment under cursor                |
 | `y`                 | Copy all comments to clipboard as markdown |
 | `X`                 | Clear all comments                         |
+| `R`                 | Refresh (re-fetch changes from git)        |
 | `?`                 | Show help                                  |
 | `q`                 | Quit review                                |
 
@@ -94,13 +97,13 @@ If no directory is specified, it defaults to the current working directory.
 
 When adding a comment:
 
-| Key      | Action                                                |
-| -------- | ----------------------------------------------------- |
-| `Ctrl-s` | Submit comment                                        |
-| `Esc`    | Save comment (or discard if empty)                    |
-| `q`      | Discard comment                                       |
-| `Tab`    | Cycle comment type                                    |
-| `1`-`4`  | Select type (1=Note, 2=Suggestion, 3=Issue, 4=Praise) |
+| Key                     | Action                                                |
+| ----------------------- | ----------------------------------------------------- |
+| `Ctrl-s` / `Ctrl-Enter` | Submit comment                                        |
+| `Esc`                   | Save comment (or discard if empty)                    |
+| `q`                     | Discard comment                                       |
+| `Ctrl-t` / `Tab`        | Cycle comment type                                    |
+| `1`-`4`                 | Select type (1=Note, 2=Suggestion, 3=Issue, 4=Praise) |
 
 ### Workflow
 

@@ -94,6 +94,7 @@ Navigation~
 
     j / k               Scroll up/down
     Ctrl-d / Ctrl-u     Half page down/up
+    Ctrl-f / Ctrl-b     Full page down/up (diff view only)
     { / }               Previous/next file
     [ / ]               Previous/next hunk
     g / G               First/last file
@@ -110,14 +111,14 @@ File List~
 Review~
 
     r                   Toggle file reviewed (folds/unfolds diff)
-    c                   Add line comment (cursor on diff line)
+    c                   Add/edit comment (edits if on existing comment)
     C                   Add file-level comment
     dd                  Delete comment under cursor
 
                                                     *tuicr-keybindings-comment*
 Comment Dialog~
 
-    Ctrl-s              Submit comment
+    Ctrl-s / Ctrl-Enter Submit comment
     Esc                 Save comment (or discard if empty)
     q                   Discard comment
     Ctrl-t / Tab        Cycle comment type
