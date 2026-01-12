@@ -1,7 +1,5 @@
 -- Review session state management
-
-local json = require("oversight.lib.storage.json")
-local logger = require("oversight.logger")
+-- Note: Sessions are ephemeral and not persisted between Neovim sessions
 
 ---@class Comment
 ---@field id string UUID
@@ -105,29 +103,12 @@ function Session.new(repo_root, base_ref)
 	return instance
 end
 
----Load session from disk or create new one
+---Create a new session for a repository
+---Sessions are ephemeral and not persisted between Neovim sessions
 ---@param repo_root string Repository root path
 ---@param base_ref string Current HEAD ref
----@return ReviewSession session Loaded or new session
+---@return ReviewSession session New session
 function Session.load_or_create(repo_root, base_ref)
-	local path = json.session_path(repo_root)
-	local data = json.read(path)
-
-	if data then
-		-- Validate the session matches current repo state
-		if data.base_ref == base_ref then
-			logger.info("Loaded existing session for %s", repo_root)
-			local session = Session.from_json(data)
-			return session
-		else
-			logger.info(
-				"Session base_ref mismatch (expected %s, got %s), creating new session",
-				base_ref,
-				data.base_ref
-			)
-		end
-	end
-
 	return Session.new(repo_root, base_ref)
 end
 
@@ -164,12 +145,11 @@ function Session:to_json()
 	}
 end
 
----Save session to disk
----@return boolean success True if save succeeded
+---No-op for backwards compatibility (sessions are no longer persisted)
+---@return boolean success Always returns true
 function Session:save()
 	self.updated_at = iso_timestamp()
-	local path = json.session_path(self.repo_root)
-	return json.write(path, self:to_json())
+	return true
 end
 
 ---Initialize file in session if not present
