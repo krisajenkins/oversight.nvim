@@ -27,7 +27,7 @@ T["JJ CLI"]["builds status command with color=never"] = function()
 	expect.equality(builder.args[4], "never")
 end
 
-T["JJ CLI"]["builds log command"] = function()
+T["JJ CLI"]["builds log command with color=never"] = function()
 	local jj = require("oversight.lib.vcs.jj.cli")
 
 	local builder = jj.log()
@@ -36,9 +36,11 @@ T["JJ CLI"]["builds log command"] = function()
 	expect.equality(builder.args[1], "log")
 	expect.equality(builder.args[2], "--no-pager")
 	expect.equality(builder.args[3], "--no-graph")
+	expect.equality(builder.args[4], "--color")
+	expect.equality(builder.args[5], "never")
 end
 
-T["JJ CLI"]["builds diff command"] = function()
+T["JJ CLI"]["builds diff command with color=never"] = function()
 	local jj = require("oversight.lib.vcs.jj.cli")
 
 	local builder = jj.diff()
@@ -46,6 +48,8 @@ T["JJ CLI"]["builds diff command"] = function()
 	expect.equality(builder.cmd, "jj")
 	expect.equality(builder.args[1], "diff")
 	expect.equality(builder.args[2], "--no-pager")
+	expect.equality(builder.args[3], "--color")
+	expect.equality(builder.args[4], "never")
 end
 
 T["JJ CLI"]["arg() adds positional argument"] = function()

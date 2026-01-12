@@ -167,13 +167,13 @@ end
 ---Create a jj log builder
 ---@return JjCli builder CLI builder
 function M.log()
-	return new_builder("jj"):arg("log"):flag("no-pager"):flag("no-graph")
+	return new_builder("jj"):arg("log"):flag("no-pager"):flag("no-graph"):option("color", "never")
 end
 
 ---Create a jj diff builder
 ---@return JjCli builder CLI builder
 function M.diff()
-	return new_builder("jj"):arg("diff"):flag("no-pager"):flag("color"):arg("never")
+	return new_builder("jj"):arg("diff"):flag("no-pager"):option("color", "never")
 end
 
 ---Create a jj status builder
