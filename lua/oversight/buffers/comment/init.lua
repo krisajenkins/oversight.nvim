@@ -94,6 +94,7 @@ function CommentInput:_update_content()
 			type_line = type_line .. " "
 		end
 	end
+	type_line = type_line .. "  (Ctrl-t to change)"
 
 	local context_line = "File: " .. (self.context.file or "")
 	if self.context.line then

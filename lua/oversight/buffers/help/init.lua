@@ -34,7 +34,6 @@ local DEFAULT_HELP_TEXT = {
 	"  Esc         Save (or discard if empty)",
 	"  q           Discard comment",
 	"  Ctrl-t/Tab  Cycle type (Note/Suggestion/Issue/Praise)",
-	"  1-4         Select type directly (normal mode)",
 	"",
 	"Export & Clear:",
 	"  y           Yank comments to clipboard",

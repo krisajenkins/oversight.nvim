@@ -119,7 +119,6 @@ When adding a comment:
 | `Esc`                   | Save comment (or discard if empty)                    |
 | `q`                     | Discard comment                                       |
 | `Ctrl-t` / `Tab`        | Cycle comment type                                    |
-| `1`-`4`                 | Select type (1=Note, 2=Suggestion, 3=Issue, 4=Praise) |
 
 
 ## License
