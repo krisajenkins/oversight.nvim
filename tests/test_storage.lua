@@ -165,4 +165,62 @@ T["Session"]["checks for comments"] = function()
 	expect.equality(session:has_comments(), true)
 end
 
+T["Session"]["reset_file clears reviewed status and comments"] = function()
+	local Session = require("oversight.lib.storage.session")
+
+	local session = Session.new("/tmp/test-repo", "abc123")
+
+	-- Setup a file with reviewed status and comments
+	session:ensure_file("test.lua", "M")
+	session:set_file_reviewed("test.lua", true)
+	session:add_comment("test.lua", 10, "new", "issue", "Comment 1")
+	session:add_comment("test.lua", 20, "old", "note", "Comment 2")
+	session:add_comment("other.lua", 5, "new", "note", "Other file comment")
+
+	expect.equality(session:is_file_reviewed("test.lua"), true)
+	expect.equality(#session:get_file_comments("test.lua"), 2)
+	expect.equality(#session:get_file_comments("other.lua"), 1)
+
+	-- Reset the file
+	session:reset_file("test.lua")
+
+	-- Verify reviewed status is cleared
+	expect.equality(session:is_file_reviewed("test.lua"), false)
+
+	-- Verify comments for that file are removed
+	expect.equality(#session:get_file_comments("test.lua"), 0)
+
+	-- Verify other file's comments are preserved
+	expect.equality(#session:get_file_comments("other.lua"), 1)
+end
+
+T["Session"]["ensure_file resets when diff changes"] = function()
+	local Session = require("oversight.lib.storage.session")
+
+	local session = Session.new("/tmp/test-repo", "abc123")
+
+	-- First ensure with initial diff content
+	local changed = session:ensure_file("test.lua", "M", "diff content v1")
+	expect.equality(changed, false) -- New file, not a change
+
+	-- Set as reviewed and add comment
+	session:set_file_reviewed("test.lua", true)
+	session:add_comment("test.lua", 10, "new", "note", "My comment")
+
+	expect.equality(session:is_file_reviewed("test.lua"), true)
+	expect.equality(#session:get_file_comments("test.lua"), 1)
+
+	-- Ensure again with same diff content - should not reset
+	changed = session:ensure_file("test.lua", "M", "diff content v1")
+	expect.equality(changed, false)
+	expect.equality(session:is_file_reviewed("test.lua"), true)
+	expect.equality(#session:get_file_comments("test.lua"), 1)
+
+	-- Ensure again with different diff content - should reset
+	changed = session:ensure_file("test.lua", "M", "diff content v2")
+	expect.equality(changed, true)
+	expect.equality(session:is_file_reviewed("test.lua"), false)
+	expect.equality(#session:get_file_comments("test.lua"), 0)
+end
+
 return T

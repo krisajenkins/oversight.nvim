@@ -209,6 +209,18 @@ function JjBackend:has_changes()
 	return #files > 0
 end
 
+---Get raw diff output for a specific file (for hashing/change detection)
+---@param file_path string File path relative to repo root
+---@return string|nil diff_raw Raw diff output or nil on error
+function JjBackend:get_file_diff_raw(file_path)
+	local jj = get_jj()
+	local result = jj.diff():arg(file_path):cwd(self.root):call()
+	if not result.success then
+		return nil
+	end
+	return result.stdout
+end
+
 ---Get diff for a specific file
 ---@param file_path string File path relative to repo root
 ---@return FileDiff|nil diff File diff or nil on error

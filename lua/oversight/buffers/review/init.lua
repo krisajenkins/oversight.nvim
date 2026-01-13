@@ -70,10 +70,11 @@ function ReviewBuffer.new(repo)
 	-- Get changed files
 	local changed_files = repo:get_changed_files()
 
-	-- Ensure files are tracked in session
+	-- Ensure files are tracked in session (with diff hashing for change detection)
 	local files = {}
 	for _, file in ipairs(changed_files) do
-		instance.session:ensure_file(file.path, file.status)
+		local diff_content = repo:get_file_diff_raw(file.path)
+		instance.session:ensure_file(file.path, file.status, diff_content)
 		local status = instance.session:get_file_status(file.path)
 		table.insert(files, {
 			path = file.path,
@@ -358,9 +359,15 @@ function ReviewBuffer:refresh()
 	local changed_files = self.repo:get_changed_files()
 
 	-- Build files list with reviewed status from session
+	-- Track files that were reset due to diff changes
 	local files = {}
+	local reset_files = {}
 	for _, file in ipairs(changed_files) do
-		self.session:ensure_file(file.path, file.status)
+		local diff_content = self.repo:get_file_diff_raw(file.path)
+		local was_reset = self.session:ensure_file(file.path, file.status, diff_content)
+		if was_reset then
+			table.insert(reset_files, file.path)
+		end
 		local status = self.session:get_file_status(file.path)
 		table.insert(files, {
 			path = file.path,
@@ -378,7 +385,15 @@ function ReviewBuffer:refresh()
 		self.diff_view:show_file(current_file)
 	end
 
-	vim.notify("Refreshed", vim.log.levels.INFO)
+	-- Notify user about what happened
+	if #reset_files > 0 then
+		vim.notify(
+			string.format("Refreshed. %d file(s) changed and were reset: %s", #reset_files, table.concat(reset_files, ", ")),
+			vim.log.levels.INFO
+		)
+	else
+		vim.notify("Refreshed", vim.log.levels.INFO)
+	end
 end
 
 ---Check if review is still valid

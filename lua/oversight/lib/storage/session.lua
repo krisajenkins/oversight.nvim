@@ -14,6 +14,7 @@
 ---@field path string File path relative to repo root
 ---@field git_status string Git status (A, M, D, R)
 ---@field reviewed boolean Whether file has been reviewed
+---@field diff_hash? string Hash of the diff content (for change detection)
 
 ---@class File
 ---@field path string File path relative to repo root
@@ -84,6 +85,17 @@ local function iso_timestamp()
 	return os.date("!%Y-%m-%dT%H:%M:%SZ") --[[@as string]]
 end
 
+---Compute a simple hash of a string (djb2 algorithm)
+---@param str string String to hash
+---@return string hash Hex string hash
+local function compute_hash(str)
+	local hash = 5381
+	for i = 1, #str do
+		hash = ((hash * 33) + str:byte(i)) % 0x100000000
+	end
+	return string.format("%08x", hash)
+end
+
 ---Create a new session
 ---@param repo_root string Repository root path
 ---@param base_ref string Base git ref
@@ -152,17 +164,40 @@ function Session:save()
 	return true
 end
 
----Initialize file in session if not present
+---Initialize file in session if not present, or reset if diff changed
 ---@param path string File path
 ---@param git_status string Git status
-function Session:ensure_file(path, git_status)
+---@param diff_content? string Optional diff content to compute hash from
+---@return boolean changed True if file was reset due to diff change
+function Session:ensure_file(path, git_status, diff_content)
+	local diff_hash = diff_content and compute_hash(diff_content) or nil
+
 	if not self.files[path] then
 		self.files[path] = {
 			path = path,
 			git_status = git_status,
 			reviewed = false,
+			diff_hash = diff_hash,
 		}
+		return false
 	end
+
+	-- Check if diff changed (only if we have both old and new hashes)
+	local existing = self.files[path]
+	if diff_hash and existing.diff_hash and diff_hash ~= existing.diff_hash then
+		-- Diff changed - reset file status and remove comments
+		self:reset_file(path)
+		existing.diff_hash = diff_hash
+		existing.git_status = git_status
+		return true
+	end
+
+	-- Update hash if we have one now but didn't before
+	if diff_hash and not existing.diff_hash then
+		existing.diff_hash = diff_hash
+	end
+
+	return false
 end
 
 ---Get file status
@@ -197,6 +232,24 @@ end
 function Session:set_file_reviewed(path, reviewed)
 	if self.files[path] then
 		self.files[path].reviewed = reviewed
+	end
+end
+
+---Reset a file's review status and remove all its comments
+---@param path string File path
+function Session:reset_file(path)
+	if self.files[path] then
+		self.files[path].reviewed = false
+	end
+
+	-- Remove all comments for this file
+	local i = 1
+	while i <= #self.comments do
+		if self.comments[i].file == path then
+			table.remove(self.comments, i)
+		else
+			i = i + 1
+		end
 	end
 end
 

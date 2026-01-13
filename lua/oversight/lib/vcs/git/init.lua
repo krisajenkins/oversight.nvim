@@ -167,6 +167,18 @@ function GitBackend:has_changes()
 	return #files > 0
 end
 
+---Get raw diff output for a specific file (for hashing/change detection)
+---@param file_path string File path relative to repo root
+---@return string|nil diff_raw Raw diff output or nil on error
+function GitBackend:get_file_diff_raw(file_path)
+	local git = get_git()
+	local result = git.diff():arg("HEAD"):arg("--"):arg(file_path):cwd(self.root):call()
+	if not result.success then
+		return nil
+	end
+	return result.stdout
+end
+
 ---Get diff for a specific file
 ---@param file_path string File path relative to repo root
 ---@return FileDiff|nil diff File diff or nil on error
