@@ -229,6 +229,9 @@ end
 
 ---Submit the comment
 function CommentInput:_submit()
+	-- Exit insert mode first to prevent staying in insert mode after window closes
+	vim.cmd("stopinsert")
+
 	-- Get comment text (lines after the separator)
 	local lines = vim.api.nvim_buf_get_lines(self.buf, 3, -1, false)
 	local text = vim.trim(table.concat(lines, "\n"))
