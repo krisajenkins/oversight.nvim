@@ -57,14 +57,16 @@ function JjBackend.new(dir)
 	local root = vim.trim(root_result.stdout)
 
 	-- Get current change ID (@ is the working copy)
-	local ref_result = jj.log():option("revisions", "@"):option("template", "change_id"):option("limit", "1"):cwd(root):call()
+	local ref_result =
+		jj.log():option("revisions", "@"):option("template", "change_id"):option("limit", "1"):cwd(root):call()
 	local ref = ""
 	if ref_result.success then
 		ref = vim.trim(ref_result.stdout)
 	end
 
 	-- Get current bookmarks
-	local branch_result = jj.log():option("revisions", "@"):option("template", "bookmarks"):option("limit", "1"):cwd(root):call()
+	local branch_result =
+		jj.log():option("revisions", "@"):option("template", "bookmarks"):option("limit", "1"):cwd(root):call()
 	local branch = nil
 	if branch_result.success then
 		local branch_str = vim.trim(branch_result.stdout)
@@ -106,13 +108,15 @@ function JjBackend:refresh()
 	local jj = get_jj()
 
 	-- Refresh change ID
-	local ref_result = jj.log():option("revisions", "@"):option("template", "change_id"):option("limit", "1"):cwd(self.root):call()
+	local ref_result =
+		jj.log():option("revisions", "@"):option("template", "change_id"):option("limit", "1"):cwd(self.root):call()
 	if ref_result.success then
 		self.ref = vim.trim(ref_result.stdout)
 	end
 
 	-- Refresh bookmarks
-	local branch_result = jj.log():option("revisions", "@"):option("template", "bookmarks"):option("limit", "1"):cwd(self.root):call()
+	local branch_result =
+		jj.log():option("revisions", "@"):option("template", "bookmarks"):option("limit", "1"):cwd(self.root):call()
 	if branch_result.success then
 		local branch_str = vim.trim(branch_result.stdout)
 		self.branch = branch_str ~= "" and branch_str or nil
