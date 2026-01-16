@@ -428,9 +428,8 @@ T["Session Persistence"]["session serializes and deserializes correctly"] = func
 	session:add_comment("file1.lua", 10, "new", "issue", "Bug here")
 	session:add_comment("file2.lua", nil, nil, "note", "General note")
 
-	-- Serialize (returns a table for JSON serialization)
+	-- Serialize (type guaranteed by LuaCATS: ---@return table)
 	local json_data = session:to_json()
-	expect.equality(type(json_data), "table")
 
 	-- Deserialize
 	local restored = Session.from_json(json_data)

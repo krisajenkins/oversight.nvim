@@ -42,7 +42,6 @@ T["Buffer"]["get_handle returns valid handle"] = function()
 	})
 
 	local handle = buf:get_handle()
-	expect.equality(type(handle), "number")
 	expect.equality(vim.api.nvim_buf_is_valid(handle), true)
 
 	buf:close()

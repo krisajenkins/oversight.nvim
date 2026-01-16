@@ -313,4 +313,7 @@ end
 -- Alias for consistency with git backend
 JjBackend.get_head = JjBackend.get_ref
 
+-- Export internal function for testing (underscore prefix indicates testing-only export)
+JjBackend._expand_rename_path = expand_rename_path
+
 return JjBackend

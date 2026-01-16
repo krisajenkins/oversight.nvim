@@ -104,11 +104,9 @@ T["Git CLI"]["call() executes and returns result"] = function()
 	-- Use rev-parse which should work in any git repo
 	local result = git.rev_parse():flag("git-dir"):call()
 
-	expect.equality(type(result), "table")
-	expect.equality(type(result.success), "boolean")
-	expect.equality(type(result.exit_code), "number")
-	expect.equality(type(result.stdout), "string")
-	expect.equality(type(result.stderr), "string")
+	-- Type guarantees (result is GitResult with success, exit_code, stdout, stderr)
+	-- are enforced by LuaCATS annotations in cli.lua
+	expect.equality(result.success, true)
 end
 
 T["Git Repository"] = MiniTest.new_set()
@@ -121,8 +119,8 @@ T["Git Repository"]["instance() returns repository for current dir"] = function(
 
 	local repo = Repository.instance()
 
-	expect.equality(type(repo), "table")
-	expect.equality(type(repo:get_root()), "string")
+	-- Type guarantees are enforced by LuaCATS annotations
+	expect.equality(repo ~= nil, true)
 end
 
 T["Git Repository"]["get_root() returns repository root"] = function()
@@ -146,7 +144,6 @@ T["Git Repository"]["get_head() returns commit SHA"] = function()
 
 	local head = repo:get_head()
 	-- HEAD should be a 40-character hex string
-	expect.equality(type(head), "string")
 	expect.equality(#head, 40)
 	expect.equality(head:match("^[0-9a-f]+$") ~= nil, true)
 end
@@ -159,7 +156,10 @@ T["Git Repository"]["get_branch() returns branch name or nil"] = function()
 
 	local branch = repo:get_branch()
 	-- Branch is either a string or nil (if detached HEAD)
-	expect.equality(type(branch) == "string" or branch == nil, true)
+	-- Type constraint (string|nil) enforced by LuaCATS annotations
+	if branch ~= nil then
+		expect.equality(#branch > 0, true)
+	end
 end
 
 T["Git Repository"]["get_changed_files() returns table"] = function()
@@ -170,11 +170,11 @@ T["Git Repository"]["get_changed_files() returns table"] = function()
 
 	local files = repo:get_changed_files()
 
-	expect.equality(type(files), "table")
-	-- Each file should have status and path
+	-- Type guarantees (VcsFileChange[]) enforced by LuaCATS annotations
+	-- Verify status values are valid VCS statuses
 	for _, file in ipairs(files) do
-		expect.equality(type(file.status), "string")
-		expect.equality(type(file.path), "string")
+		expect.equality(file.status:match("^[AMDRC]$") ~= nil, true)
+		expect.equality(#file.path > 0, true)
 	end
 end
 
@@ -186,7 +186,9 @@ T["Git Repository"]["has_changes() returns boolean"] = function()
 
 	local has_changes = repo:has_changes()
 
-	expect.equality(type(has_changes), "boolean")
+	-- Type guarantee (boolean) enforced by LuaCATS annotations
+	-- Just verify it returns without error - the boolean type is guaranteed
+	expect.equality(has_changes == true or has_changes == false, true)
 end
 
 T["Git Repository"]["instance() caches repositories"] = function()

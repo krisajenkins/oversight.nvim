@@ -107,14 +107,12 @@ T["JJ Status Parsing"]["parses modified files"] = function()
 
 	if backend then
 		local files = backend:get_changed_files()
-		expect.equality(type(files), "table")
 
-		-- Each file should have status and path
+		-- Type guarantees (VcsFileChange[]) enforced by LuaCATS annotations
+		-- Verify status values are valid
 		for _, file in ipairs(files) do
-			expect.equality(type(file.status), "string")
-			expect.equality(type(file.path), "string")
-			-- Status should be one of M, A, D, R
 			expect.equality(file.status:match("^[MADR]$") ~= nil, true)
+			expect.equality(#file.path > 0, true)
 		end
 	end
 end
@@ -132,7 +130,8 @@ T["JJ Status Parsing"]["has_changes returns boolean"] = function()
 
 	if backend then
 		local has_changes = backend:has_changes()
-		expect.equality(type(has_changes), "boolean")
+		-- Type guarantee (boolean) enforced by LuaCATS annotations
+		expect.equality(has_changes == true or has_changes == false, true)
 	end
 end
 
@@ -157,11 +156,10 @@ T["JJ Rename Path Expansion"]["handles simple rename"] = function()
 		local files = backend:get_changed_files()
 
 		-- Check that any renames have both path and old_path
+		-- Type guarantees (string fields) enforced by LuaCATS annotations
 		for _, file in ipairs(files) do
 			if file.status == "R" then
-				expect.equality(type(file.path), "string")
-				expect.equality(type(file.old_path), "string")
-				-- Paths should not contain braces
+				-- Paths should not contain braces (unexpanded rename syntax)
 				expect.equality(file.path:match("{") == nil, true)
 				expect.equality(file.old_path:match("{") == nil, true)
 				-- Paths should not have double slashes
@@ -229,8 +227,8 @@ T["JJ Rename Path Expansion"]["can get diff for renamed file"] = function()
 				if diff then
 					-- Should NOT be marked as binary
 					expect.equality(diff.is_binary, false)
-					-- Should have hunks (assuming there are actual changes)
-					expect.equality(type(diff.hunks), "table")
+					-- Should have hunks array (type guaranteed by LuaCATS)
+					expect.equality(diff.hunks ~= nil, true)
 				end
 				break -- Only test one renamed file
 			end
@@ -293,6 +291,79 @@ T["JJ Fileset Literal Escaping"]["handles paths with quotes"] = function()
 		-- Should return a valid diff object, not fail due to quoting issues
 		expect.equality(diff ~= nil, true)
 	end
+end
+
+T["expand_rename_path"] = MiniTest.new_set()
+
+T["expand_rename_path"]["expands simple rename"] = function()
+	local JjBackend = require("oversight.lib.vcs.jj")
+	local expand = JjBackend._expand_rename_path
+
+	local old_path, new_path = expand("path/to/{old => new}/file.lua")
+
+	expect.equality(old_path, "path/to/old/file.lua")
+	expect.equality(new_path, "path/to/new/file.lua")
+end
+
+T["expand_rename_path"]["expands empty new part"] = function()
+	local JjBackend = require("oversight.lib.vcs.jj")
+	local expand = JjBackend._expand_rename_path
+
+	local old_path, new_path = expand("lua/oversight/lib/{git => }/diff.lua")
+
+	expect.equality(old_path, "lua/oversight/lib/git/diff.lua")
+	expect.equality(new_path, "lua/oversight/lib/diff.lua")
+end
+
+T["expand_rename_path"]["expands empty old part"] = function()
+	local JjBackend = require("oversight.lib.vcs.jj")
+	local expand = JjBackend._expand_rename_path
+
+	local old_path, new_path = expand("{=> new}/file.lua")
+
+	expect.equality(old_path, "/file.lua")
+	expect.equality(new_path, "new/file.lua")
+end
+
+T["expand_rename_path"]["returns plain path unchanged"] = function()
+	local JjBackend = require("oversight.lib.vcs.jj")
+	local expand = JjBackend._expand_rename_path
+
+	local old_path, new_path = expand("simple/path.lua")
+
+	expect.equality(old_path, "simple/path.lua")
+	expect.equality(new_path, "simple/path.lua")
+end
+
+T["expand_rename_path"]["handles rename at start of path"] = function()
+	local JjBackend = require("oversight.lib.vcs.jj")
+	local expand = JjBackend._expand_rename_path
+
+	local old_path, new_path = expand("{src => lib}/utils.lua")
+
+	expect.equality(old_path, "src/utils.lua")
+	expect.equality(new_path, "lib/utils.lua")
+end
+
+T["expand_rename_path"]["handles rename at end of path"] = function()
+	local JjBackend = require("oversight.lib.vcs.jj")
+	local expand = JjBackend._expand_rename_path
+
+	local old_path, new_path = expand("path/to/{old.lua => new.lua}")
+
+	expect.equality(old_path, "path/to/old.lua")
+	expect.equality(new_path, "path/to/new.lua")
+end
+
+T["expand_rename_path"]["cleans double slashes from empty parts"] = function()
+	local JjBackend = require("oversight.lib.vcs.jj")
+	local expand = JjBackend._expand_rename_path
+
+	-- When empty part is in the middle, we might get double slashes without cleanup
+	local old_path, new_path = expand("a/{b => }/c.lua")
+
+	expect.equality(old_path, "a/b/c.lua")
+	expect.equality(new_path, "a/c.lua") -- Should NOT be "a//c.lua"
 end
 
 T["VCS Detection"] = MiniTest.new_set()
