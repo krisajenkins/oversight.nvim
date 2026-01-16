@@ -238,6 +238,63 @@ T["JJ Rename Path Expansion"]["can get diff for renamed file"] = function()
 	end
 end
 
+T["JJ Fileset Literal Escaping"] = MiniTest.new_set()
+
+-- Test the fileset_literal function by checking the output format
+-- We access it indirectly through the backend behavior
+
+T["JJ Fileset Literal Escaping"]["handles paths with brackets"] = function()
+	-- Test that paths with glob characters like [] are handled correctly
+	-- This is a regression test for the bug where paths like [year]/[month]/[slug].astro
+	-- were interpreted as glob patterns instead of literal paths
+
+	local JjBackend = require("oversight.lib.vcs.jj")
+
+	local cwd = vim.fn.getcwd()
+	if vim.fn.isdirectory(cwd .. "/.jj") ~= 1 then
+		return
+	end
+
+	JjBackend.clear_cache()
+	local backend = JjBackend.instance()
+
+	if backend then
+		-- Test with a path that contains brackets
+		-- Even if the file doesn't exist, we should get a valid (empty) result
+		-- instead of a glob expansion error or unexpected match
+		local diff = backend:get_file_diff("[nonexistent]/[test].lua")
+
+		-- Should return a valid diff object (not nil from command failure)
+		expect.equality(diff ~= nil, true)
+		if diff then
+			-- Should have empty hunks since file doesn't exist
+			expect.equality(#diff.hunks, 0)
+		end
+	end
+end
+
+T["JJ Fileset Literal Escaping"]["handles paths with quotes"] = function()
+	-- Test paths containing double quotes are properly escaped
+
+	local JjBackend = require("oversight.lib.vcs.jj")
+
+	local cwd = vim.fn.getcwd()
+	if vim.fn.isdirectory(cwd .. "/.jj") ~= 1 then
+		return
+	end
+
+	JjBackend.clear_cache()
+	local backend = JjBackend.instance()
+
+	if backend then
+		-- Test with a path containing a quote character
+		local diff = backend:get_file_diff('file"with"quotes.lua')
+
+		-- Should return a valid diff object, not fail due to quoting issues
+		expect.equality(diff ~= nil, true)
+	end
+end
+
 T["VCS Detection"] = MiniTest.new_set()
 
 T["VCS Detection"]["detects jj repo"] = function()

@@ -209,12 +209,22 @@ function JjBackend:has_changes()
 	return #files > 0
 end
 
+---Format a file path as a jj fileset literal (escaping glob characters)
+---@param path string File path
+---@return string fileset Path wrapped as file:"path" fileset
+local function fileset_literal(path)
+	-- Escape double quotes in the path, then wrap with file:"..."
+	local escaped = path:gsub('"', '\\"')
+	return 'file:"' .. escaped .. '"'
+end
+
 ---Get raw diff output for a specific file (for hashing/change detection)
 ---@param file_path string File path relative to repo root
 ---@return string|nil diff_raw Raw diff output or nil on error
 function JjBackend:get_file_diff_raw(file_path)
 	local jj = get_jj()
-	local result = jj.diff():arg(file_path):cwd(self.root):call()
+	-- Use file:"path" to treat path as literal, not a glob pattern
+	local result = jj.diff():arg(fileset_literal(file_path)):cwd(self.root):call()
 	if not result.success then
 		return nil
 	end
@@ -228,7 +238,8 @@ function JjBackend:get_file_diff(file_path)
 	local jj = get_jj()
 
 	-- jj diff outputs unified diff format
-	local result = jj.diff():arg(file_path):cwd(self.root):call()
+	-- Use file:"path" to treat path as literal, not a glob pattern
+	local result = jj.diff():arg(fileset_literal(file_path)):cwd(self.root):call()
 
 	if not result.success then
 		logger.error("Failed to get diff for %s: %s", file_path, result.stderr)
