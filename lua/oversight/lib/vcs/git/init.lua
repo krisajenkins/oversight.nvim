@@ -129,8 +129,7 @@ function GitBackend:get_file_diff_raw(file_path)
 	return result.stdout
 end
 
--- Apply shared backend methods (instance, get_root, get_ref, get_branch,
--- has_changes, get_file_diff, get_all_diffs, clear_cache, get_head)
-base.create_backend(GitBackend)
-
-return GitBackend
+-- Create augmented class with shared backend methods (instance, get_root,
+-- get_ref, get_branch, has_changes, get_file_diff, get_all_diffs,
+-- clear_cache, get_head)
+return base.create_backend(GitBackend)

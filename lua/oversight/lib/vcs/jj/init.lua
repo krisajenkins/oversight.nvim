@@ -179,11 +179,12 @@ function JjBackend:get_file_diff_raw(file_path)
 	return result.stdout
 end
 
--- Apply shared backend methods (instance, get_root, get_ref, get_branch,
--- has_changes, get_file_diff, get_all_diffs, clear_cache, get_head)
-base.create_backend(JjBackend)
+-- Create augmented class with shared backend methods (instance, get_root,
+-- get_ref, get_branch, has_changes, get_file_diff, get_all_diffs,
+-- clear_cache, get_head)
+local Backend = base.create_backend(JjBackend)
 
 -- Export internal function for testing (underscore prefix indicates testing-only export)
-JjBackend._expand_rename_path = expand_rename_path
+Backend._expand_rename_path = expand_rename_path
 
-return JjBackend
+return Backend
