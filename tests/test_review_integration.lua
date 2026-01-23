@@ -103,18 +103,12 @@ T["ReviewBuffer Integration"]["creates layout with two panels"] = function()
 		end, files),
 		session = session,
 		branch = repo:get_branch(),
-		on_file_select = function() end,
-		on_toggle_reviewed = function() end,
-		on_open_file = function() end,
 	})
 
 	-- Create diff view buffer
 	local diff_view = DiffViewBuffer.new({
 		repo = repo,
 		session = session,
-		on_comment = function() end,
-		on_toggle_reviewed = function() end,
-		on_quit = function() end,
 	})
 
 	expect.equality(file_list ~= nil, true)
@@ -146,12 +140,12 @@ T["FileList Navigation"]["move_cursor updates current index"] = function()
 		files = files,
 		session = session,
 		branch = "main",
-		on_file_select = function(file, _index)
-			selected_file = file
-		end,
-		on_toggle_reviewed = function() end,
-		on_open_file = function() end,
 	})
+
+	-- Subscribe to file_select events
+	file_list.events:on("file_select", function(file, _index)
+		selected_file = file
+	end)
 
 	-- Initial state
 	expect.equality(file_list:get_current_index(), 1)
@@ -196,9 +190,6 @@ T["FileList Navigation"]["move_to jumps to specific index"] = function()
 		files = files,
 		session = session,
 		branch = "main",
-		on_file_select = function() end,
-		on_toggle_reviewed = function() end,
-		on_open_file = function() end,
 	})
 
 	-- Jump to last
@@ -246,12 +237,12 @@ T["Reviewed Status"]["toggle_reviewed updates session and file state"] = functio
 		files = files,
 		session = session,
 		branch = "main",
-		on_file_select = function() end,
-		on_toggle_reviewed = function(file, _index)
-			toggled_file = file
-		end,
-		on_open_file = function() end,
 	})
+
+	-- Subscribe to toggle_reviewed events
+	file_list.events:on("toggle_reviewed", function(file, _index)
+		toggled_file = file
+	end)
 
 	-- Initially not reviewed
 	expect.equality(file_list:get_current_file().reviewed, false)
@@ -299,9 +290,6 @@ T["Reviewed Status"]["update_file_reviewed syncs state from external source"] = 
 		files = files,
 		session = session,
 		branch = "main",
-		on_file_select = function() end,
-		on_toggle_reviewed = function() end,
-		on_open_file = function() end,
 	})
 
 	-- Simulate external update (e.g., from DiffViewBuffer)
@@ -528,9 +516,6 @@ T["DiffView Integration"]["show_file updates current file state"] = function()
 	local diff_view = DiffViewBuffer.new({
 		repo = repo,
 		session = session,
-		on_comment = function() end,
-		on_toggle_reviewed = function() end,
-		on_quit = function() end,
 	})
 
 	-- Initially no file selected
@@ -561,13 +546,13 @@ T["DiffView Integration"]["toggle_reviewed notifies callback"] = function()
 	local diff_view = DiffViewBuffer.new({
 		repo = repo,
 		session = session,
-		on_comment = function() end,
-		on_toggle_reviewed = function(file)
-			callback_called = true
-			callback_file = file
-		end,
-		on_quit = function() end,
 	})
+
+	-- Subscribe to toggle_reviewed events
+	diff_view.events:on("toggle_reviewed", function(file)
+		callback_called = true
+		callback_file = file
+	end)
 
 	-- Set current_file directly (simulates show_file without git operations)
 	local test_file = { path = "src/main.lua", status = "M", reviewed = false }
@@ -609,22 +594,19 @@ T["Panel Coordination"]["file selection triggers diff view update"] = function()
 	local diff_view = DiffViewBuffer.new({
 		repo = repo,
 		session = session,
-		on_comment = function() end,
-		on_toggle_reviewed = function() end,
-		on_quit = function() end,
 	})
 
 	local file_list = FileListBuffer.new({
 		files = files,
 		session = session,
 		branch = "main",
-		on_file_select = function(file, _index)
-			-- Set current_file directly to avoid git operations in tests
-			diff_view.current_file = file
-		end,
-		on_toggle_reviewed = function() end,
-		on_open_file = function() end,
 	})
+
+	-- Subscribe to file_select to wire up the components
+	file_list.events:on("file_select", function(file, _index)
+		-- Set current_file directly to avoid git operations in tests
+		diff_view.current_file = file
+	end)
 
 	-- Trigger selection (simulates first file auto-select)
 	file_list:select_file()
@@ -652,35 +634,29 @@ T["Panel Coordination"]["reviewed status syncs between panels"] = function()
 	}
 	session:ensure_file("file1.lua", "M")
 
-	-- Forward declare file_list so it can be referenced in the callback
-	local file_list
-
 	local diff_view = DiffViewBuffer.new({
 		repo = repo,
 		session = session,
-		on_comment = function() end,
-		on_toggle_reviewed = function(file)
-			-- Sync to file list
-			if file_list then
-				file_list:update_file_reviewed(file.path, file.reviewed)
-			end
-		end,
-		on_quit = function() end,
 	})
 
-	file_list = FileListBuffer.new({
+	local file_list = FileListBuffer.new({
 		files = files,
 		session = session,
 		branch = "main",
-		on_file_select = function(file, _index)
-			-- Don't call show_file to avoid git operations in tests
-			diff_view.current_file = file
-		end,
-		on_toggle_reviewed = function() end,
-		on_open_file = function() end,
 	})
 
-	-- Select file in file list (triggers on_file_select callback)
+	-- Wire up events: file_select updates diff_view
+	file_list.events:on("file_select", function(file, _index)
+		-- Don't call show_file to avoid git operations in tests
+		diff_view.current_file = file
+	end)
+
+	-- Wire up events: toggle_reviewed syncs to file list
+	diff_view.events:on("toggle_reviewed", function(file)
+		file_list:update_file_reviewed(file.path, file.reviewed)
+	end)
+
+	-- Select file in file list (triggers file_select event)
 	file_list:select_file()
 
 	-- Silence notification
@@ -730,33 +706,27 @@ T["Full Workflow"]["complete review workflow simulation"] = function()
 		})
 	end
 
-	-- Create components with proper callbacks
-	local diff_view
-	local file_list
-
-	diff_view = DiffViewBuffer.new({
+	-- Create components
+	local diff_view = DiffViewBuffer.new({
 		repo = repo,
 		session = session,
-		on_comment = function() end,
-		on_toggle_reviewed = function(file)
-			if file_list then
-				file_list:update_file_reviewed(file.path, file.reviewed)
-			end
-		end,
-		on_quit = function() end,
 	})
 
-	file_list = FileListBuffer.new({
+	local file_list = FileListBuffer.new({
 		files = files,
 		session = session,
 		branch = repo:get_branch(),
-		on_file_select = function(file, _index)
-			-- Set current_file directly to avoid git operations in tests
-			diff_view.current_file = file
-		end,
-		on_toggle_reviewed = function() end,
-		on_open_file = function() end,
 	})
+
+	-- Wire up events
+	file_list.events:on("file_select", function(file, _index)
+		-- Set current_file directly to avoid git operations in tests
+		diff_view.current_file = file
+	end)
+
+	diff_view.events:on("toggle_reviewed", function(file)
+		file_list:update_file_reviewed(file.path, file.reviewed)
+	end)
 
 	-- Silence notifications
 	local old_notify = vim.notify

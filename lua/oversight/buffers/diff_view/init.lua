@@ -1,28 +1,28 @@
 -- Diff view buffer controller
 
 local Buffer = require("oversight.lib.buffer")
+local EventEmitter = require("oversight.lib.events")
 local DiffViewUI = require("oversight.buffers.diff_view.ui")
+
+-- Events emitted by DiffViewBuffer:
+---@alias DiffViewBufferEvent
+---| "comment" # (context: CommentContext) - Request to add a comment
+---| "edit_comment" # (comment: Comment) - Request to edit existing comment
+---| "toggle_reviewed" # (file: File) - File reviewed status was toggled
+---| "open_file" # (file: File, line: number|nil) - Request to open file at line
+---| "quit" # () - Request to close the review
 
 ---@class DiffViewBufferOpts
 ---@field repo VcsBackend VCS backend (git or jj)
 ---@field session ReviewSession Review session
----@field on_comment? fun(context: CommentContext): nil Callback for adding comments
----@field on_edit_comment? fun(comment: Comment): nil Callback for editing comments
----@field on_toggle_reviewed? fun(file: File): nil Callback when file is toggled reviewed
----@field on_open_file? fun(file: File, line: number|nil): nil Callback for opening file at line
----@field on_quit? fun(): nil Callback when quitting
 
 ---@class DiffViewBuffer
 ---@field buffer Buffer Buffer instance
+---@field events EventEmitter Event emitter for decoupled communication
 ---@field repo VcsBackend VCS backend (git or jj)
 ---@field session ReviewSession Review session
 ---@field current_file File|nil Current file being displayed
 ---@field file_diffs table<string, FileDiff> Cached file diffs
----@field on_comment? fun(context: CommentContext): nil Callback for adding comments
----@field on_edit_comment? fun(comment: Comment): nil Callback for editing comments
----@field on_toggle_reviewed? fun(file: File): nil Callback when file is toggled reviewed
----@field on_open_file? fun(file: File, line: number|nil): nil Callback for opening file at line
----@field on_quit? fun(): nil Callback when quitting
 local DiffViewBuffer = {}
 DiffViewBuffer.__index = DiffViewBuffer
 
@@ -35,11 +35,7 @@ function DiffViewBuffer.new(opts)
 		session = opts.session,
 		current_file = nil,
 		file_diffs = {},
-		on_comment = opts.on_comment,
-		on_edit_comment = opts.on_edit_comment,
-		on_toggle_reviewed = opts.on_toggle_reviewed,
-		on_open_file = opts.on_open_file,
-		on_quit = opts.on_quit,
+		events = EventEmitter.new(),
 	}, DiffViewBuffer)
 
 	instance.buffer = Buffer.new({
@@ -119,9 +115,7 @@ function DiffViewBuffer:_setup_mappings()
 
 	-- Quit
 	buf:map("n", "q", function()
-		if self.on_quit then
-			self.on_quit()
-		end
+		self.events:emit("quit")
 	end, { desc = "Quit" })
 
 	-- Open file at current line
@@ -279,13 +273,11 @@ function DiffViewBuffer:add_line_comment()
 	local line_no = item.line_no_new or item.line_no_old
 	local side = item.line_no_new and "new" or "old"
 
-	if self.on_comment then
-		self.on_comment({
-			file = self.current_file.path,
-			line = line_no,
-			side = side,
-		})
-	end
+	self.events:emit("comment", {
+		file = self.current_file.path,
+		line = line_no,
+		side = side,
+	})
 end
 
 ---Add a file-level comment
@@ -294,13 +286,11 @@ function DiffViewBuffer:add_file_comment()
 		return
 	end
 
-	if self.on_comment then
-		self.on_comment({
-			file = self.current_file.path,
-			line = nil,
-			side = nil,
-		})
-	end
+	self.events:emit("comment", {
+		file = self.current_file.path,
+		line = nil,
+		side = nil,
+	})
 end
 
 ---Delete comment under cursor
@@ -326,10 +316,10 @@ function DiffViewBuffer:edit_comment()
 		return false
 	end
 
-	if self.session and item.comment_id and self.on_edit_comment then
+	if self.session and item.comment_id then
 		local comment = self.session:get_comment(item.comment_id)
 		if comment then
-			self.on_edit_comment(comment)
+			self.events:emit("edit_comment", comment)
 			return true
 		end
 	end
@@ -353,10 +343,8 @@ function DiffViewBuffer:toggle_reviewed()
 		-- Re-render to update header
 		self:render()
 
-		-- Notify callback (to update file list)
-		if self.on_toggle_reviewed then
-			self.on_toggle_reviewed(self.current_file)
-		end
+		-- Notify listeners (to update file list)
+		self.events:emit("toggle_reviewed", self.current_file)
 
 		local status_text = new_status and "reviewed" or "not reviewed"
 		vim.notify(self.current_file.path .. " marked as " .. status_text, vim.log.levels.INFO)
@@ -377,9 +365,7 @@ function DiffViewBuffer:open_file()
 		line_no = item.line_no_new or item.line_no_old
 	end
 
-	if self.on_open_file then
-		self.on_open_file(self.current_file, line_no)
-	end
+	self.events:emit("open_file", self.current_file, line_no)
 end
 
 ---Jump to first content line (skipping keybindings hint)
@@ -413,6 +399,7 @@ end
 
 ---Close the buffer
 function DiffViewBuffer:close()
+	self.events:clear()
 	self.buffer:close()
 end
 

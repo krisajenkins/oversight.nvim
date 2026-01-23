@@ -1,25 +1,27 @@
 -- File list buffer controller
 
 local Buffer = require("oversight.lib.buffer")
+local EventEmitter = require("oversight.lib.events")
 local FileListUI = require("oversight.buffers.file_list.ui")
+
+-- Events emitted by FileListBuffer:
+---@alias FileListBufferEvent
+---| "file_select" # (file: File, index: number) - File was selected or navigated to
+---| "toggle_reviewed" # (file: File, index: number) - File reviewed status was toggled
+---| "open_file" # (file: File, index: number) - Request to open file in editor
 
 ---@class FileListBufferOpts
 ---@field files File[] List of files
 ---@field session ReviewSession Review session
 ---@field branch? string Current branch name
----@field on_file_select? fun(file: File, index: number): nil Callback when file is selected
----@field on_toggle_reviewed? fun(file: File, index: number): nil Callback when file is toggled
----@field on_open_file? fun(file: File, index: number): nil Callback when file should be opened in editor
 
 ---@class FileListBuffer
 ---@field buffer Buffer Buffer instance
+---@field events EventEmitter Event emitter for decoupled communication
 ---@field files File[] List of files
 ---@field current_path string|nil Path of currently selected file
 ---@field session ReviewSession Review session
 ---@field branch? string Current branch name
----@field on_file_select? fun(file: File, index: number): nil Callback when file is selected
----@field on_toggle_reviewed? fun(file: File, index: number): nil Callback when file is toggled
----@field on_open_file? fun(file: File, index: number): nil Callback when file should be opened in editor
 local FileListBuffer = {}
 FileListBuffer.__index = FileListBuffer
 
@@ -32,10 +34,8 @@ function FileListBuffer.new(opts)
 		files = files,
 		current_path = files[1] and files[1].path or nil,
 		session = opts.session,
-		on_file_select = opts.on_file_select,
-		on_toggle_reviewed = opts.on_toggle_reviewed,
-		on_open_file = opts.on_open_file,
 		branch = opts.branch,
+		events = EventEmitter.new(),
 	}, FileListBuffer)
 
 	instance.buffer = Buffer.new({
@@ -168,10 +168,8 @@ function FileListBuffer:move_cursor(delta)
 		self.current_path = new_file.path
 		self:render()
 
-		-- Notify parent about selection change
-		if self.on_file_select then
-			self.on_file_select(new_file, new_index)
-		end
+		-- Notify about selection change
+		self.events:emit("file_select", new_file, new_index)
 	end
 end
 
@@ -190,27 +188,25 @@ function FileListBuffer:move_to(index)
 		self.current_path = new_file.path
 		self:render()
 
-		if self.on_file_select then
-			self.on_file_select(new_file, index)
-		end
+		self.events:emit("file_select", new_file, index)
 	end
 end
 
----Select current file (trigger callback)
+---Select current file
 function FileListBuffer:select_file()
 	local file = self:get_current_file()
-	if file and self.on_file_select then
+	if file then
 		local index = self:_get_display_index(self.current_path) or 1
-		self.on_file_select(file, index)
+		self.events:emit("file_select", file, index)
 	end
 end
 
 ---Open current file in editor
 function FileListBuffer:open_file()
 	local file = self:get_current_file()
-	if file and self.on_open_file then
+	if file then
 		local index = self:_get_display_index(self.current_path) or 1
-		self.on_open_file(file, index)
+		self.events:emit("open_file", file, index)
 	end
 end
 
@@ -239,16 +235,12 @@ function FileListBuffer:toggle_reviewed()
 
 		self:render()
 
-		if self.on_toggle_reviewed then
-			self.on_toggle_reviewed(file, new_index)
-		end
+		self.events:emit("toggle_reviewed", file, new_index)
 
 		-- Notify about new selection
-		if self.on_file_select then
-			local current = self:get_current_file()
-			if current then
-				self.on_file_select(current, new_index)
-			end
+		local current = self:get_current_file()
+		if current then
+			self.events:emit("file_select", current, new_index)
 		end
 	end
 end
@@ -345,6 +337,7 @@ end
 
 ---Close the buffer
 function FileListBuffer:close()
+	self.events:clear()
 	self.buffer:close()
 end
 

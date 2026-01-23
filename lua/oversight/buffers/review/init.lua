@@ -114,40 +114,42 @@ function ReviewBuffer:_create_layout(files)
 		files = files,
 		session = self.session,
 		branch = self.repo:get_branch(),
-		on_file_select = function(file, _index)
-			self:_on_file_select(file)
-		end,
-		on_toggle_reviewed = function(_file, _index)
-			-- Session already saved in FileListBuffer
-		end,
-		on_open_file = function(file, _index)
-			self:_on_open_file(file)
-		end,
 	})
 	self.file_list:show()
+
+	-- Subscribe to file list events
+	self.file_list.events:on("file_select", function(file)
+		self:_on_file_select(file)
+	end)
+	self.file_list.events:on("open_file", function(file)
+		self:_on_open_file(file)
+	end)
+	-- toggle_reviewed: session already saved in FileListBuffer, no action needed
 
 	-- Create diff view buffer
 	vim.api.nvim_set_current_win(self.diff_view_win)
 	self.diff_view = DiffViewBuffer.new({
 		repo = self.repo,
 		session = self.session,
-		on_comment = function(context)
-			self:_on_add_comment(context)
-		end,
-		on_edit_comment = function(comment)
-			self:_on_edit_comment(comment)
-		end,
-		on_toggle_reviewed = function(file)
-			self:_on_toggle_reviewed(file)
-		end,
-		on_open_file = function(file, line)
-			self:_on_open_file(file, line)
-		end,
-		on_quit = function()
-			self:close()
-		end,
 	})
 	self.diff_view:show()
+
+	-- Subscribe to diff view events
+	self.diff_view.events:on("comment", function(context)
+		self:_on_add_comment(context)
+	end)
+	self.diff_view.events:on("edit_comment", function(comment)
+		self:_on_edit_comment(comment)
+	end)
+	self.diff_view.events:on("toggle_reviewed", function(file)
+		self:_on_toggle_reviewed(file)
+	end)
+	self.diff_view.events:on("open_file", function(file, line)
+		self:_on_open_file(file, line)
+	end)
+	self.diff_view.events:on("quit", function()
+		self:close()
+	end)
 
 	-- Setup tab-level keymappings
 	self:_setup_tab_mappings()
@@ -249,46 +251,40 @@ end
 ---Handle adding a comment
 ---@param context CommentContext Comment context
 function ReviewBuffer:_on_add_comment(context)
-	CommentInput.new({
+	local input = CommentInput.new({
 		context = context,
-		on_submit = function(comment_data)
-			self.session:add_comment(
-				comment_data.file,
-				comment_data.line,
-				comment_data.side,
-				comment_data.type,
-				comment_data.text
-			)
-			self.session:save()
-			self.diff_view:render()
-			vim.notify("Comment added", vim.log.levels.INFO)
-		end,
-		on_cancel = function()
-			-- Nothing to do
-		end,
 	})
+	input.events:on("submit", function(comment_data)
+		self.session:add_comment(
+			comment_data.file,
+			comment_data.line,
+			comment_data.side,
+			comment_data.type,
+			comment_data.text
+		)
+		self.session:save()
+		self.diff_view:render()
+		vim.notify("Comment added", vim.log.levels.INFO)
+	end)
 end
 
 ---Handle editing an existing comment
 ---@param comment Comment Comment to edit
 function ReviewBuffer:_on_edit_comment(comment)
-	CommentInput.new({
+	local input = CommentInput.new({
 		context = {
 			file = comment.file,
 			line = comment.line,
 			side = comment.side,
 		},
 		existing_comment = comment,
-		on_submit = function(comment_data)
-			self.session:update_comment(comment_data.id, comment_data.type, comment_data.text)
-			self.session:save()
-			self.diff_view:render()
-			vim.notify("Comment updated", vim.log.levels.INFO)
-		end,
-		on_cancel = function()
-			-- Nothing to do
-		end,
 	})
+	input.events:on("submit", function(comment_data)
+		self.session:update_comment(comment_data.id, comment_data.type, comment_data.text)
+		self.session:save()
+		self.diff_view:render()
+		vim.notify("Comment updated", vim.log.levels.INFO)
+	end)
 end
 
 ---Toggle focus between panels

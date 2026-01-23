@@ -1,21 +1,24 @@
 -- Comment input floating window
 
+local EventEmitter = require("oversight.lib.events")
 local float = require("oversight.lib.float")
+
+-- Events emitted by CommentInput:
+---@alias CommentInputEvent
+---| "submit" # (comment_data: CommentData) - Comment was submitted
+---| "cancel" # () - Input was cancelled
 
 ---@class CommentInputOpts
 ---@field context CommentContext Comment context (file, line, side)
 ---@field existing_comment? Comment Optional existing comment for editing
----@field on_submit? fun(comment: CommentData): nil Callback when comment is submitted
----@field on_cancel? fun(): nil Callback when input is cancelled
 
 ---@class CommentInput
 ---@field buf number Buffer handle
 ---@field win number Window handle
+---@field events EventEmitter Event emitter for decoupled communication
 ---@field context CommentContext Comment context (file, line, side)
 ---@field comment_type "note"|"suggestion"|"issue"|"praise" Current comment type
 ---@field existing_comment? Comment Optional existing comment being edited
----@field on_submit? fun(comment: CommentData): nil Callback when comment is submitted
----@field on_cancel? fun(): nil Callback when input is cancelled
 local CommentInput = {}
 CommentInput.__index = CommentInput
 
@@ -30,8 +33,7 @@ function CommentInput.new(opts)
 		context = opts.context,
 		comment_type = existing and existing.type or "note",
 		existing_comment = existing,
-		on_submit = opts.on_submit,
-		on_cancel = opts.on_cancel,
+		events = EventEmitter.new(),
 	}, CommentInput)
 
 	instance:_create_window()
@@ -229,26 +231,21 @@ function CommentInput:_submit()
 	-- Close window
 	self:close()
 
-	-- Call callback
-	if self.on_submit then
-		self.on_submit({
-			id = self.existing_comment and self.existing_comment.id or nil,
-			file = self.context.file,
-			line = self.context.line,
-			side = self.context.side,
-			type = self.comment_type,
-			text = text,
-		})
-	end
+	-- Emit submit event
+	self.events:emit("submit", {
+		id = self.existing_comment and self.existing_comment.id or nil,
+		file = self.context.file,
+		line = self.context.line,
+		side = self.context.side,
+		type = self.comment_type,
+		text = text,
+	})
 end
 
 ---Cancel the comment
 function CommentInput:_cancel()
 	self:close()
-
-	if self.on_cancel then
-		self.on_cancel()
-	end
+	self.events:emit("cancel")
 end
 
 ---Close the window
