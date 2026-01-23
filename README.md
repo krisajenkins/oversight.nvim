@@ -69,12 +69,7 @@ Open the review interface with:
 
 ```vim
 :Oversight
-
--- or
-:Oversight [directory]
 ```
-
-If no directory is specified, it defaults to the repo of the current working directory.
 
 ### Workflow
 
@@ -113,13 +108,12 @@ If no directory is specified, it defaults to the repo of the current working dir
 
 When adding a comment:
 
-| Key                     | Action                                                |
-| ----------------------- | ----------------------------------------------------- |
-| `Ctrl-s` / `Ctrl-Enter` | Submit comment                                        |
-| `Esc`                   | Save comment (or discard if empty)                    |
-| `q`                     | Discard comment                                       |
-| `Ctrl-t` / `Tab`        | Cycle comment type                                    |
-
+| Key                     | Action                             |
+| ----------------------- | ---------------------------------- |
+| `Ctrl-s` / `Ctrl-Enter` | Submit comment                     |
+| `Esc`                   | Save comment (or discard if empty) |
+| `q`                     | Discard comment                    |
+| `Ctrl-t` / `Tab`        | Cycle comment type                 |
 
 ## License
 

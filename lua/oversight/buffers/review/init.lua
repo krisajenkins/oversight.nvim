@@ -23,10 +23,9 @@ ReviewBuffer.__index = ReviewBuffer
 local instances = {}
 
 ---Open the review interface
----@param dir? string Directory to review (defaults to cwd)
 ---@return ReviewBuffer|nil instance Review buffer or nil on error
-function ReviewBuffer.open(dir)
-	dir = dir or vim.fn.getcwd()
+function ReviewBuffer.open()
+	local dir = vim.fn.getcwd()
 
 	-- Get VCS backend (git or jj)
 	local repo = Vcs.instance(dir)
@@ -388,7 +387,11 @@ function ReviewBuffer:refresh()
 	-- Notify user about what happened
 	if #reset_files > 0 then
 		vim.notify(
-			string.format("Refreshed. %d file(s) changed and were reset: %s", #reset_files, table.concat(reset_files, ", ")),
+			string.format(
+				"Refreshed. %d file(s) changed and were reset: %s",
+				#reset_files,
+				table.concat(reset_files, ", ")
+			),
 			vim.log.levels.INFO
 		)
 	else

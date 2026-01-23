@@ -18,20 +18,17 @@ function M.setup(opts)
 	require("oversight.highlights").setup()
 
 	-- Register :Oversight command
-	vim.api.nvim_create_user_command("Oversight", function(cmd_opts)
-		M.open_review(cmd_opts.args ~= "" and cmd_opts.args or nil)
+	vim.api.nvim_create_user_command("Oversight", function()
+		M.open_review()
 	end, {
-		nargs = "?",
 		desc = "Open oversight code review",
-		complete = "dir",
 	})
 end
 
 --- Open the code review interface
----@param dir? string Directory to review (defaults to cwd)
-function M.open_review(dir)
+function M.open_review()
 	local ReviewBuffer = require("oversight.buffers.review")
-	ReviewBuffer.open(dir)
+	ReviewBuffer.open()
 end
 
 --- Close any open review buffers
