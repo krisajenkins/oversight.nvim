@@ -151,6 +151,18 @@ function M.create_backend(BackendClass)
 		return diffs
 	end
 
+	---Read a file from the repository
+	---@param file_path string File path relative to repo root
+	---@return string[]|nil lines File lines or nil on error
+	function Class:read_file(file_path)
+		local full_path = self.root .. "/" .. file_path
+		local ok, lines = pcall(vim.fn.readfile, full_path)
+		if not ok then
+			return nil
+		end
+		return lines
+	end
+
 	---Clear cached backend instance
 	---@param dir? string Directory to clear (clears all if nil)
 	function Class.clear_cache(dir)

@@ -2,17 +2,23 @@
 
 local M = {}
 
+---@class ExportOpts
+---@field title? string Override the default heading title
+
 ---Convert a session to markdown format optimized for LLM feedback
 ---@param session ReviewSession Review session
 ---@param repo VcsBackend VCS backend (git or jj)
+---@param opts? ExportOpts Export options
 ---@return string markdown Markdown string
-function M.to_markdown(session, repo)
+function M.to_markdown(session, repo, opts)
+	opts = opts or {}
 	local lines = {}
 
 	-- Header
 	local repo_name = vim.fn.fnamemodify(repo:get_root(), ":t")
 	local commit = repo:get_head():sub(1, 8)
-	table.insert(lines, string.format("# Code Review: %s @ %s", repo_name, commit))
+	local title = opts.title or "Code Review"
+	table.insert(lines, string.format("# %s: %s @ %s", title, repo_name, commit))
 	table.insert(lines, "")
 
 	-- Group comments by file
@@ -77,9 +83,10 @@ end
 ---@param session ReviewSession Review session
 ---@param repo VcsBackend VCS backend (git or jj)
 ---@param output_path string Output file path
+---@param opts? ExportOpts Export options
 ---@return boolean success True if export succeeded
-function M.to_file(session, repo, output_path)
-	local markdown = M.to_markdown(session, repo)
+function M.to_file(session, repo, output_path, opts)
+	local markdown = M.to_markdown(session, repo, opts)
 	local lines = vim.split(markdown, "\n")
 
 	local ok = pcall(function()

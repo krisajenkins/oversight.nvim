@@ -58,3 +58,13 @@ For each change:
 ## Documentation
 
 - [x] Add vimdoc in `doc/` directory
+
+## Code Deduplication
+
+- [x] Extract CLI builder base class (`lib/vcs/git/cli.lua` and `lib/vcs/jj/cli.lua` share ~150 lines of identical code)
+- [ ] ReviewBuffer callback decoupling — introduce event/signal pattern to replace nested closures (`buffers/review/init.lua:113-147`) [priority:high, difficulty:medium, impact:high — improves testability and extensibility of all buffer interactions]
+- [ ] File status toggle duplication — same pattern in `file_list/init.lua:217-254` and `diff_view/init.lua:327-352` [priority:medium, difficulty:low, impact:medium — prevents state update bugs from diverging implementations]
+- [ ] Comment CRUD scattered across `diff_view/init.lua:295-325` and `comment/init.lua` — extract CommentManager [priority:medium, difficulty:low, impact:medium — centralizes logic, enables testing comment operations in isolation]
+- [ ] Window options applied twice in `lib/buffer.lua` (lines 79-95 and 149-158) [priority:low, difficulty:trivial, impact:low — small maintenance hazard, quick fix]
+- [x] VCS backend `create_backend()` mutates table in place — return new table instead [priority:low, difficulty:low, impact:low — clarity improvement, no functional change]
+- [ ] Extract text formatting utilities from `buffers/diff_view/ui.lua:11-62` to `lib/text_utils.lua` [priority:low, difficulty:trivial, impact:low — minor reusability gain]

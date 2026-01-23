@@ -35,6 +35,12 @@ function M.status()
 	return jj():arg("status"):flag("no-pager"):option("color", "never")
 end
 
+---Create a jj file list builder
+---@return CliBuilder builder CLI builder
+function M.file_list()
+	return jj():arg("file"):arg("list"):flag("no-pager")
+end
+
 ---Create a raw jj builder
 ---@return CliBuilder builder CLI builder
 function M.raw()

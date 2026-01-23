@@ -179,6 +179,28 @@ function JjBackend:get_file_diff_raw(file_path)
 	return result.stdout
 end
 
+---Get list of all tracked files in the repository
+---@return VcsFileChange[] files List of tracked files (status is empty string)
+function JjBackend:get_tracked_files()
+	local jj = get_jj()
+
+	local result = jj.file_list():cwd(self.root):call()
+	if not result.success then
+		logger.error("Failed to list tracked files: %s", result.stderr)
+		return {}
+	end
+
+	local files = {}
+	for line in result.stdout:gmatch("[^\n]+") do
+		local path = vim.trim(line)
+		if path ~= "" then
+			table.insert(files, { status = "", path = path })
+		end
+	end
+
+	return files
+end
+
 -- Create augmented class with shared backend methods (instance, get_root,
 -- get_ref, get_branch, has_changes, get_file_diff, get_all_diffs,
 -- clear_cache, get_head)

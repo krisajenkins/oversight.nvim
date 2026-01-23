@@ -4,7 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-oversight-nvim is a Neovim plugin for interactive code review. It provides a two-panel interface (file list + diff view) for reviewing uncommitted git changes, adding comments (note/suggestion/issue/praise), and exporting reviews to markdown.
+oversight-nvim is a Neovim plugin for interactive code review. It has two modes:
+
+- **Review mode** (`:Oversight` or `:Oversight review`) - Two-panel interface (file list + diff view) for reviewing uncommitted VCS changes
+- **Browse mode** (`:Oversight browse`) - Two-panel interface (file tree + file viewer) for browsing the full codebase and leaving notes on any file
+
+Both modes support adding comments (note/suggestion/issue/praise) and exporting reviews to markdown. Supports both Git and Jujutsu (jj) with automatic detection.
 
 ## Commands
 
@@ -31,7 +36,7 @@ Dependencies (`deps/mini.nvim` and `deps/plenary.nvim`) are auto-cloned by make.
 
 ### Entry Points
 
-- `lua/oversight/init.lua` - Public API: `setup()`, `open_review()`, `:Oversight` command
+- `lua/oversight/init.lua` - Public API: `setup()`, `open_review()`, `open_browse()`, `:Oversight [review|browse]` command
 - `plugin/oversight.lua` - Plugin initialization, auto-loaded by Neovim
 
 ### Core Abstractions
@@ -44,29 +49,51 @@ Dependencies (`deps/mini.nvim` and `deps/plenary.nvim`) are auto-cloned by make.
 - `renderer.lua` - Renders component trees to buffer lines with highlights
 - `init.lua` - Pre-built components: `Ui.text()`, `Ui.row()`, `Ui.col()`, `Ui.file_item()`, `Ui.diff_line()`, etc.
 
-**Git** (`lib/git/`):
+**VCS Backends** (`lib/vcs/`):
 
-- `cli.lua` - Fluent builder for git commands: `git.diff():flag("name-status"):arg("HEAD"):cwd(dir):call()`
-- `repository.lua` - Singleton per-directory Repository instances with caching
+- `base.lua` - Shared base class for VCS backends (defines `create_backend()`, shared `read_file()`)
+- `git/cli.lua` - Fluent builder for git commands: `git.diff():flag("name-status"):arg("HEAD"):cwd(dir):call()`
+- `git/init.lua` - GitBackend: `get_diff_files()`, `get_tracked_files()`, `get_file_diff()`, etc.
+- `jj/cli.lua` - Fluent builder for jj commands (same pattern as git)
+- `jj/init.lua` - JjBackend: same interface as GitBackend
 - `diff.lua` - Diff parsing and hunk extraction
 
 **Session** (`lib/session.lua`): ReviewSession tracks file review status and comments (ephemeral, not persisted between Neovim sessions).
 
 ### Buffer Types (`buffers/`)
 
-- `review/init.lua` - ReviewBuffer: orchestrates the two-panel layout, singleton per repo
+**Review mode:**
+
+- `review/init.lua` - ReviewBuffer: orchestrates the review two-panel layout, singleton per repo
 - `file_list/` - Left panel showing changed files with review status
 - `diff_view/` - Right panel showing side-by-side diffs with comments
+
+**Browse mode:**
+
+- `browse/init.lua` - BrowseBuffer: orchestrates the browse two-panel layout, singleton per repo
+- `file_tree/` - Left panel: directory tree navigator with unreviewed/reviewed sections
+- `file_view/` - Right panel: full file content viewer with treesitter syntax highlighting and inline comments
+
+**Shared:**
+
 - `comment/init.lua` - Floating window for adding comments
 - `help/init.lua` - Help overlay
 
 ### Data Flow
 
-1. `ReviewBuffer.open()` creates Repository instance and loads/creates Session
+**Review mode:**
+
+1. `ReviewBuffer.open()` creates VCS backend and loads/creates Session
 2. FileListBuffer and DiffViewBuffer receive session reference
 3. User actions (toggle reviewed, add comment) update Session
-4. Session auto-saves to JSON on changes
-5. Export converts Session comments to markdown for clipboard
+4. Export converts Session comments to markdown for clipboard
+
+**Browse mode:**
+
+1. `BrowseBuffer.open()` creates VCS backend and calls `get_tracked_files()`
+2. FileTreeBuffer and FileViewBuffer receive session reference
+3. Same comment/review/export flow as review mode
+4. Export uses "Codebase Notes" title instead of "Code Review"
 
 ## Testing
 

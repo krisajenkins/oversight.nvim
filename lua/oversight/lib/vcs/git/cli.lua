@@ -47,6 +47,12 @@ function M.branch()
 	return git():arg("branch")
 end
 
+---Create a git ls-files builder
+---@return CliBuilder builder CLI builder
+function M.ls_files()
+	return git():arg("ls-files")
+end
+
 ---Create a raw git builder
 ---@return CliBuilder builder CLI builder
 function M.raw()
