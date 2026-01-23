@@ -9,6 +9,7 @@ local DiffViewUI = require("oversight.buffers.diff_view.ui")
 ---@field on_comment? fun(context: CommentContext): nil Callback for adding comments
 ---@field on_edit_comment? fun(comment: Comment): nil Callback for editing comments
 ---@field on_toggle_reviewed? fun(file: File): nil Callback when file is toggled reviewed
+---@field on_open_file? fun(file: File, line: number|nil): nil Callback for opening file at line
 ---@field on_quit? fun(): nil Callback when quitting
 
 ---@class DiffViewBuffer
@@ -20,6 +21,7 @@ local DiffViewUI = require("oversight.buffers.diff_view.ui")
 ---@field on_comment? fun(context: CommentContext): nil Callback for adding comments
 ---@field on_edit_comment? fun(comment: Comment): nil Callback for editing comments
 ---@field on_toggle_reviewed? fun(file: File): nil Callback when file is toggled reviewed
+---@field on_open_file? fun(file: File, line: number|nil): nil Callback for opening file at line
 ---@field on_quit? fun(): nil Callback when quitting
 local DiffViewBuffer = {}
 DiffViewBuffer.__index = DiffViewBuffer
@@ -36,6 +38,7 @@ function DiffViewBuffer.new(opts)
 		on_comment = opts.on_comment,
 		on_edit_comment = opts.on_edit_comment,
 		on_toggle_reviewed = opts.on_toggle_reviewed,
+		on_open_file = opts.on_open_file,
 		on_quit = opts.on_quit,
 	}, DiffViewBuffer)
 
@@ -120,6 +123,15 @@ function DiffViewBuffer:_setup_mappings()
 			self.on_quit()
 		end
 	end, { desc = "Quit" })
+
+	-- Open file at current line
+	buf:map("n", "<CR>", function()
+		self:open_file()
+	end, { desc = "Open file at line" })
+
+	buf:map("n", "o", function()
+		self:open_file()
+	end, { desc = "Open file at line" })
 end
 
 ---Show diff for a specific file
@@ -348,6 +360,25 @@ function DiffViewBuffer:toggle_reviewed()
 
 		local status_text = new_status and "reviewed" or "not reviewed"
 		vim.notify(self.current_file.path .. " marked as " .. status_text, vim.log.levels.INFO)
+	end
+end
+
+---Open the current file in editor at the line under cursor
+function DiffViewBuffer:open_file()
+	if not self.current_file then
+		return
+	end
+
+	-- Get line number from cursor position
+	local item = self:_get_line_at_cursor()
+	local line_no = nil
+	if item and item.type == "diff_line" then
+		-- Prefer new line number (the current state of the file)
+		line_no = item.line_no_new or item.line_no_old
+	end
+
+	if self.on_open_file then
+		self.on_open_file(self.current_file, line_no)
 	end
 end
 

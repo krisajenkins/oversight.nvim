@@ -245,7 +245,7 @@ end
 ---@return Component component Header component
 function M.create_keybindings_hint()
 	return Ui.row({
-		Ui.text("j/k:scroll  {/}:file  [/]:hunk  c:comment  r:reviewed  y:yank  ?:help  q:quit", {
+		Ui.text("j/k:scroll  {/}:file  [/]:hunk  o:open  c:comment  r:reviewed  y:yank  ?:help  q:quit", {
 			highlight = "Comment",
 		}),
 	})

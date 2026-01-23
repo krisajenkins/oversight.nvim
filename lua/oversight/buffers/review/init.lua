@@ -140,6 +140,9 @@ function ReviewBuffer:_create_layout(files)
 		on_toggle_reviewed = function(file)
 			self:_on_toggle_reviewed(file)
 		end,
+		on_open_file = function(file, line)
+			self:_on_open_file(file, line)
+		end,
 		on_quit = function()
 			self:close()
 		end,
@@ -222,12 +225,18 @@ end
 
 ---Handle opening file in editor
 ---@param file File File to open
-function ReviewBuffer:_on_open_file(file)
+---@param line number|nil Optional line number to jump to
+function ReviewBuffer:_on_open_file(file, line)
 	-- Get the full path
 	local full_path = self.repo:get_root() .. "/" .. file.path
 
 	-- Open in a new tab to not disrupt the review layout
 	vim.cmd("tabnew " .. vim.fn.fnameescape(full_path))
+
+	-- Jump to line if specified
+	if line then
+		vim.api.nvim_win_set_cursor(0, { line, 0 })
+	end
 end
 
 ---Handle toggling reviewed status from diff view
