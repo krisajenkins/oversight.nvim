@@ -1,5 +1,7 @@
 -- Comment input floating window
 
+local float = require("oversight.lib.float")
+
 ---@class CommentInputOpts
 ---@field context CommentContext Comment context (file, line, side)
 ---@field existing_comment? Comment Optional existing comment for editing
@@ -39,32 +41,15 @@ end
 
 ---Create the floating window
 function CommentInput:_create_window()
-	-- Create buffer
-	self.buf = vim.api.nvim_create_buf(false, true)
-	vim.api.nvim_set_option_value("buftype", "nofile", { buf = self.buf })
-	vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = self.buf })
-	vim.api.nvim_set_option_value("filetype", "oversight-comment", { buf = self.buf })
-
-	-- Calculate window size
-	local width = math.min(80, vim.o.columns - 10)
-	local height = 10
-
-	local row = math.floor((vim.o.lines - height) / 2)
-	local col = math.floor((vim.o.columns - width) / 2)
-
-	-- Create window
 	local title = self.existing_comment and " Edit Comment " or " Add Comment "
-	self.win = vim.api.nvim_open_win(self.buf, true, {
-		relative = "editor",
-		width = width,
-		height = height,
-		row = row,
-		col = col,
-		style = "minimal",
-		border = "rounded",
+	local state = float.open({
+		width = math.min(80, vim.o.columns - 10),
+		height = 10,
 		title = title,
-		title_pos = "center",
+		filetype = "oversight-comment",
 	})
+	self.buf = state.buf
+	self.win = state.win
 
 	-- Set window options
 	vim.api.nvim_set_option_value("wrap", true, { win = self.win })
@@ -268,11 +253,7 @@ end
 
 ---Close the window
 function CommentInput:close()
-	if self.win and vim.api.nvim_win_is_valid(self.win) then
-		vim.api.nvim_win_close(self.win, true)
-	end
-	self.win = nil
-	self.buf = nil
+	float.close(self)
 end
 
 return CommentInput

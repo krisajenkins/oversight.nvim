@@ -1,5 +1,7 @@
 -- Help overlay floating window
 
+local float = require("oversight.lib.float")
+
 ---@class HelpOverlay
 ---@field buf number Buffer handle
 ---@field win number Window handle
@@ -58,29 +60,17 @@ function HelpOverlay.show(opts)
 
 	local instance = setmetatable({}, HelpOverlay)
 
-	-- Create buffer
-	instance.buf = vim.api.nvim_create_buf(false, true)
+	local state = float.open({
+		width = width,
+		height = #help_text,
+		title = title,
+	})
+	instance.buf = state.buf
+	instance.win = state.win
+
+	-- Set content and lock buffer
 	vim.api.nvim_buf_set_lines(instance.buf, 0, -1, false, help_text)
 	vim.api.nvim_set_option_value("modifiable", false, { buf = instance.buf })
-	vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = instance.buf })
-
-	-- Calculate window position
-	local height = #help_text
-	local row = math.floor((vim.o.lines - height) / 2)
-	local col = math.floor((vim.o.columns - width) / 2)
-
-	-- Create floating window
-	instance.win = vim.api.nvim_open_win(instance.buf, true, {
-		relative = "editor",
-		width = width,
-		height = height,
-		row = row,
-		col = col,
-		style = "minimal",
-		border = "rounded",
-		title = title,
-		title_pos = "center",
-	})
 
 	-- Setup keymappings to close
 	instance:_setup_close_handlers()
@@ -112,11 +102,7 @@ end
 
 ---Close the help overlay
 function HelpOverlay:close()
-	if self.win and vim.api.nvim_win_is_valid(self.win) then
-		vim.api.nvim_win_close(self.win, true)
-	end
-	self.win = nil
-	self.buf = nil
+	float.close(self)
 end
 
 return HelpOverlay
