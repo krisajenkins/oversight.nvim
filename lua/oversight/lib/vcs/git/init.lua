@@ -2,7 +2,7 @@
 -- Implements the VcsBackend interface for Git repositories
 
 local logger = require("oversight.logger")
-local Diff = require("oversight.lib.diff")
+local base = require("oversight.lib.vcs.base")
 
 ---@class GitBackend : VcsBackend
 ---@field type "git"
@@ -10,36 +10,11 @@ local Diff = require("oversight.lib.diff")
 ---@field ref string HEAD commit SHA
 ---@field branch string|nil Current branch name
 local GitBackend = {}
-GitBackend.__index = GitBackend
-
--- Singleton instances per directory
-local instances = {}
 
 ---Get the git CLI module
 ---@return table git Git CLI module
 local function get_git()
 	return require("oversight.lib.vcs.git.cli")
-end
-
----Get or create backend instance for a directory
----@param dir? string Directory (defaults to cwd)
----@return GitBackend|nil backend Backend instance or nil if not a git repo
-function GitBackend.instance(dir)
-	dir = dir or vim.fn.getcwd()
-
-	-- Resolve to absolute path
-	dir = vim.fn.fnamemodify(dir, ":p")
-	dir = dir:gsub("/$", "") -- Remove trailing slash
-
-	if instances[dir] then
-		return instances[dir]
-	end
-
-	local backend = GitBackend.new(dir)
-	if backend then
-		instances[dir] = backend
-	end
-	return backend
 end
 
 ---Create a new backend instance
@@ -88,24 +63,6 @@ function GitBackend.new(dir)
 	}, GitBackend)
 
 	return instance
-end
-
----Get the repository root directory
----@return string root Repository root
-function GitBackend:get_root()
-	return self.root
-end
-
----Get the current reference (HEAD commit SHA)
----@return string ref Current commit SHA
-function GitBackend:get_ref()
-	return self.ref
-end
-
----Get the current branch name
----@return string|nil branch Branch name or nil if detached
-function GitBackend:get_branch()
-	return self.branch
 end
 
 ---Refresh repository state (HEAD, branch)
@@ -160,13 +117,6 @@ function GitBackend:get_changed_files()
 	return files
 end
 
----Check if there are uncommitted changes
----@return boolean has_changes True if there are changes
-function GitBackend:has_changes()
-	local files = self:get_changed_files()
-	return #files > 0
-end
-
 ---Get raw diff output for a specific file (for hashing/change detection)
 ---@param file_path string File path relative to repo root
 ---@return string|nil diff_raw Raw diff output or nil on error
@@ -179,84 +129,8 @@ function GitBackend:get_file_diff_raw(file_path)
 	return result.stdout
 end
 
----Get diff for a specific file
----@param file_path string File path relative to repo root
----@return FileDiff|nil diff File diff or nil on error
-function GitBackend:get_file_diff(file_path)
-	local git = get_git()
-
-	local result = git.diff():arg("HEAD"):arg("--"):arg(file_path):cwd(self.root):call()
-
-	if not result.success then
-		logger.error("Failed to get diff for %s: %s", file_path, result.stderr)
-		return nil
-	end
-
-	if result.stdout == "" then
-		-- No changes for this file
-		return {
-			path = file_path,
-			old_path = nil,
-			status = "M",
-			hunks = {},
-			is_binary = false,
-		}
-	end
-
-	-- Check for binary file
-	-- Match the actual binary file message format: "Binary files ... and ... differ"
-	-- Be specific to avoid matching code that contains "Binary files" as a string
-	if result.stdout:match("\nBinary files [^\n]+ differ") or result.stdout:match("^Binary files [^\n]+ differ") then
-		return {
-			path = file_path,
-			old_path = nil,
-			status = "M",
-			hunks = {},
-			is_binary = true,
-		}
-	end
-
-	local lines = vim.split(result.stdout, "\n")
-	local hunks = Diff.parse_unified_diff(lines)
-
-	return {
-		path = file_path,
-		old_path = nil,
-		status = "M",
-		hunks = hunks,
-		is_binary = false,
-	}
-end
-
----Get all file diffs in the repository
----@return FileDiff[] diffs List of file diffs
-function GitBackend:get_all_diffs()
-	local files = self:get_changed_files()
-	local diffs = {}
-
-	for _, file in ipairs(files) do
-		local diff = self:get_file_diff(file.path)
-		if diff then
-			diff.status = file.status
-			diff.old_path = file.old_path
-			table.insert(diffs, diff)
-		end
-	end
-
-	return diffs
-end
-
----Clear cached backend instance
----@param dir? string Directory to clear (clears all if nil)
-function GitBackend.clear_cache(dir)
-	if dir then
-		instances[dir] = nil
-	else
-		instances = {}
-	end
-end
-
--- Backwards compatibility aliases
-GitBackend.get_head = GitBackend.get_ref
+-- Apply shared backend methods (instance, get_root, get_ref, get_branch,
+-- has_changes, get_file_diff, get_all_diffs, clear_cache, get_head)
+base.create_backend(GitBackend)
 
 return GitBackend
