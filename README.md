@@ -11,6 +11,8 @@ Rather than a full VCS UI, oversight.nvim is a specialized tool for the code
 review workflow - particularly useful when you've asked an AI to generate code
 and want to review the changes before committing.
 
+![Screenshot of the plugin](screenshot.png)
+
 ## Features
 
 - **Side-by-side diff view** - Display old and new code versions for easy comparison
