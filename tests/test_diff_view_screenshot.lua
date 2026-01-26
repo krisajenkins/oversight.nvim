@@ -71,7 +71,7 @@ end
 function mock_data.session_code(root)
 	return string.format(
 		[[
-		local Session = require("oversight.lib.storage.session")
+		local Session = require("oversight.lib.session")
 		return Session.new(%q, "abc123def456")
 	]],
 		root
@@ -262,7 +262,7 @@ T["DiffViewBuffer Screenshots"]["renders standard diff with adds, deletes, conte
 	child.lua(string.format(
 		[[
 		local DiffViewBuffer = require("oversight.buffers.diff_view")
-		local Session = require("oversight.lib.storage.session")
+		local Session = require("oversight.lib.session")
 
 		-- Create mock repo and session
 		local mock_repo = %s
@@ -306,7 +306,7 @@ T["DiffViewBuffer Screenshots"]["renders diff with line comments"] = function()
 	child.lua(string.format(
 		[[
 		local DiffViewBuffer = require("oversight.buffers.diff_view")
-		local Session = require("oversight.lib.storage.session")
+		local Session = require("oversight.lib.session")
 
 		-- Create mock repo and session
 		local mock_repo = %s
@@ -355,7 +355,7 @@ T["DiffViewBuffer Screenshots"]["renders real diff_view/ui.lua changes"] = funct
 	child.lua(string.format(
 		[[
 		local DiffViewBuffer = require("oversight.buffers.diff_view")
-		local Session = require("oversight.lib.storage.session")
+		local Session = require("oversight.lib.session")
 
 		-- Create mock repo and session
 		local mock_repo = %s
@@ -401,7 +401,7 @@ T["DiffViewBuffer Screenshots"]["renders comment/init.lua diff with pure additio
 	child.lua(string.format(
 		[[
 		local DiffViewBuffer = require("oversight.buffers.diff_view")
-		local Session = require("oversight.lib.storage.session")
+		local Session = require("oversight.lib.session")
 
 		-- Create mock repo and session
 		local mock_repo = %s

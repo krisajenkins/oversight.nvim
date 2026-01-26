@@ -2,7 +2,7 @@
 -- Coordinates the file list and diff view panels
 
 local Vcs = require("oversight.lib.vcs")
-local Session = require("oversight.lib.storage.session")
+local Session = require("oversight.lib.session")
 local FileListBuffer = require("oversight.buffers.file_list")
 local DiffViewBuffer = require("oversight.buffers.diff_view")
 local CommentInput = require("oversight.buffers.comment")

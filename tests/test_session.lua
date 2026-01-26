@@ -1,4 +1,4 @@
--- Tests for storage/session functionality
+-- Tests for session functionality
 
 local T = MiniTest.new_set()
 local expect = MiniTest.expect
@@ -6,7 +6,7 @@ local expect = MiniTest.expect
 T["Session"] = MiniTest.new_set()
 
 T["Session"]["creates new session"] = function()
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
@@ -17,7 +17,7 @@ T["Session"]["creates new session"] = function()
 end
 
 T["Session"]["adds comments"] = function()
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
@@ -32,7 +32,7 @@ T["Session"]["adds comments"] = function()
 end
 
 T["Session"]["adds file-level comments"] = function()
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
@@ -43,7 +43,7 @@ T["Session"]["adds file-level comments"] = function()
 end
 
 T["Session"]["deletes comments"] = function()
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
@@ -56,7 +56,7 @@ T["Session"]["deletes comments"] = function()
 end
 
 T["Session"]["tracks file status"] = function()
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
@@ -69,7 +69,7 @@ T["Session"]["tracks file status"] = function()
 end
 
 T["Session"]["toggles file reviewed status"] = function()
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
@@ -84,7 +84,7 @@ T["Session"]["toggles file reviewed status"] = function()
 end
 
 T["Session"]["calculates progress"] = function()
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
@@ -103,7 +103,7 @@ T["Session"]["calculates progress"] = function()
 end
 
 T["Session"]["gets comments by file"] = function()
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
@@ -122,7 +122,7 @@ T["Session"]["gets comments by file"] = function()
 end
 
 T["Session"]["gets comment counts by type"] = function()
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
@@ -140,7 +140,7 @@ T["Session"]["gets comment counts by type"] = function()
 end
 
 T["Session"]["serializes to JSON and back"] = function()
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 	session:ensure_file("test.lua", "M")
@@ -156,7 +156,7 @@ T["Session"]["serializes to JSON and back"] = function()
 end
 
 T["Session"]["checks for comments"] = function()
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 	expect.equality(session:has_comments(), false)
@@ -166,7 +166,7 @@ T["Session"]["checks for comments"] = function()
 end
 
 T["Session"]["reset_file clears reviewed status and comments"] = function()
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
@@ -195,7 +195,7 @@ T["Session"]["reset_file clears reviewed status and comments"] = function()
 end
 
 T["Session"]["ensure_file resets when diff changes"] = function()
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 

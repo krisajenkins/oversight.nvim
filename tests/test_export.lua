@@ -22,7 +22,7 @@ end
 
 T["Export"]["generates markdown header"] = function()
 	local Export = require("oversight.lib.export")
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 	local repo = create_mock_repo()
@@ -34,7 +34,7 @@ end
 
 T["Export"]["formats comments by file"] = function()
 	local Export = require("oversight.lib.export")
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 	session:add_comment("src/main.lua", 10, "new", "issue", "Fix this bug")
@@ -51,7 +51,7 @@ end
 
 T["Export"]["includes line numbers"] = function()
 	local Export = require("oversight.lib.export")
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 	session:add_comment("test.lua", 42, "new", "issue", "Problem here")
@@ -64,7 +64,7 @@ end
 
 T["Export"]["marks deleted lines with tilde"] = function()
 	local Export = require("oversight.lib.export")
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 	session:add_comment("test.lua", 10, "old", "note", "This was removed")
@@ -77,7 +77,7 @@ end
 
 T["Export"]["handles file-level comments"] = function()
 	local Export = require("oversight.lib.export")
-	local Session = require("oversight.lib.storage.session")
+	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 	session:add_comment("test.lua", nil, nil, "note", "General comment about this file")

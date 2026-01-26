@@ -2,7 +2,7 @@
 
 ## Overview
 
-The test suite uses `mini.test` with 9 test files covering core abstractions, git/jj VCS operations, session storage, UI components, and integration workflows. The overall quality is good, with several well-designed patterns, but there are some areas worth flagging.
+The test suite uses `mini.test` with 9 test files covering core abstractions, git/jj VCS operations, session state, UI components, and integration workflows. The overall quality is good, with several well-designed patterns, but there are some areas worth flagging.
 
 ---
 
@@ -77,7 +77,7 @@ local hunks = Diff.parse_unified_diff(diff_lines)
 
 No external dependencies. Deterministic. Tests edge cases (only additions, only deletions, multiple hunks).
 
-### `test_storage.lua` - Good
+### `test_session.lua` - Good
 
 Pure unit tests of session state management. Uses in-memory sessions without file I/O. Covers the important scenarios including the newer `reset_file` and `ensure_file` with diff hash detection.
 
@@ -115,11 +115,11 @@ Uses child Neovim processes with hardcoded mock diff data for visual regression 
 
 ## Missing Test Coverage for Complex Code
 
-### `lib/storage/session.lua` - `compute_hash()` (lines 91-97)
+### `lib/session.lua` - `compute_hash()` (lines 91-97)
 
 The djb2 hash function is simple but used for critical change detection. It's not directly tested.
 
-### `lib/storage/session.lua` - `generate_uuid()` (lines 72-79)
+### `lib/session.lua` - `generate_uuid()` (lines 72-79)
 
 UUID generation isn't tested (randomness is hard to test, but format validation could be done).
 
@@ -139,7 +139,7 @@ The VCS auto-detection (checking for `.jj/` vs `.git/`) isn't directly tested be
 graph TD
     subgraph "Well Tested (Pure Functions)"
         DIFF[test_diff.lua<br/>Diff parsing]
-        STORAGE[test_storage.lua<br/>Session state]
+        SESSION[test_session.lua<br/>Session state]
         EXPORT[test_export.lua<br/>Markdown export]
         UI[test_ui.lua<br/>UI components]
         BUFFER[test_buffer.lua<br/>Buffer abstraction]
@@ -156,7 +156,7 @@ graph TD
     end
 
     DIFF --> |"Mock data"| SCREENSHOT
-    STORAGE --> REVIEW
+    SESSION --> REVIEW
     UI --> BUFFER
     BUFFER --> REVIEW
 
@@ -166,7 +166,7 @@ graph TD
     style GIT fill:#ffcccc
     style JJ fill:#ffcccc
     style DIFF fill:#ccffcc
-    style STORAGE fill:#ccffcc
+    style SESSION fill:#ccffcc
     style REVIEW fill:#ccffcc
 ```
 

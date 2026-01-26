@@ -50,10 +50,7 @@ Dependencies (`deps/mini.nvim` and `deps/plenary.nvim`) are auto-cloned by make.
 - `repository.lua` - Singleton per-directory Repository instances with caching
 - `diff.lua` - Diff parsing and hunk extraction
 
-**Storage** (`lib/storage/`):
-
-- `session.lua` - ReviewSession: tracks file review status and comments
-- `json.lua` - JSON persistence to `$XDG_DATA_HOME/oversight/sessions/`
+**Session** (`lib/session.lua`): ReviewSession tracks file review status and comments (ephemeral, not persisted between Neovim sessions).
 
 ### Buffer Types (`buffers/`)
 
@@ -88,7 +85,7 @@ return T
 
 ## Type Annotations
 
-The codebase uses LuaCATS annotations (`---@class`, `---@field`, `---@param`, `---@return`). The `.luarc.lua` configures lua-language-server for type checking. Key types are defined in `lib/storage/session.lua` (Comment, FileStatus, ReviewSession).
+The codebase uses LuaCATS annotations (`---@class`, `---@field`, `---@param`, `---@return`). The `.luarc.lua` configures lua-language-server for type checking. Key types are defined in `lib/session.lua` (Comment, FileStatus, ReviewSession).
 
 ## Version Control
 

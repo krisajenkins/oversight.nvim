@@ -4,7 +4,7 @@
 local M = {}
 
 ---@class OversightConfig
----@field data_dir? string Override XDG data directory for session storage
+---@field data_dir? string Override XDG data directory for sessions
 
 ---@type OversightConfig
 M.config = {}
