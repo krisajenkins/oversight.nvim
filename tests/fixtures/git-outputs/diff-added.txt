@@ -1,0 +1,13 @@
+diff --git a/src/new_feature.lua b/src/new_feature.lua
+new file mode 100644
+index 0000000..43904e7
+--- /dev/null
++++ b/src/new_feature.lua
+@@ -0,0 +1,7 @@
++local M = {}
++
++function M.enabled()
++	return true
++end
++
++return M

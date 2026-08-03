@@ -1,0 +1,10 @@
+Working copy changes:
+M README.md
+M assets/logo.bin
+R docs/{guide.md => manual.md}
+M no-newline.txt
+D notes.txt
+M src/app.lua
+A src/new_feature.lua
+Working copy  (@) : pskzmqyv 7e69c23a main | (no description set)
+Parent commit (@-): vnsmvlzn 52e288f9 Initial commit

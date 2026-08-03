@@ -1,0 +1,7 @@
+README.md
+assets/logo.bin
+docs/manual.md
+no-newline.txt
+src/app.lua
+src/new_feature.lua
+src/util.lua

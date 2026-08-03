@@ -96,21 +96,24 @@ function GitBackend:get_changed_files()
 
 	local files = {}
 	for line in result.stdout:gmatch("[^\n]+") do
-		local status, path = line:match("^(%S+)%s+(.+)$")
-		if status and path then
-			-- Handle renamed files (R100 old_path -> new_path)
-			if status:match("^R") then
-				local old_path, new_path = path:match("^(.+)%s+(.+)$")
-				if old_path and new_path then
-					table.insert(files, { status = "R", path = new_path, old_path = old_path })
-				else
-					table.insert(files, { status = "R", path = path })
-				end
-			else
-				-- Normalize status to single character
-				local normalized_status = status:sub(1, 1)
-				table.insert(files, { status = normalized_status, path = path })
+		-- `--name-status` separates its fields with TABs, so split on those
+		-- rather than on whitespace: a path may legitimately contain spaces, and
+		-- matching "^(.+)%s+(.+)$" against "R100\told name.md\tnew name.md"
+		-- splits it at the wrong space and yields a pair of nonsense paths.
+		local fields = vim.split(line, "\t", { plain = true })
+		-- Statuses carry a similarity score for renames and copies (R100, C75);
+		-- the first letter is the part we model.
+		local status = fields[1] and fields[1]:sub(1, 1)
+
+		if status == "R" or status == "C" then
+			-- Two paths: the source and the destination.
+			if fields[2] and fields[3] then
+				table.insert(files, { status = status, path = fields[3], old_path = fields[2] })
+			elseif fields[2] then
+				table.insert(files, { status = status, path = fields[2] })
 			end
+		elseif status and fields[2] then
+			table.insert(files, { status = status, path = fields[2] })
 		end
 	end
 

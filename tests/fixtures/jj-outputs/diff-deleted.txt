@@ -1,0 +1,8 @@
+diff --git a/notes.txt b/notes.txt
+deleted file mode 100644
+index 2801153052..0000000000
+--- a/notes.txt
++++ /dev/null
+@@ -1,2 +0,0 @@
+-Scratch notes.
+-Delete me.

@@ -1,0 +1,22 @@
+diff --git a/src/app.lua b/src/app.lua
+index 802d532461..bc352df17a 100644
+--- a/src/app.lua
++++ b/src/app.lua
+@@ -1,7 +1,7 @@
+ local M = {}
+ 
+ function M.greet(name)
+-	return "Hello, " .. name
++	return "Hello there, " .. name
+ end
+ 
+ function M.farewell(name)
+@@ -12,4 +12,8 @@
+ 	return text:upper()
+ end
+ 
++function M.whisper(text)
++	return text:lower()
++end
++
+ return M

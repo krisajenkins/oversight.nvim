@@ -127,9 +127,21 @@ end
 return T
 ```
 
+VCS behaviour is tested against **frozen captures** of real `git` and `jj`
+output in `tests/fixtures/`, replayed by `tests/helpers/mock_cli.lua` — not
+against the repository the tests happen to be living in.
+`tests/test_vcs_hermetic.lua` is the one file that runs a real binary, and it is
+what keeps those captures honest. Regenerate them deliberately with
+`./scripts/generate-fixtures.sh`.
+
+**Read `tests/CLAUDE.md` before writing tests.** It records the traps: why
+swapping `package.loaded` is not enough to mock the CLI, why a test must never
+skip by returning early, and why a real-binary test has to neutralise the
+developer's own git/jj configuration.
+
 ## Type Annotations
 
-The codebase uses LuaCATS annotations (`---@class`, `---@field`, `---@param`, `---@return`). The `.luarc.lua` configures lua-language-server for type checking. Key types are defined in `lib/session.lua` (Comment, FileStatus, ReviewSession).
+The codebase uses LuaCATS annotations (`---@class`, `---@field`, `---@param`, `---@return`). `.luarc.json` configures lua-language-server for type checking (see the Commands section — it must be `.json`, and passed as an absolute path). Key types are defined in `lib/session.lua` (Comment, FileStatus, ReviewSession).
 
 ## Version Control
 

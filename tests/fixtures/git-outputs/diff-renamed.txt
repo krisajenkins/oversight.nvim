@@ -1,0 +1,9 @@
+diff --git a/docs/manual.md b/docs/manual.md
+new file mode 100644
+index 0000000..bbb436f
+--- /dev/null
++++ b/docs/manual.md
+@@ -0,0 +1,3 @@
++# Guide
++
++Read this first.

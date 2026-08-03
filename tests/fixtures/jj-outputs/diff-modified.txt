@@ -1,0 +1,9 @@
+diff --git a/README.md b/README.md
+index c7b6e3be47..3629b1bc73 100644
+--- a/README.md
++++ b/README.md
+@@ -1,3 +1,3 @@
+ # Demo
+ 
+-A repository that exists only to produce test fixtures.
++A repository that exists only to produce test fixtures for oversight.

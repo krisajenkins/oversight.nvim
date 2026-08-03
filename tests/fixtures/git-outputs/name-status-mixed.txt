@@ -1,0 +1,7 @@
+M	README.md
+M	assets/logo.bin
+R100	docs/guide.md	docs/manual.md
+M	no-newline.txt
+D	notes.txt
+M	src/app.lua
+A	src/new_feature.lua

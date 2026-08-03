@@ -1,4 +1,13 @@
--- Tests for JJ CLI and Backend modules
+-- Tests for the jj CLI builder and the jj backend's parsing.
+--
+-- These used to guard every case with `if not isdirectory(cwd .. "/.jj")`, so
+-- they were silent no-ops anywhere the plugin was not being developed in a jj
+-- checkout — and where they did run, they asserted against whatever this
+-- working copy happened to contain. They now run everywhere, against frozen
+-- captures of real jj output (tests/fixtures/jj-outputs/).
+
+local MockCli = require("tests.helpers.mock_cli")
+local capture_notifications = require("tests.helpers.notify")
 
 local T = MiniTest.new_set()
 local expect = MiniTest.expect
@@ -11,294 +20,71 @@ T["JJ CLI"]["builds root command"] = function()
 	local builder = jj.root()
 
 	expect.equality(builder.cmd, "jj")
-	expect.equality(builder.args[1], "root")
-	expect.equality(builder.args[2], "--no-pager")
+	expect.equality(builder.args, { "root", "--no-pager" })
 end
 
 T["JJ CLI"]["builds status command with color=never"] = function()
 	local jj = require("oversight.lib.vcs.jj.cli")
 
-	local builder = jj.status()
-
-	expect.equality(builder.cmd, "jj")
-	expect.equality(builder.args[1], "status")
-	expect.equality(builder.args[2], "--no-pager")
-	expect.equality(builder.args[3], "--color")
-	expect.equality(builder.args[4], "never")
+	expect.equality(jj.status().args, { "status", "--no-pager", "--color", "never" })
 end
 
 T["JJ CLI"]["builds log command with color=never"] = function()
 	local jj = require("oversight.lib.vcs.jj.cli")
 
-	local builder = jj.log()
-
-	expect.equality(builder.cmd, "jj")
-	expect.equality(builder.args[1], "log")
-	expect.equality(builder.args[2], "--no-pager")
-	expect.equality(builder.args[3], "--no-graph")
-	expect.equality(builder.args[4], "--color")
-	expect.equality(builder.args[5], "never")
+	expect.equality(jj.log().args, { "log", "--no-pager", "--no-graph", "--color", "never" })
 end
 
-T["JJ CLI"]["builds diff command with color=never"] = function()
+-- Regression test. jj's default diff format is color-words, not unified, and
+-- the backend hands this command's output straight to a unified-diff parser.
+-- Without --git every file in a jj repository showed up with zero hunks, unless
+-- the user happened to have set ui.diff-formatter = ":git" themselves.
+T["JJ CLI"]["asks jj diff for git-format output"] = function()
 	local jj = require("oversight.lib.vcs.jj.cli")
 
-	local builder = jj.diff()
-
-	expect.equality(builder.cmd, "jj")
-	expect.equality(builder.args[1], "diff")
-	expect.equality(builder.args[2], "--no-pager")
-	expect.equality(builder.args[3], "--color")
-	expect.equality(builder.args[4], "never")
+	expect.equality(jj.diff().args, { "diff", "--no-pager", "--git", "--color", "never" })
 end
 
-T["JJ CLI"]["arg() adds positional argument"] = function()
+T["JJ CLI"]["builds file list command"] = function()
 	local jj = require("oversight.lib.vcs.jj.cli")
 
-	local builder = jj.raw():arg("status"):arg("--porcelain")
-
-	expect.equality(builder.args[2], "status")
-	expect.equality(builder.args[3], "--porcelain")
+	expect.equality(jj.file_list().args, { "file", "list", "--no-pager" })
 end
 
-T["JJ CLI"]["flag() adds flag with double dash"] = function()
+T["JJ CLI"]["raw() still suppresses the pager"] = function()
 	local jj = require("oversight.lib.vcs.jj.cli")
 
-	local builder = jj.raw():arg("status"):flag("no-pager")
-
-	expect.equality(builder.args[3], "--no-pager")
+	expect.equality(jj.raw():arg("status").args, { "--no-pager", "status" })
 end
 
 T["JJ CLI"]["option() adds key-value option"] = function()
 	local jj = require("oversight.lib.vcs.jj.cli")
 
-	local builder = jj.raw():arg("log"):option("template", "change_id")
-
-	expect.equality(builder.args[3], "--template")
-	expect.equality(builder.args[4], "change_id")
+	expect.equality(jj.raw():arg("log"):option("template", "change_id").args, {
+		"--no-pager",
+		"log",
+		"--template",
+		"change_id",
+	})
 end
 
 T["JJ CLI"]["cwd() sets working directory"] = function()
 	local jj = require("oversight.lib.vcs.jj.cli")
 
-	local builder = jj.raw():cwd("/tmp")
-
-	expect.equality(builder.options.cwd, "/tmp")
+	expect.equality(jj.raw():cwd("/tmp").options.cwd, "/tmp")
 end
 
-T["JJ Status Parsing"] = MiniTest.new_set()
-
--- We test status parsing by accessing the module's internal parsing
--- This requires a helper that exposes the parsing logic
-
-T["JJ Status Parsing"]["parses modified files"] = function()
-	-- Create a minimal test by using the backend on this repo (which is jj)
-	local JjBackend = require("oversight.lib.vcs.jj")
-
-	-- Check if we're in a jj repo
-	local cwd = vim.fn.getcwd()
-	if vim.fn.isdirectory(cwd .. "/.jj") ~= 1 then
-		-- Skip test if not in a jj repo
-		return
-	end
-
-	JjBackend.clear_cache()
-	local backend = JjBackend.instance()
-
-	if backend then
-		local files = backend:get_changed_files()
-
-		-- Type guarantees (VcsFileChange[]) enforced by LuaCATS annotations
-		-- Verify status values are valid
-		for _, file in ipairs(files) do
-			expect.equality(file.status:match("^[MADR]$") ~= nil, true)
-			expect.equality(#file.path > 0, true)
-		end
-	end
-end
-
-T["JJ Status Parsing"]["has_changes returns boolean"] = function()
-	local JjBackend = require("oversight.lib.vcs.jj")
-
-	local cwd = vim.fn.getcwd()
-	if vim.fn.isdirectory(cwd .. "/.jj") ~= 1 then
-		return
-	end
-
-	JjBackend.clear_cache()
-	local backend = JjBackend.instance()
-
-	if backend then
-		local has_changes = backend:has_changes()
-		-- Type guarantee (boolean) enforced by LuaCATS annotations
-		expect.equality(has_changes == true or has_changes == false, true)
-	end
-end
-
-T["JJ Rename Path Expansion"] = MiniTest.new_set()
-
--- Test the rename path expansion logic directly
--- We need to test various jj rename formats
-
-T["JJ Rename Path Expansion"]["handles simple rename"] = function()
-	-- We test by checking the backend parses renames correctly
-	local JjBackend = require("oversight.lib.vcs.jj")
-
-	local cwd = vim.fn.getcwd()
-	if vim.fn.isdirectory(cwd .. "/.jj") ~= 1 then
-		return
-	end
-
-	JjBackend.clear_cache()
-	local backend = JjBackend.instance()
-
-	if backend then
-		local files = backend:get_changed_files()
-
-		-- Check that any renames have both path and old_path
-		-- Type guarantees (string fields) enforced by LuaCATS annotations
-		for _, file in ipairs(files) do
-			if file.status == "R" then
-				-- Paths should not contain braces (unexpanded rename syntax)
-				expect.equality(file.path:match("{") == nil, true)
-				expect.equality(file.old_path:match("{") == nil, true)
-				-- Paths should not have double slashes
-				expect.equality(file.path:match("//") == nil, true)
-				expect.equality(file.old_path:match("//") == nil, true)
-			end
-		end
-	end
-end
-
-T["JJ Rename Path Expansion"]["handles empty new part"] = function()
-	-- Test case: lua/oversight/lib/{git => }/diff.lua
-	-- Should expand to:
-	--   old: lua/oversight/lib/git/diff.lua
-	--   new: lua/oversight/lib/diff.lua (no double slash!)
-
-	local JjBackend = require("oversight.lib.vcs.jj")
-
-	local cwd = vim.fn.getcwd()
-	if vim.fn.isdirectory(cwd .. "/.jj") ~= 1 then
-		return
-	end
-
-	JjBackend.clear_cache()
-	local backend = JjBackend.instance()
-
-	if backend then
-		local files = backend:get_changed_files()
-
-		-- Look for the specific rename of diff.lua
-		for _, file in ipairs(files) do
-			if file.status == "R" and file.path:match("diff%.lua$") then
-				-- Should be lua/oversight/lib/diff.lua, not lua/oversight/lib//diff.lua
-				expect.equality(file.path:match("//") == nil, true)
-				-- The path should be valid
-				expect.equality(file.path, "lua/oversight/lib/diff.lua")
-				expect.equality(file.old_path, "lua/oversight/lib/git/diff.lua")
-			end
-		end
-	end
-end
-
-T["JJ Rename Path Expansion"]["can get diff for renamed file"] = function()
-	-- Test that get_file_diff works correctly for renamed files
-	local JjBackend = require("oversight.lib.vcs.jj")
-
-	local cwd = vim.fn.getcwd()
-	if vim.fn.isdirectory(cwd .. "/.jj") ~= 1 then
-		return
-	end
-
-	JjBackend.clear_cache()
-	local backend = JjBackend.instance()
-
-	if backend then
-		local files = backend:get_changed_files()
-
-		-- Find a renamed file
-		for _, file in ipairs(files) do
-			if file.status == "R" then
-				-- Get the diff for this renamed file
-				local diff = backend:get_file_diff(file.path)
-
-				expect.equality(diff ~= nil, true)
-				if diff then
-					-- Should NOT be marked as binary
-					expect.equality(diff.is_binary, false)
-					-- Should have hunks array (type guaranteed by LuaCATS)
-					expect.equality(diff.hunks ~= nil, true)
-				end
-				break -- Only test one renamed file
-			end
-		end
-	end
-end
-
-T["JJ Fileset Literal Escaping"] = MiniTest.new_set()
-
--- Test the fileset_literal function by checking the output format
--- We access it indirectly through the backend behavior
-
-T["JJ Fileset Literal Escaping"]["handles paths with brackets"] = function()
-	-- Test that paths with glob characters like [] are handled correctly
-	-- This is a regression test for the bug where paths like [year]/[month]/[slug].astro
-	-- were interpreted as glob patterns instead of literal paths
-
-	local JjBackend = require("oversight.lib.vcs.jj")
-
-	local cwd = vim.fn.getcwd()
-	if vim.fn.isdirectory(cwd .. "/.jj") ~= 1 then
-		return
-	end
-
-	JjBackend.clear_cache()
-	local backend = JjBackend.instance()
-
-	if backend then
-		-- Test with a path that contains brackets
-		-- Even if the file doesn't exist, we should get a valid (empty) result
-		-- instead of a glob expansion error or unexpected match
-		local diff = backend:get_file_diff("[nonexistent]/[test].lua")
-
-		-- Should return a valid diff object (not nil from command failure)
-		expect.equality(diff ~= nil, true)
-		if diff then
-			-- Should have empty hunks since file doesn't exist
-			expect.equality(#diff.hunks, 0)
-		end
-	end
-end
-
-T["JJ Fileset Literal Escaping"]["handles paths with quotes"] = function()
-	-- Test paths containing double quotes are properly escaped
-
-	local JjBackend = require("oversight.lib.vcs.jj")
-
-	local cwd = vim.fn.getcwd()
-	if vim.fn.isdirectory(cwd .. "/.jj") ~= 1 then
-		return
-	end
-
-	JjBackend.clear_cache()
-	local backend = JjBackend.instance()
-
-	if backend then
-		-- Test with a path containing a quote character
-		local diff = backend:get_file_diff('file"with"quotes.lua')
-
-		-- Should return a valid diff object, not fail due to quoting issues
-		expect.equality(diff ~= nil, true)
-	end
-end
+-- ---------------------------------------------------------------------------
+-- expand_rename_path (pure, no CLI involved)
+-- ---------------------------------------------------------------------------
 
 T["expand_rename_path"] = MiniTest.new_set()
 
-T["expand_rename_path"]["expands simple rename"] = function()
-	local JjBackend = require("oversight.lib.vcs.jj")
-	local expand = JjBackend._expand_rename_path
+local function expand(path)
+	return require("oversight.lib.vcs.jj")._expand_rename_path(path)
+end
 
+T["expand_rename_path"]["expands simple rename"] = function()
 	local old_path, new_path = expand("path/to/{old => new}/file.lua")
 
 	expect.equality(old_path, "path/to/old/file.lua")
@@ -306,9 +92,6 @@ T["expand_rename_path"]["expands simple rename"] = function()
 end
 
 T["expand_rename_path"]["expands empty new part"] = function()
-	local JjBackend = require("oversight.lib.vcs.jj")
-	local expand = JjBackend._expand_rename_path
-
 	local old_path, new_path = expand("lua/oversight/lib/{git => }/diff.lua")
 
 	expect.equality(old_path, "lua/oversight/lib/git/diff.lua")
@@ -316,9 +99,6 @@ T["expand_rename_path"]["expands empty new part"] = function()
 end
 
 T["expand_rename_path"]["expands empty old part"] = function()
-	local JjBackend = require("oversight.lib.vcs.jj")
-	local expand = JjBackend._expand_rename_path
-
 	local old_path, new_path = expand("{=> new}/file.lua")
 
 	expect.equality(old_path, "/file.lua")
@@ -326,9 +106,6 @@ T["expand_rename_path"]["expands empty old part"] = function()
 end
 
 T["expand_rename_path"]["returns plain path unchanged"] = function()
-	local JjBackend = require("oversight.lib.vcs.jj")
-	local expand = JjBackend._expand_rename_path
-
 	local old_path, new_path = expand("simple/path.lua")
 
 	expect.equality(old_path, "simple/path.lua")
@@ -336,9 +113,6 @@ T["expand_rename_path"]["returns plain path unchanged"] = function()
 end
 
 T["expand_rename_path"]["handles rename at start of path"] = function()
-	local JjBackend = require("oversight.lib.vcs.jj")
-	local expand = JjBackend._expand_rename_path
-
 	local old_path, new_path = expand("{src => lib}/utils.lua")
 
 	expect.equality(old_path, "src/utils.lua")
@@ -346,9 +120,6 @@ T["expand_rename_path"]["handles rename at start of path"] = function()
 end
 
 T["expand_rename_path"]["handles rename at end of path"] = function()
-	local JjBackend = require("oversight.lib.vcs.jj")
-	local expand = JjBackend._expand_rename_path
-
 	local old_path, new_path = expand("path/to/{old.lua => new.lua}")
 
 	expect.equality(old_path, "path/to/old.lua")
@@ -356,54 +127,198 @@ T["expand_rename_path"]["handles rename at end of path"] = function()
 end
 
 T["expand_rename_path"]["cleans double slashes from empty parts"] = function()
-	local JjBackend = require("oversight.lib.vcs.jj")
-	local expand = JjBackend._expand_rename_path
-
-	-- When empty part is in the middle, we might get double slashes without cleanup
 	local old_path, new_path = expand("a/{b => }/c.lua")
 
 	expect.equality(old_path, "a/b/c.lua")
 	expect.equality(new_path, "a/c.lua") -- Should NOT be "a//c.lua"
 end
 
-T["VCS Detection"] = MiniTest.new_set()
+-- ---------------------------------------------------------------------------
+-- Backend, against frozen captures
+-- ---------------------------------------------------------------------------
 
-T["VCS Detection"]["detects jj repo"] = function()
-	local Vcs = require("oversight.lib.vcs")
+local MOCK_ROOT = "/tmp/oversight-mock-repo"
 
-	local cwd = vim.fn.getcwd()
-	if vim.fn.isdirectory(cwd .. "/.jj") ~= 1 then
-		return
+T["JJ Backend"] = MiniTest.new_set({
+	hooks = {
+		pre_case = function()
+			MockCli.install()
+		end,
+		post_case = function()
+			MockCli.assert_no_misses()
+			MockCli.uninstall()
+		end,
+	},
+})
+
+---@return VcsBackend backend
+local function backend()
+	local Backend = require("oversight.lib.vcs.jj")
+	local instance = Backend.instance(MOCK_ROOT)
+	if not instance then
+		error("expected the mock to produce a jj backend")
 	end
-
-	Vcs.clear_cache()
-	local backend = Vcs.instance()
-
-	expect.equality(backend ~= nil, true)
-	expect.equality(backend.type, "jj")
+	return instance
 end
 
-T["VCS Detection"]["jj backend has correct methods"] = function()
-	local Vcs = require("oversight.lib.vcs")
-
-	local cwd = vim.fn.getcwd()
-	if vim.fn.isdirectory(cwd .. "/.jj") ~= 1 then
-		return
+---@param path string
+---@return FileDiff diff
+local function diff_of(path)
+	local diff = backend():get_file_diff(path)
+	if not diff then
+		error("expected a diff for " .. path)
 	end
+	return diff
+end
 
-	Vcs.clear_cache()
-	local backend = Vcs.instance()
+T["JJ Backend"]["reads root, change ID and bookmark on construction"] = function()
+	local repo = backend()
 
-	if backend and backend.type == "jj" then
-		-- Check all required methods exist
-		expect.equality(type(backend.get_root), "function")
-		expect.equality(type(backend.get_ref), "function")
-		expect.equality(type(backend.get_branch), "function")
-		expect.equality(type(backend.get_changed_files), "function")
-		expect.equality(type(backend.has_changes), "function")
-		expect.equality(type(backend.get_file_diff), "function")
-		expect.equality(type(backend.refresh), "function")
+	expect.equality(repo.type, "jj")
+	expect.equality(repo:get_root(), MOCK_ROOT)
+	-- jj's change_id template prints the full 32-character ID, not the short
+	-- prefix that `jj status` displays.
+	expect.equality(repo:get_ref(), "pskzmqyvqskkzqrslpymqmytysvosurr")
+	expect.equality(repo:get_branch(), "main")
+end
+
+T["JJ Backend"]["returns nil when the directory is not a jj repository"] = function()
+	MockCli.set_failure("jj root", 'Error: There is no jj repo in "."')
+
+	expect.equality(require("oversight.lib.vcs.jj").new("/tmp/definitely-not-a-repo"), nil)
+end
+
+T["JJ Backend"]["parses every status in jj status output"] = function()
+	local files = backend():get_changed_files()
+
+	expect.equality(files, {
+		{ status = "M", path = "README.md" },
+		{ status = "M", path = "assets/logo.bin" },
+		{ status = "R", path = "docs/manual.md", old_path = "docs/guide.md" },
+		{ status = "M", path = "no-newline.txt" },
+		{ status = "D", path = "notes.txt" },
+		{ status = "M", path = "src/app.lua" },
+		{ status = "A", path = "src/new_feature.lua" },
+	})
+end
+
+-- jj prints two trailer lines after the change list, and a header before it.
+-- None of them may be mistaken for a file.
+T["JJ Backend"]["reports no changes for a clean working copy"] = function()
+	MockCli.set("jj status", { fixture = "jj-outputs/status-clean.txt" })
+
+	local repo = backend()
+
+	expect.equality(repo:get_changed_files(), {})
+	expect.equality(repo:has_changes(), false)
+end
+
+T["JJ Backend"]["has_changes is true when the working copy is dirty"] = function()
+	expect.equality(backend():has_changes(), true)
+end
+
+T["JJ Backend"]["lists tracked files for browse mode"] = function()
+	local files = backend():get_tracked_files()
+
+	expect.equality(#files, 7)
+	expect.equality(files[1], { status = "", path = "README.md" })
+	expect.equality(files[7], { status = "", path = "src/util.lua" })
+end
+
+T["JJ Backend"]["parses a single-hunk diff"] = function()
+	local diff = diff_of("README.md")
+
+	expect.equality(diff.is_binary, false)
+	expect.equality(#diff.hunks, 1)
+end
+
+T["JJ Backend"]["parses a diff with several hunks"] = function()
+	expect.equality(#diff_of("src/app.lua").hunks, 2)
+end
+
+T["JJ Backend"]["parses a pure-addition diff"] = function()
+	local diff = diff_of("src/new_feature.lua")
+
+	expect.equality(#diff.hunks, 1)
+	for _, line in ipairs(diff.hunks[1].lines) do
+		expect.equality(line.type, "add")
 	end
+end
+
+T["JJ Backend"]["parses a pure-deletion diff"] = function()
+	local diff = diff_of("notes.txt")
+
+	expect.equality(#diff.hunks, 1)
+	for _, line in ipairs(diff.hunks[1].lines) do
+		expect.equality(line.type, "delete")
+	end
+end
+
+T["JJ Backend"]["marks binary files as binary"] = function()
+	local diff = diff_of("assets/logo.bin")
+
+	expect.equality(diff.is_binary, true)
+	expect.equality(#diff.hunks, 0)
+end
+
+T["JJ Backend"]["drops the no-trailing-newline marker"] = function()
+	local diff = diff_of("no-newline.txt")
+
+	expect.equality(#diff.hunks, 1)
+	expect.equality(#diff.hunks[1].lines, 2)
+end
+
+-- jj reports a pure rename as a header-only diff with no hunks at all. That has
+-- to survive as an empty-but-valid FileDiff rather than a nil.
+T["JJ Backend"]["handles a rename with no content change"] = function()
+	local diff = diff_of("docs/manual.md")
+
+	expect.equality(diff.is_binary, false)
+	expect.equality(diff.hunks, {})
+end
+
+T["JJ Backend"]["returns nil and notifies when the diff command fails"] = function()
+	MockCli.set_failure('file:"src/util.lua"', "Error: No such path")
+
+	local messages = capture_notifications(function()
+		expect.equality(backend():get_file_diff("src/util.lua"), nil)
+	end)
+
+	expect.equality(#messages, 1)
+	expect.equality(messages[1]:find("src/util.lua", 1, true) ~= nil, true)
+end
+
+-- Regression test for paths that look like glob patterns. The backend wraps
+-- every path in a `file:"..."` fileset literal precisely so jj does not treat
+-- the brackets as a pattern.
+T["JJ Backend"]["quotes paths as fileset literals"] = function()
+	MockCli.set('file:"[year]/[slug].astro"', { stdout = "" })
+
+	diff_of("[year]/[slug].astro")
+
+	local last = MockCli.calls[#MockCli.calls]
+	expect.equality(last.cmdline:find('file:"[year]/[slug].astro"', 1, true) ~= nil, true)
+end
+
+T["JJ Backend"]["escapes double quotes in paths"] = function()
+	MockCli.set('file:"file\\"with\\"quotes.lua"', { stdout = "" })
+
+	diff_of('file"with"quotes.lua')
+
+	local last = MockCli.calls[#MockCli.calls]
+	expect.equality(last.cmdline:find('file:"file\\"with\\"quotes.lua"', 1, true) ~= nil, true)
+end
+
+T["JJ Backend"]["refresh() re-reads change ID and bookmark"] = function()
+	local repo = backend()
+
+	MockCli.set("--template change_id", { stdout = "zzzzzzzzzzzz" })
+	MockCli.set("--template bookmarks", { stdout = "" })
+	repo:refresh()
+
+	expect.equality(repo:get_ref(), "zzzzzzzzzzzz")
+	-- No bookmark points at @, which jj reports as empty output.
+	expect.equality(repo:get_branch(), nil)
 end
 
 return T
