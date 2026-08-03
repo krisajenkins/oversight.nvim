@@ -8,7 +8,10 @@ local logger = require("oversight.logger")
 ---@field cmd string Command to execute
 ---@field args string[] Command arguments
 ---@field options table Command options
----@field env table Environment variables
+---@field _env table<string, string> Environment variables set via `env()`. Named
+---with a leading underscore so it does not shadow the `env()` method on the
+---metatable — an `env` instance field would make `builder:env(k, v)` raise
+---"attempt to call method 'env' (a table value)".
 local Cli = {}
 Cli.__index = Cli
 
@@ -20,7 +23,7 @@ function Cli.new(cmd)
 	builder.cmd = cmd
 	builder.args = {}
 	builder.options = {}
-	builder.env = {}
+	builder._env = {}
 	return builder
 end
 
@@ -29,14 +32,6 @@ end
 ---@return CliBuilder self For chaining
 function Cli:arg(value)
 	table.insert(self.args, value)
-	return self
-end
-
----Add multiple positional arguments
----@param values string[] Argument values
----@return CliBuilder self For chaining
-function Cli:args(values)
-	vim.list_extend(self.args, values)
 	return self
 end
 
@@ -75,7 +70,7 @@ end
 ---@param value string Environment variable value
 ---@return CliBuilder self For chaining
 function Cli:env(key, value)
-	self.env[key] = value
+	self._env[key] = value
 	return self
 end
 
@@ -112,7 +107,12 @@ function Cli:call()
 		command = command,
 		args = cmd_args,
 		cwd = cwd,
-		env = self.env,
+		-- Only pass env when the caller has actually set variables. plenary's Job
+		-- treats any non-nil env table as the *entire* child environment, so an
+		-- empty-but-non-nil table would strip HOME, PATH, SSH_AUTH_SOCK, GIT_*,
+		-- JJ_CONFIG and the rest — leaving git and jj to run without the user's
+		-- own config. Passing nil lets the child inherit ours.
+		env = next(self._env) and self._env or nil,
 	})
 
 	local ok, result = pcall(function()
