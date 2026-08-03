@@ -1,20 +1,10 @@
 -- Screenshot tests for DiffViewBuffer
 -- Tests visual rendering of diff views with various content types
 
-local child = MiniTest.new_child_neovim()
+local child, child_set = require("tests.helpers.child")()
 local expect = MiniTest.expect
 
-local T = MiniTest.new_set({
-	hooks = {
-		pre_case = function()
-			child.restart({ "-u", "scripts/minimal_init.lua" })
-			-- Set consistent dimensions for reproducible screenshots
-			child.o.lines = 30
-			child.o.columns = 100
-		end,
-		post_once = child.stop,
-	},
-})
+local T = child_set()
 
 -- Mock data helpers
 local mock_data = {}
@@ -252,12 +242,6 @@ end
 T["DiffViewBuffer Screenshots"] = MiniTest.new_set()
 
 T["DiffViewBuffer Screenshots"]["renders standard diff with adds, deletes, context"] = function()
-	-- Load the plugin
-	child.lua([[
-		vim.cmd("set rtp+=.")
-		require("oversight").setup()
-	]])
-
 	-- Create components in child
 	child.lua(string.format(
 		[[
@@ -296,12 +280,6 @@ T["DiffViewBuffer Screenshots"]["renders standard diff with adds, deletes, conte
 end
 
 T["DiffViewBuffer Screenshots"]["renders diff with line comments"] = function()
-	-- Load the plugin
-	child.lua([[
-		vim.cmd("set rtp+=.")
-		require("oversight").setup()
-	]])
-
 	-- Create components with comments
 	child.lua(string.format(
 		[[
@@ -344,12 +322,6 @@ T["DiffViewBuffer Screenshots"]["renders diff with line comments"] = function()
 end
 
 T["DiffViewBuffer Screenshots"]["renders real diff_view/ui.lua changes"] = function()
-	-- Load the plugin
-	child.lua([[
-		vim.cmd("set rtp+=.")
-		require("oversight").setup()
-	]])
-
 	-- This test uses actual diff data from lua/oversight/buffers/diff_view/ui.lua
 	-- to capture how multi-hunk type annotation changes render
 	child.lua(string.format(
@@ -389,12 +361,6 @@ T["DiffViewBuffer Screenshots"]["renders real diff_view/ui.lua changes"] = funct
 end
 
 T["DiffViewBuffer Screenshots"]["renders comment/init.lua diff with pure additions"] = function()
-	-- Load the plugin
-	child.lua([[
-		vim.cmd("set rtp+=.")
-		require("oversight").setup()
-	]])
-
 	-- This test uses diff data from lua/oversight/buffers/comment/init.lua
 	-- which has hunks with pure additions (no corresponding deletes)
 	-- that can expose column alignment issues
