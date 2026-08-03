@@ -285,7 +285,7 @@ T["JJ Backend"]["returns nil and notifies when the diff command fails"] = functi
 	end)
 
 	expect.equality(#messages, 1)
-	expect.equality(messages[1]:find("src/util.lua", 1, true) ~= nil, true)
+	expect.equality(tostring(messages[1].msg):find("src/util.lua", 1, true) ~= nil, true)
 end
 
 -- Regression test for paths that look like glob patterns. The backend wraps

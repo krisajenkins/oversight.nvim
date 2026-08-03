@@ -10,8 +10,48 @@ Things that cost someone an afternoon. Not a mini.test tutorial — see
 | `fixtures/` | Frozen captures of real `git`/`jj` output. See `fixtures/README.md`. |
 | `helpers/mock_cli.lua` | Stands in for `oversight.lib.cli` and replays those captures. |
 | `helpers/notify.lua` | Captures `vim.notify` around a function. |
+| `helpers/child.lua` | Child Neovim plus a set factory with the standard hooks. |
 | `test_vcs_hermetic.lua` | The **only** file that runs a real VCS binary. |
-| `screenshots/` | mini.test reference screenshots for `test_diff_view_screenshot.lua`. |
+| `screenshots/` | mini.test reference screenshots. |
+
+## Never call `vim.wait` inside a case
+
+This one is nasty, because it fails **green**.
+
+`MiniTest.execute` schedules every case up front with `vim.schedule` (see
+`mini/test.lua`). A `vim.wait` that lets the event loop run therefore flushes
+that queue and starts the *following* cases nested inside the current one. When
+the outer case eventually finishes, the runner has moved on and its result is
+discarded — no pass, no fail, no warning. The run reports `Fails (0)` and you
+are none the wiser.
+
+Symptom: a group shows fewer `o`s than it has cases, while the summary still
+claims to have run them all. Reproduce it with three cases where only the last
+one omits `vim.wait`; only that one reports.
+
+Two ways out:
+
+- plenary's `Job:wait` passes `fast_only = true` to `vim.wait`, which does not
+  run scheduled callbacks. That is why the *synchronous* CLI tests are safe.
+  `fast_only` is no help when you are waiting for something that arrives via
+  `vim.schedule` — which is everything asynchronous in this plugin.
+- **Wait in a child Neovim instead.** The child's event loop is not the
+  runner's, and the parent blocks on a plain RPC call. `test_cli.lua`'s async
+  group and all of `test_watcher.lua` work this way.
+
+## Child Neovim
+
+`helpers/child.lua` supplies the child and a set factory:
+
+```lua
+local child, child_set = require("tests.helpers.child")()
+local T = child_set({ columns = 120, pre_case = function() ... end })
+```
+
+The factory's `pre_case` restarts the child at fixed dimensions and loads the
+plugin; anything you pass is *appended* to that, never replacing it. Screenshot
+comparisons depend on those dimensions, so a test that sets its own is a test
+nobody else can reproduce.
 
 ## Never skip silently
 

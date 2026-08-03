@@ -261,7 +261,7 @@ T["Git Backend"]["returns nil and notifies when the diff command fails"] = funct
 	end)
 
 	expect.equality(#messages, 1)
-	expect.equality(messages[1]:find("src/util.lua", 1, true) ~= nil, true)
+	expect.equality(tostring(messages[1].msg):find("src/util.lua", 1, true) ~= nil, true)
 end
 
 T["Git Backend"]["get_all_diffs carries status and old_path through"] = function()

@@ -5,9 +5,13 @@
 -- the test runner's output; capturing it keeps the run readable and lets the
 -- test assert that the user was actually told.
 
+---@class CapturedNotification
+---@field msg string The message text
+---@field level number|nil The vim.log.levels value it was raised at
+
 ---Run `fn` with vim.notify captured.
 ---@param fn fun()
----@return string[] messages Notifications raised, in order
+---@return CapturedNotification[] notifications Raised notifications, in order
 return function(fn)
 	local original = vim.notify
 	local messages = {}
@@ -16,8 +20,8 @@ return function(fn)
 	-- as one-argument and then flag every `vim.notify(msg, level)` call in the
 	-- plugin as passing a redundant parameter.
 	---@diagnostic disable-next-line: duplicate-set-field
-	vim.notify = function(msg, _level, _opts)
-		table.insert(messages, msg)
+	vim.notify = function(msg, level, _opts)
+		table.insert(messages, { msg = msg, level = level })
 	end
 
 	local ok, err = pcall(fn)
