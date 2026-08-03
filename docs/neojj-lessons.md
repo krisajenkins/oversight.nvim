@@ -556,6 +556,74 @@ of its own — the traps it records (the upvalue that makes `package.loaded`
 mocking insufficient, never skipping by returning early, neutralising the
 developer's own VCS config) are all ones this work hit.
 
+Items 11, 12 and 13 are done. The theme running through all three is that each
+one found a defect the tests as written could not have caught.
+
+**Item 11** was the quiet one: `tests/helpers/child.lua` now holds the child
+Neovim boilerplate, the four diff-view screenshots came out byte-identical after
+the refactor, and browse mode went from zero screenshots to eight covering the
+file tree (nesting, the reviewed/unreviewed split, a collapsed directory, an
+empty repository) and the file viewer (line numbers, all four comment types, a
+file-level comment, the empty placeholder).
+
+**Item 12** turned up a hole in the test *runner*, not the code:
+
+- **`vim.wait` inside a mini.test case silently abandons that case.**
+  `MiniTest.execute` schedules every case up front with `vim.schedule`, so a
+  non-fast `vim.wait` flushes that queue and runs the following cases *nested*
+  inside the current one; the outer case then finishes into a runner that has
+  moved on and its result is dropped. No pass, no fail, `Fails (0)`. The first
+  five async tests I wrote were all in this state. plenary's `Job:wait` escapes
+  it by passing `fast_only = true`, which is why the synchronous CLI tests were
+  fine — and why that trick is no use for anything that completes via
+  `vim.schedule`. Everything asynchronous now waits inside a child Neovim.
+- The timeout became a per-builder `:timeout(ms)` with a class default, which is
+  a real feature and also lets the timeout tests run in 200ms. The 6s sleep
+  flagged as a judgement call under items 7/8 is gone; what actually guarded
+  that regression — that the default is 60000, not plenary's 5000 — is now a
+  free assertion.
+
+The **refresh lock** deliberately is not a semaphore. §4.1 above already noted
+one would be pointless while the calls are synchronous, and converting the whole
+refresh path to async is a change to every backend call site that has no
+business landing in the same batch as a new watcher. But there is a real
+serialisation hazard, and it is not the one neojj has: **reading a jj repository
+writes to it.** `jj status` snapshots the working copy when it has changed, which
+writes a new op head — which the watcher then reports as a change, which
+refreshes again. `Watcher.while_refreshing` plus `sync_probe` is the lock that
+matters here, and removing it makes a test fail.
+
+**Item 13**, the watcher, is where an end-to-end run earned its keep. The
+design the report sketched — VCS metadata plus the files currently under review
+— passed seven unit tests and then failed the first honest exercise: open a
+review, have an "agent" edit a tracked file that had *no* changes yet, and
+nothing happens. Nothing was watching that file, because it was not interesting
+yet. That is not an edge case, it is most of what an agent does.
+
+So the watcher combines two signals with different costs and neither is
+optional: stat-based pollers (fast, narrow) and a VCS probe every two seconds
+(slow, complete). Other decisions worth recording:
+
+- `fs_poll`, never `fs_event` — kqueue and FSEvents stop delivering once the
+  watched entry is *replaced* rather than modified, which is the normal case for
+  editors, for `.git/index`, and for every jj op head. There is a regression test
+  that renames a file over the watched path.
+- The event payload is never inspected. Any callback means "go re-query".
+- Browse mode gets no per-file watchers: its list is every tracked file, far past
+  the cap, and its probe is the tracked-file list instead.
+- The gap that remains is honest and now documented in three places: a brand-new
+  **untracked** file is invisible, because `git diff HEAD` does not report
+  untracked files. That is the same product question item 10 raised, not a
+  watcher limitation.
+
+One inconsistency fixed in passing: the README required Neovim >= 0.10.0 while
+the vimdoc and `:checkhealth` both said 0.9.0, and the code carries explicit 0.9
+fallbacks in three places (including the one added by item 8). The README was
+the outlier and now says 0.9.0.
+
+`setup()` takes an option again — `watch` — so the "takes no options" wording
+introduced by item 4 has been updated rather than quietly left wrong.
+
 | # | Change | Effort | Why |
 |---|--------|--------|-----|
 | ~~1~~ | ~~`env = next(self._env) and self._env or nil`~~ **done** | trivial | §1.1, real correctness bug |
@@ -568,8 +636,8 @@ developer's own VCS config) are all ones this work hit.
 | ~~8~~ | ~~Health: `report_*` fallback, versions~~ **done** | small | §4.4 |
 | ~~9~~ | ~~CI → `nix develop -c make` + store cache + `check-format`~~ **done** | medium | §2.2, §2.3 |
 | ~~10~~ | ~~Fixtures + mock CLI; de-fang `test_git.lua` / `test_jj.lua`~~ **done** | large | §3.1–3.3, biggest test-quality win |
-| 11 | Screenshot coverage for browse mode; `tests/helpers/child.lua` | medium | §3.4, §3.5 |
-| 12 | Real `call_async`, then repository refresh lock | medium | §4.1 |
-| 13 | Filesystem watcher for the working tree | medium | §4.2, best new feature for our use case |
+| ~~11~~ | ~~Screenshot coverage for browse mode; `tests/helpers/child.lua`~~ **done** | medium | §3.4, §3.5 |
+| ~~12~~ | ~~Real `call_async`, then repository refresh lock~~ **done** | medium | §4.1 |
+| ~~13~~ | ~~Filesystem watcher for the working tree~~ **done** | medium | §4.2, best new feature for our use case |
 | 14 | View stack | large | §4.5 |
 | 15 | VHS demo, CI badge, release.yml, keybinding source-of-truth note | medium | §2.3, §5 |
