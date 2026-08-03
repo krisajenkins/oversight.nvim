@@ -492,9 +492,24 @@ Item 9 was pulled forward because item 6 forced it: `make typecheck` now needs
 lua-language-server, which has no apt package, so the old apt/luarocks workflow
 could no longer run the build at all.
 
-Item 8 is partly done — the plenary check and the data-directory removal landed
-with item 4; the `report_*` fallback for Neovim 0.9 and version reporting are
-still outstanding.
+Items 7 and 8 are done too, and item 7 needs a correction to §1.2 above: the
+claim that a timeout arrived "with no `vim.notify`" was wrong. `logger.error`
+already routes to `vim.notify` (see `logger.lua`), so the user *was* notified —
+with plenary's raw stack trace, which is worse than useless. The fix was
+therefore to phrase the failures for a human and route them through the logger
+at the right level (WARN for a timeout, ERROR for a spawn failure), **not** to
+add a `vim.notify`, which would have notified twice. Discovered by a test
+asserting one notification and getting two.
+
+Two judgement calls worth recording:
+
+- The timeout regression test sleeps 6s — just past plenary's old 5s default.
+  It is the only way to genuinely prove the timeout was raised, but it makes
+  `make test` noticeably slower. Worth revisiting if the suite gets slow.
+- Item 8 deliberately asserts **no** minimum git or jj version. neojj declares
+  `MIN_JJ`, but we use only long-stable git subcommands and a jj floor would be
+  a guess — inventing one would repeat exactly the unfounded-claim problem item
+  4 cleaned up. The versions are reported as diagnostics instead.
 
 | # | Change | Effort | Why |
 |---|--------|--------|-----|
@@ -504,8 +519,8 @@ still outstanding.
 | ~~4~~ | ~~Correct the persistence claims in README/CLAUDE.md/health~~ **done** | trivial | §1.7 |
 | ~~5~~ | ~~Link highlights to colorscheme groups~~ **done** | small | §4.3, visible to every user |
 | ~~6~~ | ~~`.luarc.lua` → `.luarc.json`, add `lua-ls` target~~ **done** | small | §2.1, we type-check nothing today |
-| 7 | 60s timeout + notify + missing-binary handling in `lib/cli.lua` | small | §1.2, §1.4 |
-| 8 | Health: `report_*` fallback, versions (partly done in item 4) | small | §4.4 |
+| ~~7~~ | ~~60s timeout + notify + missing-binary handling in `lib/cli.lua`~~ **done** | small | §1.2, §1.4 |
+| ~~8~~ | ~~Health: `report_*` fallback, versions~~ **done** | small | §4.4 |
 | ~~9~~ | ~~CI → `nix develop -c make` + store cache + `check-format`~~ **done** | medium | §2.2, §2.3 |
 | 10 | Fixtures + mock CLI; de-fang `test_git.lua` / `test_jj.lua` | large | §3.1–3.3, biggest test-quality win |
 | 11 | Screenshot coverage for browse mode; `tests/helpers/child.lua` | medium | §3.4, §3.5 |
