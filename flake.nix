@@ -1,5 +1,5 @@
 {
-  description = "NeoJJ - Neovim plugin for Jujutsu VCS";
+  description = "oversight.nvim - Neovim plugin for interactive code review";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/26.05";
@@ -27,7 +27,7 @@
           ];
 
           shellHook = ''
-            echo "NeoJJ development environment"
+            echo "oversight.nvim development environment"
             echo "Available tools:"
             echo "  - lua-language-server (type checking)"
             echo "  - luacheck (static analysis)"
