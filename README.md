@@ -25,7 +25,7 @@ for leaving notes on any file in the codebase.
 - **File-level comments** - Add general feedback about entire files
 - **4 comment types** - Note, Suggestion, Issue, and Praise with distinct colors
 - **File review status** - Mark individual files or entire directories as reviewed
-- **Session persistence** - Comments and review state survive editor restarts
+- **Stale-diff detection** - Comments and review status reset when the underlying diff changes
 - **Export to markdown** - Generate formatted feedback summaries for AI agents
 - **Multi-VCS support** - Works with Git and Jujutsu (jj) repositories
 

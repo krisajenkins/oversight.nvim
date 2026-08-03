@@ -58,7 +58,10 @@ Dependencies (`deps/mini.nvim` and `deps/plenary.nvim`) are auto-cloned by make.
 - `jj/init.lua` - JjBackend: same interface as GitBackend
 - `diff.lua` - Diff parsing and hunk extraction
 
-**Session** (`lib/session.lua`): ReviewSession tracks file review status and comments (ephemeral, not persisted between Neovim sessions).
+**Session** (`lib/session.lua`): ReviewSession tracks file review status and
+comments. Sessions are **in-memory only** and do not survive a Neovim restart.
+`to_json`/`from_json` exist and are round-trip tested, but nothing writes them
+to disk; `Session:save()` is a no-op that only stamps `updated_at`.
 
 ### Buffer Types (`buffers/`)
 
@@ -83,10 +86,11 @@ Dependencies (`deps/mini.nvim` and `deps/plenary.nvim`) are auto-cloned by make.
 
 **Review mode:**
 
-1. `ReviewBuffer.open()` creates VCS backend and loads/creates Session
+1. `ReviewBuffer.open()` creates VCS backend and creates a fresh Session
 2. FileListBuffer and DiffViewBuffer receive session reference
 3. User actions (toggle reviewed, add comment) update Session
-4. Export converts Session comments to markdown for clipboard
+4. Re-opening a file whose diff hash changed resets its status and drops its comments
+5. Export converts Session comments to markdown for clipboard
 
 **Browse mode:**
 

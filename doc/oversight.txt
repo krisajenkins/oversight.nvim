@@ -30,8 +30,11 @@ Key features:
 - Line-level and file-level comments
 - Mark files as reviewed (folds reviewed files)
 - Export comments to clipboard for pasting into PRs/issues
-- Session persistence (comments survive editor restarts)
+- Comments and review status reset when the underlying diff changes
 - Multi-VCS support (Git and Jujutsu)
+
+Review sessions are held in memory for the lifetime of the Neovim session and
+are not written to disk. Export your comments before quitting.
 
 ==============================================================================
 2. REQUIREMENTS                                       *oversight-requirements*
@@ -83,10 +86,7 @@ Using packer.nvim: >lua
 4. SETUP                                                    *oversight-setup*
 
 Call the setup function to initialize the plugin: >lua
-    require("oversight").setup({
-        -- Optional: override data directory (defaults to stdpath("data")/oversight)
-        data_dir = nil,
-    })
+    require("oversight").setup()
 <
 
 This registers the `:Oversight` command for opening the review interface.
@@ -156,19 +156,13 @@ Other~
 ==============================================================================
 7. CONFIGURATION                                    *oversight-configuration*
 
-                                                    *oversight-config-data_dir*
-data_dir~
-    Type: `string` or `nil`
-    Default: `vim.fn.stdpath("data") .. "/oversight"`
-
-    Directory where review sessions are stored. Sessions persist comments
-    and reviewed file status across editor restarts.
-
-Example: >lua
-    require("oversight").setup({
-        data_dir = vim.fn.expand("~/.local/share/oversight"),
-    })
+`setup()` takes no options at present. Call it to register the |:Oversight|
+command and set up the plugin's highlight groups: >lua
+    require("oversight").setup()
 <
+Colours are controlled by overriding the plugin's `Oversight*` highlight
+groups (see `lua/oversight/highlights.lua` for the full list) rather than
+through setup options.
 
 ==============================================================================
 8. HEALTH CHECK                                          *oversight-health*
@@ -178,7 +172,7 @@ Run `:checkhealth oversight` to verify your installation:
 - Checks Neovim version (>= 0.9.0 required)
 - Verifies git and/or jj are installed and in PATH
 - Reports which VCS the current directory uses (Git or Jujutsu)
-- Reports data directory status
+- Verifies plenary.nvim is available
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:

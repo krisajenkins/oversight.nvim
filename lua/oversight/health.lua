@@ -108,12 +108,19 @@ function M.check()
 		vim.health.info("Current directory is not a version-controlled repository")
 	end
 
-	-- Check data directory
-	local data_dir = vim.fn.stdpath("data") .. "/oversight"
-	if vim.fn.isdirectory(data_dir) == 1 then
-		vim.health.ok("Data directory exists: " .. data_dir)
+	-- Check plenary, which lib/cli.lua depends on for every VCS invocation
+	local missing = {}
+	for _, mod in ipairs({ "plenary.job", "plenary.async" }) do
+		if not pcall(require, mod) then
+			table.insert(missing, mod)
+		end
+	end
+	if #missing == 0 then
+		vim.health.ok("plenary.nvim is installed")
 	else
-		vim.health.info("Data directory will be created on first use: " .. data_dir)
+		vim.health.error("plenary.nvim is not available (missing: " .. table.concat(missing, ", ") .. ")", {
+			"Install nvim-lua/plenary.nvim with your plugin manager",
+		})
 	end
 end
 

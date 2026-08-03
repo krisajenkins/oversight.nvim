@@ -3,8 +3,10 @@
 
 local M = {}
 
+---Configuration accepted by `setup()`. Empty for now: review sessions are held
+---in memory only, so there is no data directory to configure, and colours are
+---set by overriding the `Oversight*` highlight groups.
 ---@class OversightConfig
----@field data_dir? string Override XDG data directory for sessions
 
 ---@type OversightConfig
 M.config = {}
