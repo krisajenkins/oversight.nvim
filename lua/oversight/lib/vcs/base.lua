@@ -47,8 +47,9 @@ function M.create_backend(BackendClass)
 	function Class.instance(dir)
 		dir = dir or vim.fn.getcwd()
 
-		-- Resolve to absolute path
-		dir = vim.fn.fnamemodify(dir, ":p")
+		-- Resolve to absolute path. fnamemodify is typed as possibly-nil in the
+		-- bundled vim stubs, so pin it to string for the gsub below.
+		dir = vim.fn.fnamemodify(dir, ":p") --[[@as string]]
 		dir = dir:gsub("/$", "") -- Remove trailing slash
 
 		if instances[dir] then

@@ -360,7 +360,16 @@ end
 ---Check if browse is still valid
 ---@return boolean valid True if tab and windows are valid
 function BrowseBuffer:is_valid()
-	return self.tab_page and vim.api.nvim_tabpage_is_valid(self.tab_page) and self.file_tree and self.file_view
+	-- `and` yields the last truthy operand, so without the coercion this
+	-- returned a FileViewBuffer rather than the boolean the signature promises.
+	-- `not not` rather than `~= nil`: nvim_tabpage_is_valid returns false, and
+	-- `false ~= nil` would wrongly report a closed tab as valid.
+	return not not (
+		self.tab_page
+		and vim.api.nvim_tabpage_is_valid(self.tab_page)
+		and self.file_tree
+		and self.file_view
+	)
 end
 
 ---Focus the browse tab

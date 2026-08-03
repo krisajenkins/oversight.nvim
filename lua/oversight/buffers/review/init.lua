@@ -407,7 +407,16 @@ end
 ---Check if review is still valid
 ---@return boolean valid True if tab and windows are valid
 function ReviewBuffer:is_valid()
-	return self.tab_page and vim.api.nvim_tabpage_is_valid(self.tab_page) and self.file_list and self.diff_view
+	-- `and` yields the last truthy operand, so without the coercion this
+	-- returned a DiffViewBuffer rather than the boolean the signature promises.
+	-- `not not` rather than `~= nil`: nvim_tabpage_is_valid returns false, and
+	-- `false ~= nil` would wrongly report a closed tab as valid.
+	return not not (
+		self.tab_page
+		and vim.api.nvim_tabpage_is_valid(self.tab_page)
+		and self.file_list
+		and self.diff_view
+	)
 end
 
 ---Focus the review tab

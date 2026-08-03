@@ -35,10 +35,12 @@
 ---@field type "note"|"suggestion"|"issue"|"praise" Comment type
 ---@field text string Comment text
 
+---Data attached to an interactive component, retrieved via `get_item()`.
 ---@class LineInfo
----@field type string Line type ("diff_line", "comment", "hunk_header", etc.)
----@field line_no_old? number Old line number
----@field line_no_new? number New line number
+---@field type string Line type ("diff_line", "file_line", "comment", "hunk_header", etc.)
+---@field line_no_old? number Old line number (diff view, "old" side)
+---@field line_no_new? number New line number (diff view, "new" side)
+---@field line_no? number Line number (browse mode's file view, which has no sides)
 ---@field file? string File path
 ---@field comment_id? string Comment ID (for comment lines)
 

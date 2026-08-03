@@ -10,11 +10,29 @@ local M = {}
 ---@field path string File path
 ---@field old_path? string Original path for renamed files
 
+---The interface every VCS backend satisfies. GitBackend and JjBackend each
+---implement the four backend-specific methods and inherit the rest from
+---`lib/vcs/base.lua` via `create_backend()`, so this is the single place the
+---contract is written down — keep it in step with that module's docstring.
 ---@class VcsBackend
 ---@field type "git"|"jj" VCS type identifier
 ---@field root string Repository root directory
 ---@field ref string Current commit/change reference
 ---@field branch string|nil Current branch name
+--- Shared, from base.lua:
+---@field get_root fun(self: VcsBackend): string Repository root directory
+---@field get_ref fun(self: VcsBackend): string Current commit SHA or change ID
+---@field get_head fun(self: VcsBackend): string Alias of `get_ref`
+---@field get_branch fun(self: VcsBackend): string|nil Branch name, nil if detached
+---@field has_changes fun(self: VcsBackend): boolean True if the working copy has changes
+---@field get_file_diff fun(self: VcsBackend, file_path: string): FileDiff|nil Parsed diff, nil on error
+---@field get_all_diffs fun(self: VcsBackend): FileDiff[] Parsed diffs for every changed file
+---@field read_file fun(self: VcsBackend, file_path: string): string[]|nil File lines, nil on error
+--- Implemented per backend:
+---@field refresh fun(self: VcsBackend): nil Re-fetch the current ref and branch
+---@field get_changed_files fun(self: VcsBackend): VcsFileChange[] Uncommitted changes
+---@field get_file_diff_raw fun(self: VcsBackend, file_path: string): string|nil Unparsed diff output
+---@field get_tracked_files fun(self: VcsBackend): VcsFileChange[] Every tracked file, for browse mode (status is always "")
 
 -- Lazy-loaded backend modules
 local backends = {
@@ -70,8 +88,9 @@ end
 function M.instance(dir)
 	dir = dir or vim.fn.getcwd()
 
-	-- Resolve to absolute path
-	dir = vim.fn.fnamemodify(dir, ":p")
+	-- Resolve to absolute path. fnamemodify is typed as possibly-nil in the
+	-- bundled vim stubs, so pin it to string for the gsub below.
+	dir = vim.fn.fnamemodify(dir, ":p") --[[@as string]]
 	dir = dir:gsub("/$", "") -- Remove trailing slash
 
 	local Backend = detect_vcs(dir)

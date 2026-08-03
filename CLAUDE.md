@@ -23,14 +23,27 @@ make test
 # Run a single test file
 FILE=tests/test_buffer.lua make test_file
 
-# Run static analysis (luacheck)
+# Run both static analysis passes
 make typecheck
+make luacheck   # linting only
+make lua-ls     # LuaCATS type checking only
 
 # Format code with stylua
 make format
+make check-format   # fail instead of rewriting (used in CI)
 ```
 
+`typecheck` runs two complementary tools: luacheck lints, and
+lua-language-server verifies the LuaCATS annotations that luacheck ignores
+entirely. lua_ls is configured by `.luarc.json` — note the extension: it does
+**not** read a `.luarc.lua`, and the Makefile must pass `--configpath` as an
+absolute path or lua_ls resolves it against `lua/` and silently ignores it,
+leaving `vim` undefined and flooding the run with false positives.
+
 Dependencies (`deps/mini.nvim` and `deps/plenary.nvim`) are auto-cloned by make. The Nix flake provides dev tools: `lua-language-server`, `luacheck`, `stylua`, `neovim`, `git`.
+
+CI runs `nix develop -c make` plus `make check-format`, so it uses the same
+toolchain as the dev shell.
 
 ## Architecture
 

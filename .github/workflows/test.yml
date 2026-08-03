@@ -4,8 +4,16 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
   workflow_dispatch:
+
+# Only one run per ref at a time — cancel superseded runs rather than letting a
+# rapid series of pushes queue up full builds.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -13,20 +21,56 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Neovim
-        uses: rhysd/action-setup-vim@v1
+      # Run the same toolchain developers get from `nix develop`, rather than a
+      # separate apt/luarocks stack. `make typecheck` now needs
+      # lua-language-server, which has no apt package — and the old workflow
+      # installed no stylua and no jj, so formatting went unchecked and every jj
+      # test silently skipped.
+      #
+      # Single-user install (store owned by the runner, not root). This is a hard
+      # requirement for cache-nix-action below: it restores the cache by untarring
+      # straight into /nix as the runner user, which a multi-user/daemon install
+      # forbids — every path fails with "Permission denied" and the store
+      # silently rebuilds from source while the step still reports success.
+      - name: Install Nix
+        uses: nixbuild/nix-quick-install-action@v30
         with:
-          neovim: true
-          version: stable
+          nix_conf: |
+            experimental-features = nix-command flakes
 
-      - name: Install luacheck
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y lua5.1 luarocks
-          sudo luarocks install luacheck
+      # The jujutsu overlay pins a version newer than nixpkgs, so it isn't in
+      # cache.nixos.org and builds from source — that compile is what makes CI
+      # slow. Cache the resulting /nix/store in GitHub's own Actions cache so the
+      # first run pays the build and every run after restores it in seconds. The
+      # key busts whenever the flake or an overlay changes, forcing a rebuild
+      # only then.
+      - name: Cache Nix store
+        uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.nix', 'flake.lock', 'overlays/**') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          # Garbage-collect down to the runtime closure before saving so
+          # build-only deps (the Rust toolchain, sources) don't bloat the cache
+          # past GitHub's 10 GB cap.
+          gc-max-store-size-linux: 5G
+          # Roll the cache: drop older entries with the same prefix, keep the
+          # freshly-written primary key.
+          purge: true
+          purge-prefixes: nix-${{ runner.os }}-
+          purge-created: 0
+          purge-primary-key: never
 
-      - name: Run typecheck
-        run: make typecheck
+      # `make` clones mini.nvim and plenary.nvim into deps/ on every run; cache
+      # them so we skip the re-clone. Keyed on the Makefile, where the clone URLs
+      # live.
+      - name: Cache test dependencies
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: deps-${{ runner.os }}-${{ hashFiles('Makefile') }}
 
-      - name: Run tests
-        run: make test
+      - name: Run checks and tests
+        run: nix develop -c make
+
+      - name: Check formatting
+        run: nix develop -c make check-format

@@ -68,7 +68,9 @@ end
 ---@param options? ComponentOptions Component options
 ---@return Component component Text component
 function Ui.text(value, options)
-	return Component.new(function(props)
+	-- `_props` rather than `props`: unlike the other builders here, a text
+	-- component's value is closed over rather than read from props.
+	return Component.new(function(_props)
 		-- Sanitize value to remove any newlines that could cause rendering issues
 		local sanitized_value = (value or ""):gsub("\n", " "):gsub("\r", "")
 		return {

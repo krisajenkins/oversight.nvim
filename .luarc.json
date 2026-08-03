@@ -1,0 +1,51 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime": {
+    "version": "LuaJIT",
+    "path": ["?.lua", "?/init.lua", "lua/?.lua", "lua/?/init.lua"]
+  },
+  "diagnostics": {
+    "globals": ["vim", "MiniTest"],
+    "//": "stylua owns formatting and luacheck owns linting; keep lua_ls to the type-aware checks neither can do. codestyle-check is off so lua_ls's formatter doesn't fight stylua. deprecated is off because Neovim's LuaJIT ships without Lua 5.2 compat (table.unpack is nil), so we use the global unpack, which lua_ls's 5.4 meta marks deprecated.",
+    "disable": ["codestyle-check", "deprecated"],
+    "severity": {
+      "param-type-mismatch": "Error",
+      "assign-type-mismatch": "Error",
+      "undefined-field": "Error",
+      "missing-parameter": "Warning",
+      "redundant-parameter": "Warning",
+      "redundant-value": "Warning",
+      "unbalanced-assignments": "Warning",
+      "unused-local": "Warning",
+      "unused-vararg": "Warning",
+      "trailing-space": "Warning"
+    },
+    "neededFileStatus": {
+      "duplicate-index": "Any",
+      "duplicate-set-field": "Any",
+      "redundant-parameter": "Any",
+      "redundant-value": "Any",
+      "unbalanced-assignments": "Any",
+      "unused-local": "Any",
+      "unused-vararg": "Any"
+    },
+    "unusedLocalExclude": ["_*"]
+  },
+  "workspace": {
+    "checkThirdParty": false,
+    "library": ["${3rd}/luv/library"]
+  },
+  "type": {
+    "castNumberToInteger": true,
+    "weakUnionCheck": true,
+    "weakNilCheck": true
+  },
+  "hint": {
+    "enable": true,
+    "paramType": true,
+    "setType": true,
+    "paramName": "Literal",
+    "semicolon": "SameLine",
+    "arrayIndex": "Enable"
+  }
+}
