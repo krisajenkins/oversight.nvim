@@ -455,12 +455,29 @@ graph TD
 Item 2 is a prerequisite for CI in a practical sense, not a technical one: there
 is no point enforcing a pipeline that is already failing.
 
+### Progress
+
+Items 1–4 are done (`make` is green at 126 cases). Two things turned up while
+doing them that were not in the original survey:
+
+- Writing the regression test for §1.1 exposed that the `env` **and** `args`
+  instance fields shadowed the same-named methods on the `Cli` metatable, so
+  `builder:env(k, v)` and `builder:args(t)` had never been callable — they
+  raised "attempt to call method (a table value)". The env field is now `_env`;
+  the uncallable, uncalled `args()` method was removed.
+- `lib/storage/init.lua` was not merely half-broken, it was entirely unused —
+  nothing requires `oversight.lib.storage`, and Lua resolves
+  `oversight.lib.storage.session` without an `init.lua`. The whole file went.
+- The persistence cleanup reached further than README/CLAUDE.md/health: the
+  vimdoc documented a `data_dir` **setup option**, and `OversightConfig` carried
+  a matching `@field` that nothing read. `setup()` now honestly takes no options.
+
 | # | Change | Effort | Why |
 |---|--------|--------|-----|
-| 1 | `env = next(self.env) and self.env or nil` | trivial | §1.1, real correctness bug |
-| 2 | Re-baseline 4 screenshots; get `make` green | trivial | §1.5, nothing else is trustworthy until then |
-| 3 | Fix flake description, delete `storage/init.lua` json accessor | trivial | §1.6, §1.8 |
-| 4 | Correct the persistence claims in README/CLAUDE.md/health | trivial | §1.7 |
+| ~~1~~ | ~~`env = next(self._env) and self._env or nil`~~ **done** | trivial | §1.1, real correctness bug |
+| ~~2~~ | ~~Re-baseline 4 screenshots; get `make` green~~ **done** | trivial | §1.5, nothing else is trustworthy until then |
+| ~~3~~ | ~~Fix flake description, delete dead `storage/init.lua`~~ **done** | trivial | §1.6, §1.8 |
+| ~~4~~ | ~~Correct the persistence claims in README/CLAUDE.md/health~~ **done** | trivial | §1.7 |
 | 5 | Link highlights to colorscheme groups | small | §4.3, visible to every user |
 | 6 | `.luarc.lua` → `.luarc.json`, add `lua-ls` target | small | §2.1, we type-check nothing today |
 | 7 | 60s timeout + notify + missing-binary handling in `lib/cli.lua` | small | §1.2, §1.4 |
