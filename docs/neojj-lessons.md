@@ -472,17 +472,41 @@ doing them that were not in the original survey:
   vimdoc documented a `data_dir` **setup option**, and `OversightConfig` carried
   a matching `@field` that nothing read. `setup()` now honestly takes no options.
 
+Items 5, 6 and 9 are also done. Item 6 turned out to be the productive one:
+lua_ls's first run found 30 problems in 8 files, three of them real bugs rather
+than annotation gaps.
+
+- `VcsBackend` declared only *data* fields, so every `repo:get_root()`,
+  `get_changed_files()`, `get_file_diff_raw()` and friend was an undefined field
+  — 23 of the 30. `base.lua` already documented the contract in prose; it is now
+  written on the class.
+- `LineInfo` was never extended when browse mode landed, so the file viewer's
+  `line_no` was undeclared.
+- `ReviewBuffer:is_valid()` and `BrowseBuffer:is_valid()` are annotated
+  `@return boolean` but returned the last operand of an `and` chain — a buffer
+  object. Worth noting the near-miss in the fix: `~= nil` looks like the obvious
+  coercion and is wrong, because `nvim_tabpage_is_valid` returns `false` and
+  `false ~= nil` would report a **closed tab as valid**. `not not` is correct.
+
+Item 9 was pulled forward because item 6 forced it: `make typecheck` now needs
+lua-language-server, which has no apt package, so the old apt/luarocks workflow
+could no longer run the build at all.
+
+Item 8 is partly done — the plenary check and the data-directory removal landed
+with item 4; the `report_*` fallback for Neovim 0.9 and version reporting are
+still outstanding.
+
 | # | Change | Effort | Why |
 |---|--------|--------|-----|
 | ~~1~~ | ~~`env = next(self._env) and self._env or nil`~~ **done** | trivial | §1.1, real correctness bug |
 | ~~2~~ | ~~Re-baseline 4 screenshots; get `make` green~~ **done** | trivial | §1.5, nothing else is trustworthy until then |
 | ~~3~~ | ~~Fix flake description, delete dead `storage/init.lua`~~ **done** | trivial | §1.6, §1.8 |
 | ~~4~~ | ~~Correct the persistence claims in README/CLAUDE.md/health~~ **done** | trivial | §1.7 |
-| 5 | Link highlights to colorscheme groups | small | §4.3, visible to every user |
-| 6 | `.luarc.lua` → `.luarc.json`, add `lua-ls` target | small | §2.1, we type-check nothing today |
+| ~~5~~ | ~~Link highlights to colorscheme groups~~ **done** | small | §4.3, visible to every user |
+| ~~6~~ | ~~`.luarc.lua` → `.luarc.json`, add `lua-ls` target~~ **done** | small | §2.1, we type-check nothing today |
 | 7 | 60s timeout + notify + missing-binary handling in `lib/cli.lua` | small | §1.2, §1.4 |
-| 8 | Health: `report_*` fallback, versions, plenary, drop data dir | small | §4.4 |
-| 9 | CI → `nix develop -c make` + store cache + `check-format` | medium | §2.2, §2.3 |
+| 8 | Health: `report_*` fallback, versions (partly done in item 4) | small | §4.4 |
+| ~~9~~ | ~~CI → `nix develop -c make` + store cache + `check-format`~~ **done** | medium | §2.2, §2.3 |
 | 10 | Fixtures + mock CLI; de-fang `test_git.lua` / `test_jj.lua` | large | §3.1–3.3, biggest test-quality win |
 | 11 | Screenshot coverage for browse mode; `tests/helpers/child.lua` | medium | §3.4, §3.5 |
 | 12 | Real `call_async`, then repository refresh lock | medium | §4.1 |
