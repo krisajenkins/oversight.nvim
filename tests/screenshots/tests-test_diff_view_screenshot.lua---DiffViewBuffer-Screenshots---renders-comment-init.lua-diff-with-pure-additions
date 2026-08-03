@@ -27,7 +27,7 @@
 26|  27         on_submit = opts.on_submit,         |   31         on_submit = opts.on_submit,         
 27|  28         on_cancel = opts.on_cancel,         |   32         on_cancel = opts.on_cancel,         
 28|@@ -49,6 +53,7 @@                                                                                   
-29|oversight://diff [RO]                                                             1,1            Top
+29|oversight://diff [-][RO]                                                          1,1            Top
 30|                                                                                                    
 
 --|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|
