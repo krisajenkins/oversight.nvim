@@ -3,13 +3,17 @@
 
 local M = {}
 
----Configuration accepted by `setup()`. Empty for now: review sessions are held
----in memory only, so there is no data directory to configure, and colours are
----set by overriding the `Oversight*` highlight groups.
+---Configuration accepted by `setup()`. Review sessions are held in memory only,
+---so there is no data directory to configure, and colours are set by overriding
+---the `Oversight*` highlight groups.
 ---@class OversightConfig
+---@field watch? boolean Auto-refresh open views when the repository changes on
+---disk (default true). See `lua/oversight/lib/watcher.lua` for what is watched.
 
 ---@type OversightConfig
-M.config = {}
+M.config = {
+	watch = true,
+}
 
 --- Setup oversight with optional configuration
 ---@param opts? OversightConfig

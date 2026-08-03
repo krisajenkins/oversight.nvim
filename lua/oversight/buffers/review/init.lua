@@ -161,6 +161,60 @@ function ReviewBuffer:_create_layout(files)
 
 	-- Focus file list initially
 	vim.api.nvim_set_current_win(self.file_list_win)
+
+	self:_start_watching(files)
+end
+
+---Watch the repository so an agent's edits land in the view without a keypress.
+---@param files File[] Files to watch individually, alongside the VCS metadata
+function ReviewBuffer:_start_watching(files)
+	if require("oversight").config.watch == false then
+		return
+	end
+
+	local Watcher = require("oversight.lib.watcher")
+	Watcher.attach(self.repo:get_root(), self.repo.type, {
+		on_change = function()
+			-- The view may have been closed between the poll and this callback.
+			if not self:is_valid() then
+				return
+			end
+			self:refresh({ silent = true })
+		end,
+		-- The stat-based pollers only watch files that already have changes, so
+		-- they cannot notice a clean file *becoming* changed — which is most of
+		-- what an agent does. This is the signal that catches that.
+		probe = function()
+			return self:_change_signature()
+		end,
+	})
+	self:_update_watched_files(files)
+end
+
+---A cheap summary of the current change list, for the watcher to compare
+---against. Paths and statuses only: a content edit to a file already in the list
+---does not move it, and does not need to — the file's own poller sees that.
+---@return string signature
+function ReviewBuffer:_change_signature()
+	local parts = {}
+	for _, file in ipairs(self.repo:get_changed_files()) do
+		table.insert(parts, file.status .. " " .. file.path)
+	end
+	return table.concat(parts, "\n")
+end
+
+---Point the watcher at the files that currently have changes.
+---@param files File[] Current file list
+function ReviewBuffer:_update_watched_files(files)
+	if require("oversight").config.watch == false then
+		return
+	end
+
+	local paths = {}
+	for _, file in ipairs(files) do
+		table.insert(paths, file.path)
+	end
+	require("oversight.lib.watcher").set_watched_files(self.repo:get_root(), paths)
 end
 
 ---Setup tab-level keymappings
@@ -357,28 +411,45 @@ function ReviewBuffer:show_help()
 	HelpOverlay.show()
 end
 
----Refresh the file list and diff view with latest git status
-function ReviewBuffer:refresh()
-	-- Re-fetch changed files from repository
-	local changed_files = self.repo:get_changed_files()
+---@class RefreshOpts
+---@field silent? boolean Suppress the "Refreshed" notification. Watcher-driven
+---refreshes set this: one notification per keystroke of an agent's editing would
+---be unusable. Files being *reset* is still reported either way, because that
+---discards the user's comments.
 
-	-- Build files list with reviewed status from session
-	-- Track files that were reset due to diff changes
+---Refresh the file list and diff view with latest git status
+---@param opts? RefreshOpts
+function ReviewBuffer:refresh(opts)
+	opts = opts or {}
+
+	local Watcher = require("oversight.lib.watcher")
 	local files = {}
 	local reset_files = {}
-	for _, file in ipairs(changed_files) do
-		local diff_content = self.repo:get_file_diff_raw(file.path)
-		local was_reset = self.session:ensure_file(file.path, file.status, diff_content)
-		if was_reset then
-			table.insert(reset_files, file.path)
+
+	-- Reading the repository is not free of side effects: `jj status` snapshots
+	-- the working copy when it has changed, which writes a new op head — which
+	-- the watcher would then report as a change and refresh again. Suppressing
+	-- our own window breaks that echo.
+	Watcher.while_refreshing(self.repo:get_root(), function()
+		-- Re-fetch changed files from repository
+		local changed_files = self.repo:get_changed_files()
+
+		-- Build files list with reviewed status from session
+		-- Track files that were reset due to diff changes
+		for _, file in ipairs(changed_files) do
+			local diff_content = self.repo:get_file_diff_raw(file.path)
+			local was_reset = self.session:ensure_file(file.path, file.status, diff_content)
+			if was_reset then
+				table.insert(reset_files, file.path)
+			end
+			local status = self.session:get_file_status(file.path)
+			table.insert(files, {
+				path = file.path,
+				status = file.status,
+				reviewed = status and status.reviewed or false,
+			})
 		end
-		local status = self.session:get_file_status(file.path)
-		table.insert(files, {
-			path = file.path,
-			status = file.status,
-			reviewed = status and status.reviewed or false,
-		})
-	end
+	end)
 
 	-- Update file list
 	self.file_list:set_files(files)
@@ -388,6 +459,12 @@ function ReviewBuffer:refresh()
 	if current_file then
 		self.diff_view:show_file(current_file)
 	end
+
+	-- The change list moves as the agent works, so the watch set moves with it.
+	self:_update_watched_files(files)
+	-- The view now matches what the probe would report; recording that stops the
+	-- next tick reporting our own refresh back to us.
+	Watcher.sync_probe(self.repo:get_root())
 
 	-- Notify user about what happened
 	if #reset_files > 0 then
@@ -399,7 +476,7 @@ function ReviewBuffer:refresh()
 			),
 			vim.log.levels.INFO
 		)
-	else
+	elseif not opts.silent then
 		vim.notify("Refreshed", vim.log.levels.INFO)
 	end
 end
@@ -431,6 +508,12 @@ function ReviewBuffer:close()
 	-- Save session
 	if self.session then
 		self.session:save()
+	end
+
+	-- Refcounted, so this only tears the pollers down if browse mode is not also
+	-- open on the same repository.
+	if self.repo then
+		require("oversight.lib.watcher").detach(self.repo:get_root())
 	end
 
 	-- Close buffers

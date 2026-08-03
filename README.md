@@ -28,6 +28,7 @@ for leaving notes on any file in the codebase.
 - **Stale-diff detection** - Comments and review status reset when the underlying diff changes
 - **Export to markdown** - Generate formatted feedback summaries for AI agents
 - **Multi-VCS support** - Works with Git and Jujutsu (jj) repositories
+- **Live refresh** - Views update themselves as an agent edits the working tree
 
 ## Credits
 
@@ -39,7 +40,7 @@ Rust - check it out if you prefer a standalone tool over a Neovim plugin.
 
 **Requirements:**
 
-- Neovim >= 0.10.0
+- Neovim >= 0.9.0
 - **git** or **jj (Jujutsu)** - at least one must be in PATH
 - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
 
@@ -68,6 +69,29 @@ use {
 ```
 
 Verify your setup with `:checkhealth oversight`
+
+### Configuration
+
+`setup()` takes one option:
+
+```lua
+require("oversight").setup({
+    -- Auto-refresh open views when the repository changes on disk.
+    watch = true,
+})
+```
+
+With `watch` enabled (the default) an open review keeps up with an agent editing
+underneath it. Two signals drive it: stat-based pollers on the VCS metadata and
+on the files that already have changes give a ~150ms response to editing
+something you are already looking at, and a VCS query every two seconds catches
+files that only *become* interesting.
+
+The one thing neither notices is a brand-new **untracked** file, because
+`git diff HEAD` does not report untracked files at all. Press `R` for that.
+
+Colours are set by overriding the plugin's `Oversight*` highlight groups rather
+than through options; see `lua/oversight/highlights.lua` for the list.
 
 ## Usage
 

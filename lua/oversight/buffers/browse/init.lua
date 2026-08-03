@@ -154,6 +154,39 @@ function BrowseBuffer:_create_layout(files)
 
 	-- Focus file tree initially
 	vim.api.nvim_set_current_win(self.file_tree_win)
+
+	self:_start_watching()
+end
+
+---Watch the repository so an agent's edits land in the view without a keypress.
+---
+---Unlike review mode there is no per-file watching here: browse mode lists every
+---tracked file, which is far past the watcher's cap, and none of them are
+---especially interesting. The VCS metadata poller is what matters — it catches
+---files being added to or removed from the repository.
+function BrowseBuffer:_start_watching()
+	if require("oversight").config.watch == false then
+		return
+	end
+
+	require("oversight.lib.watcher").attach(self.repo:get_root(), self.repo.type, {
+		on_change = function()
+			if not self:is_valid() then
+				return
+			end
+			self:refresh({ silent = true })
+		end,
+		-- Browse mode's tree is the tracked-file list, so that is what has to
+		-- move for the view to be stale — the file *contents* are re-read on
+		-- every refresh anyway.
+		probe = function()
+			local parts = {}
+			for _, file in ipairs(self.repo:get_tracked_files()) do
+				table.insert(parts, file.path)
+			end
+			return table.concat(parts, "\n")
+		end,
+	})
 end
 
 ---Setup tab-level keymappings
@@ -333,28 +366,41 @@ function BrowseBuffer:show_help()
 end
 
 ---Refresh the file tree with latest tracked files
-function BrowseBuffer:refresh()
-	local tracked_files = self.repo:get_tracked_files()
+---@param opts? RefreshOpts
+function BrowseBuffer:refresh(opts)
+	opts = opts or {}
 
 	local files = {}
-	for _, file in ipairs(tracked_files) do
-		self.session:ensure_file(file.path, file.status, nil)
-		local status = self.session:get_file_status(file.path)
-		table.insert(files, {
-			path = file.path,
-			status = file.status,
-			reviewed = status and status.reviewed or false,
-		})
-	end
+
+	-- See ReviewBuffer:refresh — reading a jj repository writes to it.
+	require("oversight.lib.watcher").while_refreshing(self.repo:get_root(), function()
+		local tracked_files = self.repo:get_tracked_files()
+
+		for _, file in ipairs(tracked_files) do
+			self.session:ensure_file(file.path, file.status, nil)
+			local status = self.session:get_file_status(file.path)
+			table.insert(files, {
+				path = file.path,
+				status = file.status,
+				reviewed = status and status.reviewed or false,
+			})
+		end
+	end)
 
 	self.file_tree:set_files(files)
 
 	local current_file = self.file_tree:get_current_file()
 	if current_file then
+		-- Drop the cached contents so an externally-edited file is re-read.
+		self.file_view.file_cache[current_file.path] = nil
 		self.file_view:show_file(current_file)
 	end
 
-	vim.notify("Refreshed", vim.log.levels.INFO)
+	require("oversight.lib.watcher").sync_probe(self.repo:get_root())
+
+	if not opts.silent then
+		vim.notify("Refreshed", vim.log.levels.INFO)
+	end
 end
 
 ---Check if browse is still valid
@@ -383,6 +429,12 @@ end
 function BrowseBuffer:close()
 	if self.session then
 		self.session:save()
+	end
+
+	-- Refcounted, so this only tears the pollers down if review mode is not also
+	-- open on the same repository.
+	if self.repo then
+		require("oversight.lib.watcher").detach(self.repo:get_root())
 	end
 
 	if self.file_tree then

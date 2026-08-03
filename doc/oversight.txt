@@ -13,7 +13,8 @@ CONTENTS                                                  *oversight-contents*
     5. Commands ............................ |oversight-commands|
     6. Keybindings ......................... |oversight-keybindings|
     7. Configuration ....................... |oversight-configuration|
-    8. Health Check ........................ |oversight-health|
+    8. Auto-refresh ........................ |oversight-watch|
+    9. Health Check ........................ |oversight-health|
 
 ==============================================================================
 1. INTRODUCTION                                       *oversight-introduction*
@@ -32,6 +33,7 @@ Key features:
 - Export comments to clipboard for pasting into PRs/issues
 - Comments and review status reset when the underlying diff changes
 - Multi-VCS support (Git and Jujutsu)
+- Open views refresh themselves when the repository changes on disk
 
 Review sessions are held in memory for the lifetime of the Neovim session and
 are not written to disk. Export your comments before quitting.
@@ -156,16 +158,53 @@ Other~
 ==============================================================================
 7. CONFIGURATION                                    *oversight-configuration*
 
-`setup()` takes no options at present. Call it to register the |:Oversight|
-command and set up the plugin's highlight groups: >lua
-    require("oversight").setup()
+`setup()` registers the |:Oversight| command and sets up the plugin's highlight
+groups. It takes a single option: >lua
+    require("oversight").setup({
+        watch = true,
+    })
 <
+                                                      *oversight-setup-watch*
+watch ~
+                        Type: boolean, Default: `true`
+
+                        Auto-refresh open views when the repository changes on
+                        disk. See |oversight-watch| below.
+
 Colours are controlled by overriding the plugin's `Oversight*` highlight
 groups (see `lua/oversight/highlights.lua` for the full list) rather than
 through setup options.
 
 ==============================================================================
-8. HEALTH CHECK                                          *oversight-health*
+8. AUTO-REFRESH                                            *oversight-watch*
+
+oversight is meant for reviewing changes as they are being made, so open views
+keep themselves up to date rather than waiting for you to press `R`.
+
+There is no cheap filesystem answer to "did anything in this tree change", so
+two signals are combined:
+
+1. Stat-based polling of the VCS metadata (`.git/index`,
+   `.jj/repo/op_heads/heads`, covering commits, staging and jj operations) and
+   of the files that currently have changes. Fast - about 150ms - and free, but
+   blind to any file it is not already watching.
+2. A query to git or jj every two seconds, comparing the change list. Slower,
+   but the only thing that notices a clean file becoming a changed one.
+
+Events are collapsed over 150ms, so one save produces one refresh. A
+watcher-driven refresh is silent; a manual `R` still reports what it did.
+
+The one thing neither signal notices is a brand-new *untracked* file, because
+`git diff HEAD` does not report untracked files at all - press `R` for that.
+
+Reading a repository is not free of side effects in jj: `jj status` snapshots
+the working copy, which writes a new operation. Events raised during a refresh
+are therefore ignored, so a refresh cannot trigger itself.
+
+Set `watch = false` in |oversight-setup| to turn all of this off.
+
+==============================================================================
+9. HEALTH CHECK                                          *oversight-health*
 
 Run `:checkhealth oversight` to verify your installation:
 

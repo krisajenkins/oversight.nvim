@@ -71,6 +71,24 @@ toolchain as the dev shell.
 - `jj/init.lua` - JjBackend: same interface as GitBackend
 - `diff.lua` - Diff parsing and hunk extraction
 
+**Watcher** (`lib/watcher.lua`): auto-refreshes open views when the repository
+changes on disk. Refcounted per repository root; disable with
+`setup({ watch = false })`.
+
+It combines two signals and needs both. `fs_poll` (*not* `fs_event` — see the
+module comment) on the VCS metadata path and on the files that already have
+changes is fast but only ever sees what it is already watching; a VCS `probe`
+every 2s compares the change list and is the only thing that notices a clean
+file becoming a changed one. Dropping either leaves a hole — an end-to-end run
+is what caught it the first time.
+
+Three things are load-bearing and easy to undo by accident: it never inspects
+the event payload (there is no trustworthy "what changed"), `while_refreshing`
+suppresses events for the duration of a refresh — because reading a jj
+repository *writes* to it, so a refresh otherwise triggers itself — and
+`sync_probe` re-baselines afterwards so the next tick does not report our own
+work back to us.
+
 **Session** (`lib/session.lua`): ReviewSession tracks file review status and
 comments. Sessions are **in-memory only** and do not survive a Neovim restart.
 `to_json`/`from_json` exist and are round-trip tested, but nothing writes them
