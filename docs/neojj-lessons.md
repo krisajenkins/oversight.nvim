@@ -511,6 +511,51 @@ Two judgement calls worth recording:
   a guess — inventing one would repeat exactly the unfounded-claim problem item
   4 cleaned up. The versions are reported as diagnostics instead.
 
+Item 10 is done, and it paid for itself before a single test was rewritten.
+Building the fixture generator — running the plugin's exact commands against a
+purpose-built demo repository and reading the output — turned up **two real
+bugs**, neither of which any existing test could have caught, because the
+existing tests ran against this working copy on a machine configured to hide
+one of them.
+
+- **`jj diff` was never asked for a format we can parse.** jj's default diff
+  format is `color-words`, not unified. `JjBackend:get_file_diff_raw` fed that
+  straight to `Diff.parse_unified_diff`, which finds no `@@` headers and returns
+  zero hunks — so **every file in a jj repository rendered as an empty diff**.
+  It worked here only because this machine's personal jj config sets
+  `ui.diff-formatter = ":git"`. `jj.diff()` now passes `--git` explicitly.
+  Note the interaction with item 1: the empty-`env` bug would have *masked* this
+  one, by denying the child process the very config that was hiding it.
+- **git rename paths were split on whitespace, not tabs.** `--name-status` is
+  TAB-separated, but the rename branch matched `"^(.+)%s+(.+)$"`. Given
+  `R100\tdocs/old name.md\tdocs/new name.md` that splits at the last *space* and
+  yields `old_path = "docs/old name.md\tdocs/new"`, `path = "name.md"` — any
+  renamed file whose name contains a space. Now split on tabs, which also gets
+  `C` (copy) statuses their source path for free.
+
+Three judgement calls:
+
+- **Not every status can be captured honestly.** git only emits `C` when asked
+  with `--find-copies-harder`, which the plugin does not pass, so no genuine
+  capture can contain one. Rather than fabricate a "capture", the `C` and
+  paths-with-spaces cases are hand-authored fixtures, labelled as such in
+  `tests/fixtures/README.md` so a regeneration does not quietly delete them.
+- **Scalar outputs are canned in the mock's route table, not frozen as
+  fixtures.** Freezing `git rev-parse --show-toplevel` would bake a `/tmp/...`
+  path from whoever last ran the generator into a committed file. Fixtures are
+  for the multi-line output the parsers actually work on.
+- **The demo repository's git changes are staged.** `git diff HEAD` — the
+  command the backend runs — only reports added and renamed files once they are
+  in the index, so an unstaged capture would silently lose the `A` and `R`
+  cases. Which raises a real product question, noted here and not acted on: an
+  *untracked* new file never appears in review mode at all, and a brand-new file
+  is exactly what an AI agent tends to produce.
+
+§3.6's `tests/CLAUDE.md` landed with this item rather than as a numbered entry
+of its own — the traps it records (the upvalue that makes `package.loaded`
+mocking insufficient, never skipping by returning early, neutralising the
+developer's own VCS config) are all ones this work hit.
+
 | # | Change | Effort | Why |
 |---|--------|--------|-----|
 | ~~1~~ | ~~`env = next(self._env) and self._env or nil`~~ **done** | trivial | §1.1, real correctness bug |
@@ -522,7 +567,7 @@ Two judgement calls worth recording:
 | ~~7~~ | ~~60s timeout + notify + missing-binary handling in `lib/cli.lua`~~ **done** | small | §1.2, §1.4 |
 | ~~8~~ | ~~Health: `report_*` fallback, versions~~ **done** | small | §4.4 |
 | ~~9~~ | ~~CI → `nix develop -c make` + store cache + `check-format`~~ **done** | medium | §2.2, §2.3 |
-| 10 | Fixtures + mock CLI; de-fang `test_git.lua` / `test_jj.lua` | large | §3.1–3.3, biggest test-quality win |
+| ~~10~~ | ~~Fixtures + mock CLI; de-fang `test_git.lua` / `test_jj.lua`~~ **done** | large | §3.1–3.3, biggest test-quality win |
 | 11 | Screenshot coverage for browse mode; `tests/helpers/child.lua` | medium | §3.4, §3.5 |
 | 12 | Real `call_async`, then repository refresh lock | medium | §4.1 |
 | 13 | Filesystem watcher for the working tree | medium | §4.2, best new feature for our use case |
