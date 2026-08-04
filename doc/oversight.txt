@@ -112,11 +112,14 @@ This registers the `:Oversight` command for opening the review interface.
 Navigation~
 
     j / k               Scroll up/down
+    Down / Up           Scroll up/down
     Ctrl-d / Ctrl-u     Half page down/up
     Ctrl-f / Ctrl-b     Full page down/up (diff/file view only)
     { / }               Previous/next file
     [ / ]               Previous/next hunk (diff view only)
     g / G               First/last file (file list/tree only)
+    l / h               Expand/collapse directory (file tree only)
+    Right / Left        Expand/collapse directory (file tree only)
     Tab                 Switch between panels
 
                                             *oversight-keybindings-file-list*

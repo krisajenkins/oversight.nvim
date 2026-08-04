@@ -117,6 +117,14 @@ function FileListBuffer:_setup_mappings()
 		self:move_cursor(-1)
 	end, { desc = "Move up" })
 
+	buf:map("n", "<Down>", function()
+		self:move_cursor(1)
+	end, { desc = "Move down" })
+
+	buf:map("n", "<Up>", function()
+		self:move_cursor(-1)
+	end, { desc = "Move up" })
+
 	buf:map("n", "g", function()
 		self:move_to(1)
 	end, { desc = "Go to first file" })

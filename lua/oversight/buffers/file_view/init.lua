@@ -82,6 +82,14 @@ function FileViewBuffer:_setup_mappings()
 		vim.cmd("normal! k")
 	end, { desc = "Scroll up" })
 
+	buf:map("n", "<Down>", function()
+		vim.cmd("normal! j")
+	end, { desc = "Scroll down" })
+
+	buf:map("n", "<Up>", function()
+		vim.cmd("normal! k")
+	end, { desc = "Scroll up" })
+
 	buf:map("n", "<C-d>", function()
 		local keys = vim.api.nvim_replace_termcodes("<C-d>", true, false, true)
 		vim.api.nvim_feedkeys(keys, "n", false)

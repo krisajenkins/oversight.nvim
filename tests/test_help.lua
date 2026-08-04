@@ -32,6 +32,10 @@ local KEY_SPELLING = {
 	["<C-B>"] = "Ctrl-b",
 	["<CR>"] = "Enter",
 	["<Tab>"] = "Tab",
+	["<Down>"] = "Down",
+	["<Up>"] = "Up",
+	["<Right>"] = "Right",
+	["<Left>"] = "Left",
 }
 
 ---Pull the key column out of the help text and expand it into single keys.

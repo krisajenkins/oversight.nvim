@@ -242,6 +242,14 @@ function FileTreeBuffer:_setup_mappings()
 		self:move_cursor(-1)
 	end, { desc = "Move up" })
 
+	buf:map("n", "<Down>", function()
+		self:move_cursor(1)
+	end, { desc = "Move down" })
+
+	buf:map("n", "<Up>", function()
+		self:move_cursor(-1)
+	end, { desc = "Move up" })
+
 	buf:map("n", "g", function()
 		self:move_to(1)
 	end, { desc = "Go to first" })
@@ -259,6 +267,14 @@ function FileTreeBuffer:_setup_mappings()
 	end, { desc = "Expand directory" })
 
 	buf:map("n", "h", function()
+		self:collapse_current()
+	end, { desc = "Collapse directory" })
+
+	buf:map("n", "<Right>", function()
+		self:expand_current()
+	end, { desc = "Expand directory" })
+
+	buf:map("n", "<Left>", function()
 		self:collapse_current()
 	end, { desc = "Collapse directory" })
 

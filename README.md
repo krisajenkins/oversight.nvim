@@ -147,7 +147,7 @@ Browse the full codebase and leave notes on any file:
 **Workflow:**
 
 1. Run `:Oversight browse` to open the file tree
-2. Navigate the directory tree (j/k to move, Enter to expand/collapse)
+2. Navigate the directory tree (j/k or arrow keys to move, Enter to expand/collapse)
 3. Select a file to see its content with syntax highlighting
 4. Add comments with `c` (line-level) or `C` (file-level)
 5. Mark files or directories as reviewed with `r`
@@ -160,6 +160,7 @@ Browse the full codebase and leave notes on any file:
 | Key                 | Action                           |
 | ------------------- | -------------------------------- |
 | `j` / `k`           | Move up/down                     |
+| `Down` / `Up`       | Move up/down                     |
 | `Ctrl-d` / `Ctrl-u` | Half page down/up                |
 | `g` / `G`           | First/last file                  |
 | `Enter`             | Select file (show diff)          |
@@ -171,6 +172,7 @@ Browse the full codebase and leave notes on any file:
 | Key                 | Action                                 |
 | ------------------- | -------------------------------------- |
 | `j` / `k`           | Scroll up/down                         |
+| `Down` / `Up`       | Scroll up/down                         |
 | `Ctrl-d` / `Ctrl-u` | Half page down/up                      |
 | `Ctrl-f` / `Ctrl-b` | Full page down/up                      |
 | `[` / `]`           | Previous/next hunk                     |
@@ -199,10 +201,12 @@ Browse the full codebase and leave notes on any file:
 | Key                 | Action                                     |
 | ------------------- | ------------------------------------------ |
 | `j` / `k`           | Move up/down                               |
+| `Down` / `Up`       | Move up/down                               |
 | `Ctrl-d` / `Ctrl-u` | Half page down/up                          |
 | `g` / `G`           | First/last item                            |
 | `Enter`             | Expand/collapse directory, or select file  |
 | `l` / `h`           | Expand / collapse directory                |
+| `Right` / `Left`    | Expand / collapse directory                |
 | `o`                 | Open file in new tab for editing           |
 | `r`                 | Toggle reviewed (file or entire directory) |
 
@@ -211,6 +215,7 @@ Browse the full codebase and leave notes on any file:
 | Key                 | Action                                 |
 | ------------------- | -------------------------------------- |
 | `j` / `k`           | Scroll up/down                         |
+| `Down` / `Up`       | Scroll up/down                         |
 | `Ctrl-d` / `Ctrl-u` | Half page down/up                      |
 | `Ctrl-f` / `Ctrl-b` | Full page down/up                      |
 | `o` / `Enter`       | Open file in new tab at current line   |
