@@ -155,26 +155,42 @@ Browse the full codebase and leave notes on any file:
 
 ### Review Mode Keybindings
 
-| Key                 | Action                                     |
-| ------------------- | ------------------------------------------ |
-| `j` / `k`           | Scroll up/down                             |
-| `Ctrl-d` / `Ctrl-u` | Half page down/up                          |
-| `Ctrl-f` / `Ctrl-b` | Full page down/up (diff view)              |
-| `{` / `}`           | Previous/next file                         |
-| `[` / `]`           | Previous/next hunk                         |
-| `g` / `G`           | First/last file                            |
-| `Tab`               | Switch between file list and diff panels   |
-| `Enter`             | Select file (in file list)                 |
-| `o`                 | Open file in new tab for editing           |
-| `r`                 | Toggle file as reviewed                    |
-| `c`                 | Add/edit comment (edits if on comment)     |
-| `C`                 | Add file-level comment                     |
-| `dd`                | Delete comment under cursor                |
-| `y`                 | Copy all comments to clipboard as markdown |
-| `X`                 | Clear all comments                         |
-| `R`                 | Refresh (re-fetch changes from VCS)        |
-| `?`                 | Show help                                  |
-| `q`                 | Quit review                                |
+**File List (left panel):**
+
+| Key                 | Action                           |
+| ------------------- | -------------------------------- |
+| `j` / `k`           | Move up/down                     |
+| `Ctrl-d` / `Ctrl-u` | Half page down/up                |
+| `g` / `G`           | First/last file                  |
+| `Enter`             | Select file (show diff)          |
+| `o`                 | Open file in new tab for editing |
+| `r`                 | Toggle file as reviewed          |
+
+**Diff View (right panel):**
+
+| Key                 | Action                                 |
+| ------------------- | -------------------------------------- |
+| `j` / `k`           | Scroll up/down                         |
+| `Ctrl-d` / `Ctrl-u` | Half page down/up                      |
+| `Ctrl-f` / `Ctrl-b` | Full page down/up                      |
+| `[` / `]`           | Previous/next hunk                     |
+| `o` / `Enter`       | Open file in new tab at current line   |
+| `c`                 | Add/edit comment (edits if on comment) |
+| `C`                 | Add file-level comment                 |
+| `dd`                | Delete comment under cursor            |
+| `r`                 | Toggle file as reviewed                |
+
+**Tab-level (both panels):**
+
+| Key       | Action                                     |
+| --------- | ------------------------------------------ |
+| `Tab`     | Switch between file list and diff panels   |
+| `{` / `}` | Previous/next file                         |
+| `y`       | Copy all comments to clipboard as markdown |
+| `X`       | Clear all comments                         |
+| `R`       | Refresh (re-fetch changes from VCS)        |
+| `?`       | Show help                                  |
+| `q`       | Quit review                                |
 
 ### Browse Mode Keybindings
 
@@ -220,12 +236,13 @@ Browse the full codebase and leave notes on any file:
 
 When adding a comment:
 
-| Key                     | Action                             |
-| ----------------------- | ---------------------------------- |
-| `Ctrl-s` / `Ctrl-Enter` | Submit comment                     |
-| `Esc`                   | Save comment (or discard if empty) |
-| `q`                     | Discard comment                    |
-| `Ctrl-t` / `Tab`        | Cycle comment type                 |
+| Key                     | Action                                    |
+| ----------------------- | ----------------------------------------- |
+| `Ctrl-s` / `Ctrl-Enter` | Submit comment                            |
+| `Esc`                   | Save comment (or discard if empty)        |
+| `q`                     | Discard comment                           |
+| `Ctrl-t` / `Tab`        | Cycle comment type                        |
+| `1` / `2` / `3` / `4`   | Set type: note/suggestion/issue/praise     |
 
 ## License
 

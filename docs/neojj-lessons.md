@@ -431,8 +431,35 @@ rows. We render diffs and trees, not aligned records. Skip.
   tables in README.md and doc/neojj.txt must match too." We have keybindings in
   four places with no such statement.
 
-**CI badge done**, pointing at `test.yml`. The demo GIF and the keybinding
-source-of-truth note are still outstanding.
+**CI badge done**, pointing at `test.yml`. The demo GIF is still outstanding.
+
+**Keybinding source of truth done**, and naming one turned up drift that had
+been invisible precisely because nothing was authoritative. CLAUDE.md now has a
+Keybindings section declaring the code the source of truth and listing the three
+surfaces that must follow it, and `tests/test_help.lua` enforces the code → help
+half by reading the maps back off live buffers.
+
+What the audit found, none of it guessed — the keymaps were dumped from running
+buffers and compared:
+
+- **Browse mode was showing the review-mode help.** `BrowseBuffer:show_help()`
+  called `HelpOverlay.show()` with no argument, and the overlay's default text
+  is the review one: hunk keys that do not exist in browse, no `l`/`h`, and
+  "Quit review" at the bottom. Each mode now passes its own text.
+- **`1`/`2`/`3`/`4` set the comment type directly** and appeared in no surface
+  at all — not the README, not the vimdoc, not the help overlay.
+- **The help overlay claimed `Ctrl-s/CR` submits a comment.** Plain `CR` is not
+  bound; it is `Ctrl-Enter`. The README already had this right.
+- **The README's review table was flat**, implying every key works in both
+  panels. `g`/`G` are file-list only and `[`/`]`, `c`, `C`, `dd` are diff-view
+  only. Browse mode's tables were already split per panel and were accurate, so
+  review mode now follows that shape.
+
+One measurement trap worth recording, because it produced a convincing wrong
+answer first: **the tab-level maps install on `BufEnter`, not when the view
+opens.** Reading the keymaps of a panel that has never been focused reports it
+as missing `Tab`, `y`, `X`, `R`, `?` and `q`, which looks exactly like a real
+defect. It is not. Visit both panels before believing the dump.
 
 While adding it, the installation instructions were checked by running them
 rather than by reading them, which is worth recording because two of the claims
@@ -677,4 +704,4 @@ introduced by item 4 has been updated rather than quietly left wrong.
 | ~~12~~ | ~~Real `call_async`, then repository refresh lock~~ **done** | medium | §4.1 |
 | ~~13~~ | ~~Filesystem watcher for the working tree~~ **done** | medium | §4.2, best new feature for our use case |
 | 14 | View stack | large | §4.5 |
-| 15 | VHS demo, ~~CI badge~~, ~~release.yml~~, keybinding source-of-truth note | medium | §2.3, §5 |
+| 15 | VHS demo, ~~CI badge~~, ~~release.yml~~, ~~keybinding source-of-truth note~~ | medium | §2.3, §5 |

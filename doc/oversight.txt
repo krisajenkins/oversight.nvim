@@ -113,10 +113,10 @@ Navigation~
 
     j / k               Scroll up/down
     Ctrl-d / Ctrl-u     Half page down/up
-    Ctrl-f / Ctrl-b     Full page down/up (diff view only)
+    Ctrl-f / Ctrl-b     Full page down/up (diff/file view only)
     { / }               Previous/next file
-    [ / ]               Previous/next hunk
-    g / G               First/last file
+    [ / ]               Previous/next hunk (diff view only)
+    g / G               First/last file (file list/tree only)
     Tab                 Switch between panels
 
                                             *oversight-keybindings-file-list*
@@ -141,6 +141,7 @@ Comment Dialog~
     Esc                 Save comment (or discard if empty)
     q                   Discard comment
     Ctrl-t / Tab        Cycle comment type
+    1 / 2 / 3 / 4       Set type: note/suggestion/issue/praise
 
                                                 *oversight-keybindings-export*
 Export & Clear~

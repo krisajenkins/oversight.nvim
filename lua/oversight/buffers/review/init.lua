@@ -408,7 +408,7 @@ end
 
 ---Show help overlay
 function ReviewBuffer:show_help()
-	HelpOverlay.show()
+	HelpOverlay.show({ help_text = HelpOverlay.REVIEW_HELP_TEXT, title = " Review Help " })
 end
 
 ---@class RefreshOpts

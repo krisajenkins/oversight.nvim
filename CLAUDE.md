@@ -157,6 +157,38 @@ swapping `package.loaded` is not enough to mock the CLI, why a test must never
 skip by returning early, and why a real-binary test has to neutralise the
 developer's own git/jj configuration.
 
+## Keybindings
+
+Keybindings exist in four places. Only one of them runs, so only one is the
+source of truth:
+
+1. **The code** — each panel's `_setup_mappings()` (`buffers/file_list`,
+   `buffers/diff_view`, `buffers/file_tree`, `buffers/file_view`,
+   `buffers/comment`), **plus** the tab-level maps in
+   `buffers/review/init.lua:_setup_tab_mappings()` and the matching method in
+   `buffers/browse`. **This is the source of truth.**
+2. `lua/oversight/buffers/help/init.lua` — the `?` overlay, one text per mode.
+3. `README.md` — the Keybindings tables.
+4. `doc/oversight.txt` — section 6.
+
+Change 1, then update 2-4 to match. `tests/test_help.lua` enforces the 1 → 2
+half by reading the maps back off live buffers, so an undocumented key fails the
+suite; 3 and 4 are prose and stay a manual step.
+
+Two things make this easy to get wrong:
+
+- **The two panels of a mode do not share a map set.** `g`/`G` are file
+  list/tree only; `[`/`]`, `c`, `C` and `dd` are diff/file view only. A flat
+  "these are the review mode keys" table is wrong, and was.
+- **The tab-level maps install on `BufEnter`, not at open.** A panel you have
+  never focused genuinely has no `Tab`, `y`, `X`, `R`, `?` or `q` yet, so
+  reading its keymaps before visiting it under-reports. `test_help.lua` visits
+  both panels first; do the same when investigating by hand.
+
+Each mode must pass its own text to `HelpOverlay.show()`. The overlay's default
+is the review text, and browse mode silently inherited it for a while — hunk
+keys that do not exist there, no `l`/`h`, and "Quit review" at the bottom.
+
 ## Type Annotations
 
 The codebase uses LuaCATS annotations (`---@class`, `---@field`, `---@param`, `---@return`). `.luarc.json` configures lua-language-server for type checking (see the Commands section — it must be `.json`, and passed as an absolute path). Key types are defined in `lib/session.lua` (Comment, FileStatus, ReviewSession).

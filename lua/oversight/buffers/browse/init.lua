@@ -362,7 +362,9 @@ end
 
 ---Show help overlay
 function BrowseBuffer:show_help()
-	HelpOverlay.show()
+	-- Browse mode must ask for its own text. The overlay's default is the review
+	-- one, which talks about hunks that do not exist here and omits `l`/`h`.
+	HelpOverlay.show({ help_text = HelpOverlay.BROWSE_HELP_TEXT, title = " Browse Help " })
 end
 
 ---Refresh the file tree with latest tracked files
