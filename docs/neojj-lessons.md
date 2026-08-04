@@ -190,6 +190,14 @@ GitHub release with generated notes on any `v*` tag push. Both are small and
 worth copying. (Conversely: our Makefile has `.PHONY` and a `clean` target and
 neojj's doesn't — keep those.)
 
+**Done.** `check-format` landed with item 9; `.github/workflows/release.yml` is
+now a near-copy of neojj's. The one thing that needed adapting is the
+instructions in its header: this is a jj repository, and `jj git push` does not
+push tags, so the release ritual is `jj tag set vX.Y.Z -r @-` followed by a
+plain `git push origin vX.Y.Z`. (`jj tag set` does write a real git tag in a
+colocated repo — verified, not assumed. A *bookmark* named `v0.1.0` would push a
+branch and trigger nothing.)
+
 ---
 
 ## 3. Test suite
@@ -640,4 +648,4 @@ introduced by item 4 has been updated rather than quietly left wrong.
 | ~~12~~ | ~~Real `call_async`, then repository refresh lock~~ **done** | medium | §4.1 |
 | ~~13~~ | ~~Filesystem watcher for the working tree~~ **done** | medium | §4.2, best new feature for our use case |
 | 14 | View stack | large | §4.5 |
-| 15 | VHS demo, CI badge, release.yml, keybinding source-of-truth note | medium | §2.3, §5 |
+| 15 | VHS demo, CI badge, ~~release.yml~~, keybinding source-of-truth note | medium | §2.3, §5 |
