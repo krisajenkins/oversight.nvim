@@ -9,7 +9,7 @@ oversight-nvim is a Neovim plugin for interactive code review. It has two modes:
 - **Review mode** (`:Oversight` or `:Oversight review`) - Two-panel interface (file list + diff view) for reviewing uncommitted VCS changes
 - **Browse mode** (`:Oversight browse`) - Two-panel interface (file tree + file viewer) for browsing the full codebase and leaving notes on any file
 
-Both modes support adding comments (note/suggestion/issue/praise) and exporting reviews to markdown. Supports both Git and Jujutsu (jj) with automatic detection.
+Both modes support adding comments (suggestion/issue/question) and exporting reviews to markdown. Supports both Git and Jujutsu (jj) with automatic detection.
 
 ## Commands
 

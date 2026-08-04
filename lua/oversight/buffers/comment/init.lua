@@ -17,12 +17,12 @@ local float = require("oversight.lib.float")
 ---@field win number Window handle
 ---@field events EventEmitter Event emitter for decoupled communication
 ---@field context CommentContext Comment context (file, line, side)
----@field comment_type "note"|"suggestion"|"issue"|"praise" Current comment type
+---@field comment_type "suggestion"|"issue"|"question" Current comment type
 ---@field existing_comment? Comment Optional existing comment being edited
 local CommentInput = {}
 CommentInput.__index = CommentInput
 
-local COMMENT_TYPES = { "note", "suggestion", "issue", "praise" }
+local COMMENT_TYPES = { "suggestion", "issue", "question" }
 
 ---Create a new comment input window
 ---@param opts CommentInputOpts Options
@@ -31,7 +31,7 @@ function CommentInput.new(opts)
 	local existing = opts.existing_comment
 	local instance = setmetatable({
 		context = opts.context,
-		comment_type = existing and existing.type or "note",
+		comment_type = existing and existing.type or COMMENT_TYPES[1],
 		existing_comment = existing,
 		events = EventEmitter.new(),
 	}, CommentInput)
@@ -163,18 +163,11 @@ function CommentInput:_setup_mappings()
 	end, opts)
 
 	-- Direct type selection
-	vim.keymap.set("n", "1", function()
-		self:_set_type("note")
-	end, opts)
-	vim.keymap.set("n", "2", function()
-		self:_set_type("suggestion")
-	end, opts)
-	vim.keymap.set("n", "3", function()
-		self:_set_type("issue")
-	end, opts)
-	vim.keymap.set("n", "4", function()
-		self:_set_type("praise")
-	end, opts)
+	for i, comment_type in ipairs(COMMENT_TYPES) do
+		vim.keymap.set("n", tostring(i), function()
+			self:_set_type(comment_type)
+		end, opts)
+	end
 end
 
 ---Cycle to next comment type

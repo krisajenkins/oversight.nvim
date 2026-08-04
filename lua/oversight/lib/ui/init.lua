@@ -20,17 +20,15 @@ function Ui.get_status_highlight(status)
 end
 
 ---Get highlight group and label for comment type
----@param comment_type string Comment type (note, suggestion, issue, praise)
+---@param comment_type string Comment type (suggestion, issue, question)
 ---@return string highlight, string label Highlight group and label text
 function Ui.get_comment_type_display(comment_type)
-	if comment_type == "suggestion" then
-		return "OversightCommentSuggestion", "[SUGGESTION]"
-	elseif comment_type == "issue" then
+	if comment_type == "issue" then
 		return "OversightCommentIssue", "[ISSUE]"
-	elseif comment_type == "praise" then
-		return "OversightCommentPraise", "[PRAISE]"
+	elseif comment_type == "question" then
+		return "OversightCommentQuestion", "[QUESTION]"
 	end
-	return "OversightCommentNote", "[NOTE]"
+	return "OversightCommentSuggestion", "[SUGGESTION]"
 end
 
 ---Create a column (vertical container)
@@ -191,7 +189,7 @@ function Ui.file_header(path, status, options)
 end
 
 ---Create a comment display component
----@param comment_type "note"|"suggestion"|"issue"|"praise" Comment type
+---@param comment_type "suggestion"|"issue"|"question" Comment type
 ---@param text string Comment text
 ---@param options? ComponentOptions Component options
 ---@return Component component Comment component

@@ -205,13 +205,13 @@ T["Help"]["gives each mode its own text"] = function()
 end
 
 -- The comment dialog is a floating window rather than a panel, so the map-
--- reading check above never sees it. `1`-`4` set the comment type directly and
+-- reading check above never sees it. `1`-`3` set the comment type directly and
 -- went undocumented in both surfaces until this audit.
 T["Help"]["documents the comment dialog type shortcuts"] = function()
 	child.lua([[_G.Help = require("oversight.buffers.help")]])
 	for _, name in ipairs({ "REVIEW_HELP_TEXT", "BROWSE_HELP_TEXT" }) do
 		local text = table.concat(child.lua_get("_G.Help." .. name), "\n")
-		expect.equality(text:find("1/2/3/4", 1, true) ~= nil, true)
+		expect.equality(text:find("1/2/3", 1, true) ~= nil, true)
 		expect.equality(text:find("Ctrl-t/Tab", 1, true) ~= nil, true)
 	end
 end

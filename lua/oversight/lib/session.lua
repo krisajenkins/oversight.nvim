@@ -6,7 +6,7 @@
 ---@field file string File path relative to repo root
 ---@field line number|nil Line number (nil for file-level comments)
 ---@field side "old"|"new"|nil Which side of the diff (nil for file-level)
----@field type "note"|"suggestion"|"issue"|"praise" Comment type
+---@field type "suggestion"|"issue"|"question" Comment type
 ---@field text string Comment content
 ---@field created_at string ISO 8601 timestamp
 
@@ -32,7 +32,7 @@
 ---@field file string File path
 ---@field line? number Line number
 ---@field side? "old"|"new" Diff side
----@field type "note"|"suggestion"|"issue"|"praise" Comment type
+---@field type "suggestion"|"issue"|"question" Comment type
 ---@field text string Comment text
 
 ---Data attached to an interactive component, retrieved via `get_item()`.
@@ -259,7 +259,7 @@ end
 ---@param file string File path
 ---@param line number|nil Line number (nil for file-level)
 ---@param side "old"|"new"|nil Diff side (nil for file-level)
----@param comment_type "note"|"suggestion"|"issue"|"praise" Comment type
+---@param comment_type "suggestion"|"issue"|"question" Comment type
 ---@param text string Comment text
 ---@return Comment comment New comment
 function Session:add_comment(file, line, side, comment_type, text)
@@ -332,7 +332,7 @@ end
 
 ---Update an existing comment
 ---@param comment_id string Comment ID
----@param comment_type "note"|"suggestion"|"issue"|"praise" Comment type
+---@param comment_type "suggestion"|"issue"|"question" Comment type
 ---@param text string Comment text
 ---@return boolean success True if comment was updated
 function Session:update_comment(comment_id, comment_type, text)
@@ -367,10 +367,9 @@ end
 ---@return table<string, number> counts Map of type to count
 function Session:get_comment_counts()
 	local counts = {
-		note = 0,
 		suggestion = 0,
 		issue = 0,
-		praise = 0,
+		question = 0,
 	}
 
 	for _, comment in ipairs(self.comments) do

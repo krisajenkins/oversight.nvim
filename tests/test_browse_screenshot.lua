@@ -142,14 +142,13 @@ T["FileViewBuffer Screenshots"]["renders file content with line numbers"] = func
 	expect.reference_screenshot(child.get_screenshot())
 end
 
--- One of each comment type, so the four highlight groups are all exercised in
+-- One of each comment type, so the three highlight groups are all exercised in
 -- a single reference.
 T["FileViewBuffer Screenshots"]["renders inline comments of every type"] = function()
 	child.lua(build_view([[
-		_G.session:add_comment("src/example.lua", 2, "new", "note", "Module table")
+		_G.session:add_comment("src/example.lua", 2, "new", "question", "What owns this table?")
 		_G.session:add_comment("src/example.lua", 7, "new", "issue", "No validation of `name`")
 		_G.session:add_comment("src/example.lua", 8, "new", "suggestion", "Use string.format here")
-		_G.session:add_comment("src/example.lua", 11, "new", "praise", "Clean module boundary")
 	]]))
 	child.lua([[vim.cmd('redraw')]])
 
@@ -158,7 +157,7 @@ end
 
 T["FileViewBuffer Screenshots"]["renders a file-level comment"] = function()
 	child.lua(build_view([[
-		_G.session:add_comment("src/example.lua", nil, nil, "note", "Whole-file note")
+		_G.session:add_comment("src/example.lua", nil, nil, "question", "Whole-file question")
 	]]))
 	child.lua([[vim.cmd('redraw')]])
 

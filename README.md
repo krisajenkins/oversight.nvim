@@ -25,7 +25,7 @@ for leaving notes on any file in the codebase.
 - **Dual-panel layout** - File list/tree on the left, diff/file view on the right
 - **Line-level comments** - Add detailed feedback on specific lines
 - **File-level comments** - Add general feedback about entire files
-- **4 comment types** - Note, Suggestion, Issue, and Praise with distinct colors
+- **3 comment types** - Suggestion, Issue, and Question with distinct colors
 - **File review status** - Mark individual files or entire directories as reviewed
 - **Stale-diff detection** - Comments and review status reset when the underlying diff changes
 - **Export to markdown** - Generate formatted feedback summaries for AI agents
@@ -247,7 +247,7 @@ When adding a comment:
 | `Esc`                   | Save comment (or discard if empty)        |
 | `q`                     | Discard comment                           |
 | `Ctrl-t` / `Tab`        | Cycle comment type                        |
-| `1` / `2` / `3` / `4`   | Set type: note/suggestion/issue/praise     |
+| `1` / `2` / `3`         | Set type: suggestion/issue/question        |
 
 ## License
 

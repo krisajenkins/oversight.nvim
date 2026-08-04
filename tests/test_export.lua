@@ -67,7 +67,7 @@ T["Export"]["marks deleted lines with tilde"] = function()
 	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
-	session:add_comment("test.lua", 10, "old", "note", "This was removed")
+	session:add_comment("test.lua", 10, "old", "question", "This was removed")
 
 	local repo = create_mock_repo()
 	local markdown = Export.to_markdown(session, repo)
@@ -80,7 +80,7 @@ T["Export"]["handles file-level comments"] = function()
 	local Session = require("oversight.lib.session")
 
 	local session = Session.new("/tmp/test-repo", "abc123")
-	session:add_comment("test.lua", nil, nil, "note", "General comment about this file")
+	session:add_comment("test.lua", nil, nil, "question", "General comment about this file")
 
 	local repo = create_mock_repo()
 	local markdown = Export.to_markdown(session, repo)

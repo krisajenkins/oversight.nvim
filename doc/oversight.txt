@@ -144,7 +144,7 @@ Comment Dialog~
     Esc                 Save comment (or discard if empty)
     q                   Discard comment
     Ctrl-t / Tab        Cycle comment type
-    1 / 2 / 3 / 4       Set type: note/suggestion/issue/praise
+    1 / 2 / 3           Set type: suggestion/issue/question
 
                                                 *oversight-keybindings-export*
 Export & Clear~

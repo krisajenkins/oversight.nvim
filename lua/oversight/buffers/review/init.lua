@@ -378,8 +378,7 @@ function ReviewBuffer:export_markdown()
 	vim.fn.setreg("+", markdown)
 	vim.fn.setreg("*", markdown)
 
-	local counts = self.session:get_comment_counts()
-	local total = counts.note + counts.suggestion + counts.issue + counts.praise
+	local total = #self.session.comments
 	vim.notify(string.format("Exported %d comments to clipboard", total), vim.log.levels.INFO)
 end
 
@@ -390,8 +389,7 @@ function ReviewBuffer:clear_comments()
 		return
 	end
 
-	local counts = self.session:get_comment_counts()
-	local total = counts.note + counts.suggestion + counts.issue + counts.praise
+	local total = #self.session.comments
 
 	-- Confirm before clearing
 	vim.ui.select({ "Yes", "No" }, {

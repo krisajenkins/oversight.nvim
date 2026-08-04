@@ -47,10 +47,9 @@ function M.setup()
 
 		-- Comment types. The Diagnostic* groups carry the right severity
 		-- semantics already, and every colorscheme styles them.
-		OversightCommentNote = { link = "DiagnosticInfo" },
 		OversightCommentSuggestion = { link = "DiagnosticHint" },
 		OversightCommentIssue = { link = "DiagnosticError" },
-		OversightCommentPraise = { link = "DiagnosticOk" },
+		OversightCommentQuestion = { link = "DiagnosticInfo" },
 
 		-- UI elements
 		OversightSeparator = { link = "NonText" },

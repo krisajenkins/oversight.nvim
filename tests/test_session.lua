@@ -36,7 +36,7 @@ T["Session"]["adds file-level comments"] = function()
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
-	local comment = session:add_comment("test.lua", nil, nil, "note", "General observation")
+	local comment = session:add_comment("test.lua", nil, nil, "question", "General observation")
 
 	expect.equality(comment.line, nil)
 	expect.equality(comment.side, nil)
@@ -107,7 +107,7 @@ T["Session"]["gets comments by file"] = function()
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
-	session:add_comment("file1.lua", 10, "new", "note", "Comment 1")
+	session:add_comment("file1.lua", 10, "new", "question", "Comment 1")
 	session:add_comment("file1.lua", 20, "new", "issue", "Comment 2")
 	session:add_comment("file2.lua", 5, "old", "suggestion", "Comment 3")
 
@@ -126,17 +126,14 @@ T["Session"]["gets comment counts by type"] = function()
 
 	local session = Session.new("/tmp/test-repo", "abc123")
 
-	session:add_comment("test.lua", 1, "new", "note", "Note 1")
-	session:add_comment("test.lua", 2, "new", "note", "Note 2")
+	session:add_comment("test.lua", 1, "new", "question", "Question 1")
+	session:add_comment("test.lua", 2, "new", "question", "Question 2")
 	session:add_comment("test.lua", 3, "new", "issue", "Issue 1")
 	session:add_comment("test.lua", 4, "new", "suggestion", "Suggestion 1")
 
 	local counts = session:get_comment_counts()
 
-	expect.equality(counts.note, 2)
-	expect.equality(counts.issue, 1)
-	expect.equality(counts.suggestion, 1)
-	expect.equality(counts.praise, 0)
+	expect.equality(counts, { suggestion = 1, issue = 1, question = 2 })
 end
 
 T["Session"]["serializes to JSON and back"] = function()
@@ -161,7 +158,7 @@ T["Session"]["checks for comments"] = function()
 	local session = Session.new("/tmp/test-repo", "abc123")
 	expect.equality(session:has_comments(), false)
 
-	session:add_comment("test.lua", 10, "new", "note", "Comment")
+	session:add_comment("test.lua", 10, "new", "question", "Comment")
 	expect.equality(session:has_comments(), true)
 end
 
@@ -174,8 +171,8 @@ T["Session"]["reset_file clears reviewed status and comments"] = function()
 	session:ensure_file("test.lua", "M")
 	session:set_file_reviewed("test.lua", true)
 	session:add_comment("test.lua", 10, "new", "issue", "Comment 1")
-	session:add_comment("test.lua", 20, "old", "note", "Comment 2")
-	session:add_comment("other.lua", 5, "new", "note", "Other file comment")
+	session:add_comment("test.lua", 20, "old", "question", "Comment 2")
+	session:add_comment("other.lua", 5, "new", "question", "Other file comment")
 
 	expect.equality(session:is_file_reviewed("test.lua"), true)
 	expect.equality(#session:get_file_comments("test.lua"), 2)
@@ -205,7 +202,7 @@ T["Session"]["ensure_file resets when diff changes"] = function()
 
 	-- Set as reviewed and add comment
 	session:set_file_reviewed("test.lua", true)
-	session:add_comment("test.lua", 10, "new", "note", "My comment")
+	session:add_comment("test.lua", 10, "new", "question", "My comment")
 
 	expect.equality(session:is_file_reviewed("test.lua"), true)
 	expect.equality(#session:get_file_comments("test.lua"), 1)

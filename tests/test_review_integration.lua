@@ -343,7 +343,7 @@ T["Comments Integration"]["comments are tracked per file in session"] = function
 	-- Add comments to different files
 	session:add_comment("file1.lua", 10, "new", "issue", "Bug here")
 	session:add_comment("file1.lua", 20, "new", "suggestion", "Consider this")
-	session:add_comment("file2.lua", 5, "old", "note", "Was removed")
+	session:add_comment("file2.lua", 5, "old", "question", "Was removed")
 
 	-- Check file-level retrieval
 	local file1_comments = session:get_file_comments("file1.lua")
@@ -354,9 +354,7 @@ T["Comments Integration"]["comments are tracked per file in session"] = function
 
 	-- Check total counts
 	local counts = session:get_comment_counts()
-	expect.equality(counts.issue, 1)
-	expect.equality(counts.suggestion, 1)
-	expect.equality(counts.note, 1)
+	expect.equality(counts, { suggestion = 1, issue = 1, question = 1 })
 end
 
 T["Comments Integration"]["file-level comments work correctly"] = function()
@@ -366,12 +364,12 @@ T["Comments Integration"]["file-level comments work correctly"] = function()
 	local session = Session.new(repo:get_root(), repo:get_head())
 
 	-- Add file-level comment (no line number)
-	local comment = session:add_comment("file1.lua", nil, nil, "praise", "Great file!")
+	local comment = session:add_comment("file1.lua", nil, nil, "question", "Great file!")
 
 	expect.equality(comment.file, "file1.lua")
 	expect.equality(comment.line, nil)
 	expect.equality(comment.side, nil)
-	expect.equality(comment.type, "praise")
+	expect.equality(comment.type, "question")
 	expect.equality(comment.text, "Great file!")
 
 	-- Should be retrievable
@@ -414,7 +412,7 @@ T["Session Persistence"]["session serializes and deserializes correctly"] = func
 	session:ensure_file("file2.lua", "A")
 	session:set_file_reviewed("file1.lua", true)
 	session:add_comment("file1.lua", 10, "new", "issue", "Bug here")
-	session:add_comment("file2.lua", nil, nil, "note", "General note")
+	session:add_comment("file2.lua", nil, nil, "question", "General question")
 
 	-- Serialize (type guaranteed by LuaCATS: ---@return table)
 	local json_data = session:to_json()
@@ -443,18 +441,14 @@ T["Session Persistence"]["session preserves all comment types"] = function()
 	-- Add all comment types
 	session:add_comment("test.lua", 1, "new", "issue", "Issue text")
 	session:add_comment("test.lua", 2, "new", "suggestion", "Suggestion text")
-	session:add_comment("test.lua", 3, "new", "note", "Note text")
-	session:add_comment("test.lua", 4, "new", "praise", "Praise text")
+	session:add_comment("test.lua", 3, "new", "question", "Question text")
 
 	-- Round-trip
 	local json_data = session:to_json()
 	local restored = Session.from_json(json_data)
 
 	local counts = restored:get_comment_counts()
-	expect.equality(counts.issue, 1)
-	expect.equality(counts.suggestion, 1)
-	expect.equality(counts.note, 1)
-	expect.equality(counts.praise, 1)
+	expect.equality(counts, { suggestion = 1, issue = 1, question = 1 })
 end
 
 T["Export Integration"] = MiniTest.new_set()
@@ -474,7 +468,7 @@ T["Export Integration"]["export produces valid markdown with comments"] = functi
 	-- Add comments
 	session:add_comment("src/main.lua", 10, "new", "issue", "Fix this critical bug")
 	session:add_comment("src/main.lua", 25, "new", "suggestion", "Consider using a constant")
-	session:add_comment("src/utils.lua", nil, nil, "praise", "Well structured file")
+	session:add_comment("src/utils.lua", nil, nil, "question", "Well structured file")
 
 	local markdown = Export.to_markdown(session, repo)
 
