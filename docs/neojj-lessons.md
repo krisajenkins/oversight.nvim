@@ -182,6 +182,11 @@ against the same flake developers use. It also carries three things worth taking
 
 There is a `nix-ci-cache` skill that covers this recipe.
 
+**Done, and now verified against real GitHub Actions.** The caveat carried since
+item 9 — that the workflow had never actually run — is closed: the populating
+run took 21m26s, and the two runs since took 55s and 1m11s against a 1.24 GiB
+restored store cache. The cache behaves exactly as the skill predicts.
+
 ### 2.3 Add `make check-format` and a release workflow
 
 We have `make format` but nothing that fails on unformatted code. neojj has
@@ -426,6 +431,30 @@ rows. We render diffs and trees, not aligned records. Skip.
   tables in README.md and doc/neojj.txt must match too." We have keybindings in
   four places with no such statement.
 
+**CI badge done**, pointing at `test.yml`. The demo GIF and the keybinding
+source-of-truth note are still outstanding.
+
+While adding it, the installation instructions were checked by running them
+rather than by reading them, which is worth recording because two of the claims
+had never been exercised:
+
+- **"plenary.nvim" is the whole dependency list.** Confirmed by launching with
+  only the plugin and plenary on the runtimepath — no mini.nvim, nothing else —
+  and opening both modes.
+- **"Neovim >= 0.9.0."** Confirmed on a real 0.9.5 binary, not by reading the
+  API docs. Setup, both modes, the watcher, `:checkhealth` and the treesitter
+  highlighting path in `file_view` all behave identically to 0.12. That last one
+  was the risk: `vim.treesitter.language.get_lang`, `get_string_parser` and
+  `query.get` were all renamed around the 0.8-0.9 boundary.
+- The lazy.nvim snippet was run verbatim, including a `cmd = "Oversight"`
+  lazy-loading variant, which now appears in the README — subcommand dispatch
+  survives lazy's stub command, so `:Oversight browse` works from cold.
+
+The one genuine correction: `setup()` is *required*, not optional.
+`plugin/oversight.lua` only registers a `ColorScheme` autocmd; the `:Oversight`
+command is created inside `setup()`, so skipping it leaves nothing registered.
+The README implied it was conventional boilerplate.
+
 ---
 
 ## 6. Suggested order
@@ -648,4 +677,4 @@ introduced by item 4 has been updated rather than quietly left wrong.
 | ~~12~~ | ~~Real `call_async`, then repository refresh lock~~ **done** | medium | §4.1 |
 | ~~13~~ | ~~Filesystem watcher for the working tree~~ **done** | medium | §4.2, best new feature for our use case |
 | 14 | View stack | large | §4.5 |
-| 15 | VHS demo, CI badge, ~~release.yml~~, keybinding source-of-truth note | medium | §2.3, §5 |
+| 15 | VHS demo, ~~CI badge~~, ~~release.yml~~, keybinding source-of-truth note | medium | §2.3, §5 |

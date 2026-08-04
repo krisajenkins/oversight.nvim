@@ -1,5 +1,7 @@
 # oversight.nvim
 
+[![Tests](https://github.com/krisajenkins/oversight.nvim/actions/workflows/test.yml/badge.svg)](https://github.com/krisajenkins/oversight.nvim/actions/workflows/test.yml)
+
 A Neovim plugin for reviewing AI-generated code changes. Provides a focused,
 terminal-based interface for examining uncommitted changes, browsing codebases,
 adding contextual comments, and generating review summaries that can be fed back
@@ -44,27 +46,47 @@ Rust - check it out if you prefer a standalone tool over a Neovim plugin.
 - **git** or **jj (Jujutsu)** - at least one must be in PATH
 - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
 
+plenary is the only plugin dependency, and `setup()` is required rather than
+optional - the `:Oversight` command is created there, so without it nothing is
+registered.
+
 ### lazy.nvim
 
 ```lua
 {
     "krisajenkins/oversight.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
+    cmd = "Oversight",
     config = function()
         require("oversight").setup()
     end,
 }
 ```
 
-### packer.nvim
+`cmd = "Oversight"` is optional; it defers loading until you first run the
+command.
+
+### vim.pack
+
+Neovim's built-in plugin manager, no third-party manager needed. Requires
+Neovim >= 0.12 (the plugin itself still supports 0.9).
 
 ```lua
-use {
-    "krisajenkins/oversight.nvim",
-    requires = { "nvim-lua/plenary.nvim" },
-    config = function()
-        require("oversight").setup()
-    end,
+vim.pack.add({
+    { src = "https://github.com/nvim-lua/plenary.nvim" },
+    { src = "https://github.com/krisajenkins/oversight.nvim" },
+})
+
+require("oversight").setup()
+```
+
+That tracks the default branch. To follow release tags instead, give the
+oversight spec a version range:
+
+```lua
+{
+    src = "https://github.com/krisajenkins/oversight.nvim",
+    version = vim.version.range("*"),
 }
 ```
 
