@@ -39,6 +39,18 @@ local function attach(root)
 	))
 end
 
+---Let a freshly-started poller finish arming itself.
+---
+---`fs_poll` does not stat synchronously: `uv_fs_poll_start` queues the first
+---stat on the threadpool and stores its result as the baseline *without*
+---reporting it, which is how it avoids calling back the instant you start
+---watching. A test that writes before that stat lands gets the post-write state
+---baselined in as "unchanged", and the change it is waiting for never arrives.
+---This was a ~25% failure rate on the first case.
+local function settle()
+	child.lua([[vim.wait(100)]])
+end
+
 ---Wait for at least one change callback, returning how many arrived.
 ---@param timeout_ms? number
 ---@return number changes
@@ -56,6 +68,7 @@ T["Watcher"]["reports a change to a watched file"] = function()
 	local root = make_root()
 	attach(root)
 	child.lua(string.format([[require("oversight.lib.watcher").set_watched_files(%q, { "watched.txt" })]], root))
+	settle()
 
 	child.lua(string.format([[vim.fn.writefile({ "two" }, %q .. "/watched.txt")]], root))
 
@@ -70,6 +83,7 @@ T["Watcher"]["survives the watched file being replaced, not modified"] = functio
 	local root = make_root()
 	attach(root)
 	child.lua(string.format([[require("oversight.lib.watcher").set_watched_files(%q, { "watched.txt" })]], root))
+	settle()
 
 	child.lua(string.format(
 		[[
@@ -86,6 +100,7 @@ end
 T["Watcher"]["reports a change to the VCS metadata"] = function()
 	local root = make_root()
 	attach(root)
+	settle()
 
 	-- No per-file watchers at all: the metadata poller alone must notice.
 	child.lua(string.format([[vim.fn.writefile({ "index", "changed" }, %q .. "/.git/index")]], root))
@@ -97,6 +112,7 @@ T["Watcher"]["collapses a burst of writes into one callback"] = function()
 	local root = make_root()
 	attach(root)
 	child.lua(string.format([[require("oversight.lib.watcher").set_watched_files(%q, { "watched.txt" })]], root))
+	settle()
 
 	child.lua(string.format(
 		[[
@@ -124,6 +140,10 @@ T["Watcher"]["ignores events raised during a refresh"] = function()
 	local root = make_root()
 	attach(root)
 	child.lua(string.format([[require("oversight.lib.watcher").set_watched_files(%q, { "watched.txt" })]], root))
+	-- Not just anti-flake here: an unarmed poller would baseline the refresh's
+	-- own write away, and the case would pass without the suppression ever
+	-- being what stopped it.
+	settle()
 
 	child.lua(string.format(
 		[[

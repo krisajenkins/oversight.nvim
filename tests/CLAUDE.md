@@ -53,6 +53,43 @@ plugin; anything you pass is *appended* to that, never replacing it. Screenshot
 comparisons depend on those dimensions, so a test that sets its own is a test
 nobody else can reproduce.
 
+## Let `fs_poll` arm before you touch the file
+
+`uv_fs_poll_start` does **not** stat synchronously. It queues the first stat on
+libuv's threadpool and stores the result as the baseline *without* firing the
+callback — that is how it avoids reporting a change the instant you start
+watching. Only stats after that one get compared.
+
+So a test that starts a watcher and immediately writes is racing it. Lose the
+race and libuv baselines the *post-write* state as "unchanged", and the change
+you are waiting for never arrives. `test_watcher.lua` failed this way about 25%
+of the time, on the tightest case:
+
+```lua
+Watcher.set_watched_files(root, { "watched.txt" })  -- baseline stat queued
+vim.fn.writefile({ "two" }, root .. "/watched.txt") -- next RPC, ~20-30ms later
+```
+
+The fix is `settle()` — `vim.wait(100)` in the child, between arming the
+watcher and moving the filesystem. It is a bound rather than a signal: libuv
+exposes no way to observe that first stat landing, so 100ms is chosen as ~10x
+the observed race window, not as a guarantee.
+
+Two things this is easy to get wrong:
+
+- **It is not only the "expect a change" cases.** A case asserting *zero*
+  callbacks passes just as happily when the poller was never armed — the
+  "ignores events raised during a refresh" case would have gone green without
+  the suppression logic ever being what stopped it. A settle turns a possible
+  false green into a real assertion.
+- **Equal-length writes have nothing else to distinguish them.** `"one"` ->
+  `"two"` keeps the size and the inode, so mtime is the only field left in
+  libuv's `statbuf_eq`. That is fine here (APFS timestamps are nanosecond), but
+  it means the baseline is the *whole* signal — there is no second chance.
+
+Don't chase this one into `lib/watcher.lua`. The same race exists in
+production, where the 2s VCS probe covers it; that fallback is the design.
+
 ## Never skip silently
 
 The VCS tests used to open with:
