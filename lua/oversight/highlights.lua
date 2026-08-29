@@ -20,12 +20,10 @@ local M = {}
 --- Setup all highlight groups
 function M.setup()
 	local highlights = {
-		-- Diff line highlights. These three DO span whole lines, so the
-		-- background-carrying Diff* groups are correct here.
-		OversightDiffAdd = { link = "DiffAdd" },
-		OversightDiffDelete = { link = "DiffDelete" },
-		OversightDiffChange = { link = "DiffChange" },
-		OversightDiffContext = { link = "Normal" },
+		-- Browse mode marks a commented line with a background. Review mode has
+		-- no equivalent: Neovim's own diff paints it, with DiffAdd, DiffChange,
+		-- DiffDelete and DiffText, which the user already has a theme for.
+		OversightCommentedLine = { link = "DiffAdd" },
 
 		-- Line numbers
 		OversightLineNumber = { link = "LineNr" },
@@ -54,7 +52,6 @@ function M.setup()
 		-- UI elements
 		OversightSeparator = { link = "NonText" },
 		OversightHeader = { link = "Title" },
-		OversightHunkHeader = { link = "PreProc" },
 		OversightCursor = { link = "CursorLine" },
 
 		-- File list

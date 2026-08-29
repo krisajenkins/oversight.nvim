@@ -17,12 +17,18 @@ for leaving notes on any file in the codebase.
 
 ![Screenshot of the plugin](screenshot.png)
 
+<sub>The screenshot is generated, not captured by hand — `nix shell nixpkgs#vhs
+-c vhs scripts/demo/screenshot.tape` rebuilds it from a throwaway repository, so
+it moves when the plugin does.</sub>
+
 ## Features
 
 - **Two modes** - Diff review for uncommitted changes, browse for the full codebase
-- **Side-by-side diff view** - Display old and new code versions for easy comparison
+- **Neovim's own diff** - The file at the base revision and the file now, side by
+  side, diffed and highlighted by Neovim itself, with `]c`/`[c`, your `diffopt`
+  and your syntax highlighting all working as they do everywhere else
 - **Codebase browser** - File tree navigator with treesitter syntax-highlighted file viewer
-- **Dual-panel layout** - File list/tree on the left, diff/file view on the right
+- **Three-pane review** - File list on the left, the two sides of the diff on the right
 - **Line-level comments** - Add detailed feedback on specific lines
 - **File-level comments** - Add general feedback about entire files
 - **3 comment types** - Suggestion, Issue, and Question with distinct colors
@@ -113,7 +119,21 @@ The one thing neither notices is a brand-new **untracked** file, because
 `git diff HEAD` does not report untracked files at all. Press `R` for that.
 
 Colours are set by overriding the plugin's `Oversight*` highlight groups rather
-than through options; see `lua/oversight/highlights.lua` for the list.
+than through options; see `lua/oversight/highlights.lua` for the list. Review
+mode's diff is painted by Neovim's own `DiffAdd`, `DiffChange`, `DiffDelete` and
+`DiffText`, which your colorscheme already styles.
+
+Because the diff is Neovim's, `diffopt` is what draws it — and it is yours, so
+oversight never writes to it. A good setting:
+
+```lua
+vim.opt.diffopt = "internal,filler,closeoff,linematch:60"
+```
+
+`internal` selects Neovim's built-in diff library rather than shelling out to
+`diff(1)`; `linematch` lines up changed lines within a hunk, which makes small
+edits far easier to read. `:checkhealth oversight` warns if `internal` is
+missing.
 
 ## Usage
 
@@ -167,26 +187,33 @@ Browse the full codebase and leave notes on any file:
 | `o`                 | Open file in new tab for editing |
 | `r`                 | Toggle file as reviewed          |
 
-**Diff View (right panel):**
+**Diff View (the two right-hand panels):**
 
-| Key                 | Action                                 |
-| ------------------- | -------------------------------------- |
-| `j` / `k`           | Scroll up/down                         |
-| `Down` / `Up`       | Scroll up/down                         |
-| `Ctrl-d` / `Ctrl-u` | Half page down/up                      |
-| `Ctrl-f` / `Ctrl-b` | Full page down/up                      |
-| `[` / `]`           | Previous/next hunk                     |
-| `o` / `Enter`       | Open file in new tab at current line   |
-| `c`                 | Add/edit comment (edits if on comment) |
-| `C`                 | Add file-level comment                 |
-| `dd`                | Delete comment under cursor            |
-| `r`                 | Toggle file as reviewed                |
+Both sides carry the same keys. The two panes are scrollbound, so plain `j`,
+`k`, `Ctrl-d` and the rest move them together.
 
-**Tab-level (both panels):**
+| Key                 | Action                                        |
+| ------------------- | --------------------------------------------- |
+| `[` / `]`           | Previous/next hunk (wraps at the ends)        |
+| `Ctrl-w h` / `l`    | Move between the base and working-copy panes  |
+
+| `o` / `Enter`       | Open the working copy in a new tab, at this line |
+| `c`                 | Comment on this line (edits the one already there) |
+| `C`                 | Add file-level comment                        |
+| `dd`                | Delete this line's comment                    |
+| `r`                 | Toggle file as reviewed                       |
+
+A comment appears as virtual lines under the line it is about, on the side you
+wrote it on. Commenting on the left-hand pane records the line number in the
+base revision, which the export marks as `Line ~N (deleted)`.
+
+**Across all three windows:**
+
+The three panes are ordinary windows, so `Ctrl-w h` / `Ctrl-w l` move between
+them; there is no plugin-specific key for it.
 
 | Key       | Action                                     |
 | --------- | ------------------------------------------ |
-| `Tab`     | Switch between file list and diff panels   |
 | `{` / `}` | Previous/next file                         |
 | `y`       | Copy all comments to clipboard as markdown |
 | `X`       | Clear all comments                         |

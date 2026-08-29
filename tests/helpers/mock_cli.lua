@@ -162,6 +162,25 @@ function MockCli.install_default_routes()
 		{ "jj status", { fixture = "jj-outputs/status-mixed.txt" } },
 		{ "jj file list", { fixture = "jj-outputs/file-list.txt" } },
 
+		-- git: whole-file content at HEAD, for the two sides of the diff view.
+		-- The renamed file answers to its OLD name, which is what it was called
+		-- at HEAD; the added file has no content there at all and git says so.
+		{ "HEAD:README.md", { fixture = "git-outputs/show-head-modified.txt" } },
+		{ "HEAD:src/app.lua", { fixture = "git-outputs/show-head-multiple-hunks.txt" } },
+		{ "HEAD:notes.txt", { fixture = "git-outputs/show-head-deleted.txt" } },
+		{ "HEAD:docs/guide.md", { fixture = "git-outputs/show-head-renamed.txt" } },
+		{ "HEAD:no-newline.txt", { fixture = "git-outputs/show-head-no-trailing-newline.txt" } },
+		{ "HEAD:assets/logo.bin", { fixture = "git-outputs/show-head-binary.txt" } },
+		{
+			"HEAD:src/new_feature.lua",
+			{
+				success = false,
+				exit_code = 128,
+				stdout = "",
+				stderr = "fatal: path 'src/new_feature.lua' exists on disk, but not in 'HEAD'",
+			},
+		},
+
 		-- jj: per-file diffs, keyed on the fileset literal.
 		{ 'file:"README.md"', { fixture = "jj-outputs/diff-modified.txt" } },
 		{ 'file:"src/app.lua"', { fixture = "jj-outputs/diff-multiple-hunks.txt" } },
@@ -170,6 +189,29 @@ function MockCli.install_default_routes()
 		{ 'file:"docs/manual.md"', { fixture = "jj-outputs/diff-renamed.txt" } },
 		{ 'file:"no-newline.txt"', { fixture = "jj-outputs/diff-no-trailing-newline.txt" } },
 		{ 'file:"assets/logo.bin"', { fixture = "jj-outputs/diff-binary.txt" } },
+
+		-- jj: whole-file content at @-. These have to be MORE specific than the
+		-- diff routes just above, because `jj diff` and `jj file show` are given
+		-- the same fileset literal and the first matching route wins — so they
+		-- match on the revision flag too, and are declared last.
+		{ '--revision @- file:"README.md"', { fixture = "jj-outputs/file-show-modified.txt" } },
+		{ '--revision @- file:"src/app.lua"', { fixture = "jj-outputs/file-show-multiple-hunks.txt" } },
+		{ '--revision @- file:"notes.txt"', { fixture = "jj-outputs/file-show-deleted.txt" } },
+		{ '--revision @- file:"docs/guide.md"', { fixture = "jj-outputs/file-show-renamed.txt" } },
+		{
+			'--revision @- file:"no-newline.txt"',
+			{ fixture = "jj-outputs/file-show-no-trailing-newline.txt" },
+		},
+		{ '--revision @- file:"assets/logo.bin"', { fixture = "jj-outputs/file-show-binary.txt" } },
+		{
+			'--revision @- file:"src/new_feature.lua"',
+			{
+				success = false,
+				exit_code = 1,
+				stdout = "",
+				stderr = "Error: No such path: src/new_feature.lua",
+			},
+		},
 	}
 
 	for _, route in ipairs(defaults) do

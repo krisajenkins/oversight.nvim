@@ -19,6 +19,8 @@ Buffer.__index = Buffer
 ---@field modifiable? boolean Whether buffer is modifiable
 ---@field readonly? boolean Whether buffer is readonly
 ---@field unlisted? boolean Whether buffer is unlisted
+---@field window_opts? table<string, any> Window-local options to override the
+---defaults, applied wherever the buffer is displayed
 ---@field scratch? boolean Whether buffer is scratch
 
 ---Get existing buffer by name or create new one
@@ -93,6 +95,15 @@ function Buffer:_setup_buffer()
 		scrolloff = 5,
 		sidescrolloff = 5,
 	}
+
+	-- A caller with different needs (the diff view wants `number` on and folds
+	-- off, because Neovim's diff mode draws both) overrides individual entries
+	-- rather than replacing the set. These are re-applied on every BufWinEnter,
+	-- so an override has to live here or it is undone the next time the window
+	-- is entered.
+	if self.config.window_opts then
+		window_opts = vim.tbl_extend("force", window_opts, self.config.window_opts)
+	end
 
 	-- Store window options for later use
 	self.window_opts = window_opts

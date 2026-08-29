@@ -71,9 +71,14 @@ local function build_view(extra)
 
 		_G.session = Session.new("/tmp/test-repo", "abc123def456")
 		_G.file_view = FileViewBuffer.new({
-			-- read_file is the only backend method the view uses, and the cache
-			-- below means it is never called. Kept honest rather than omitted.
-			repo = { read_file = function() return nil end },
+			-- read_file and get_root are the only backend methods the view uses,
+			-- and the cache below means the file is never actually read. The root
+			-- points at nothing, which is what the binary sniff of a file that is
+			-- not there has to survive.
+			repo = {
+				read_file = function() return nil end,
+				get_root = function() return "/tmp/test-repo" end,
+			},
 			session = _G.session,
 		})
 		_G.file_view:show()

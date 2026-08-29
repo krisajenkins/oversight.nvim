@@ -29,7 +29,7 @@ end
 function M.create_file_line(line_no, content, has_comment)
 	-- Omit highlight on content so treesitter syntax colors come through.
 	-- Only apply an explicit highlight for commented lines.
-	local content_hl = has_comment and { highlight = "OversightDiffAdd" } or {}
+	local content_hl = has_comment and { highlight = "OversightCommentedLine" } or {}
 
 	return Ui.row({
 		Ui.text(string.format("%4d", line_no), { highlight = "OversightLineNumber" }),

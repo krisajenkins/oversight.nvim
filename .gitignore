@@ -2,3 +2,7 @@
 /.envrc
 /deps/
 /doc/tags
+
+# VHS insists on a video Output even when the tape only wants a Screenshot.
+# scripts/demo/screenshot.tape produces screenshot.png; the GIF is a by-product.
+/scripts/demo/demo.gif

@@ -15,7 +15,8 @@ local HelpOverlay = require("oversight.buffers.help")
 ---@field diff_view DiffViewBuffer Diff view buffer
 ---@field tab_page number Tab page handle
 ---@field file_list_win number File list window handle
----@field diff_view_win number Diff view window handle
+---@field old_win number Base-revision window handle
+---@field new_win number Working-copy window handle
 local ReviewBuffer = {}
 ReviewBuffer.__index = ReviewBuffer
 
@@ -88,25 +89,30 @@ function ReviewBuffer.new(repo)
 	return instance
 end
 
----Create the two-panel layout
+---Create the three-window layout: file list, base revision, working copy
 ---@param files File[] List of files
 function ReviewBuffer:_create_layout(files)
 	-- Create new tab
 	vim.cmd("tabnew")
 	self.tab_page = vim.api.nvim_get_current_tabpage()
 
-	-- Create vertical split
+	-- Three windows in a row: the file list, then the two sides of the diff.
+	-- `vsplit` inserts to the left of the current window, and
+	-- nvim_tabpage_list_wins reports them in layout order, so the list ends up
+	-- first and the working copy last.
+	vim.cmd("vsplit")
 	vim.cmd("vsplit")
 
-	-- Get window handles
 	local wins = vim.api.nvim_tabpage_list_wins(self.tab_page)
 	self.file_list_win = wins[1]
-	self.diff_view_win = wins[2]
+	self.old_win = wins[2]
+	self.new_win = wins[3]
 
-	-- Set file list width to ~25%
+	-- File list ~25%, the two diff panes splitting what is left evenly.
 	local total_width = vim.o.columns
 	local file_list_width = math.max(30, math.floor(total_width * 0.25))
 	vim.api.nvim_win_set_width(self.file_list_win, file_list_width)
+	vim.api.nvim_win_set_width(self.old_win, math.floor((total_width - file_list_width) / 2))
 
 	-- Create file list buffer
 	vim.api.nvim_set_current_win(self.file_list_win)
@@ -126,13 +132,12 @@ function ReviewBuffer:_create_layout(files)
 	end)
 	-- toggle_reviewed: session already saved in FileListBuffer, no action needed
 
-	-- Create diff view buffer
-	vim.api.nvim_set_current_win(self.diff_view_win)
+	-- Create diff view buffers and put them in the two right-hand windows
 	self.diff_view = DiffViewBuffer.new({
 		repo = self.repo,
 		session = self.session,
 	})
-	self.diff_view:show()
+	self.diff_view:attach(self.old_win, self.new_win)
 
 	-- Subscribe to diff view events
 	self.diff_view.events:on("comment", function(context)
@@ -221,20 +226,20 @@ end
 function ReviewBuffer:_setup_tab_mappings()
 	local group = vim.api.nvim_create_augroup("oversight_review_" .. self.tab_page, { clear = true })
 
-	-- Tab switching between panels
+	-- Maps that belong to the whole review rather than to one panel. They are
+	-- installed on whichever panel is entered.
+	--
+	-- There is deliberately no panel-switching key: the three windows are
+	-- ordinary windows in an ordinary layout, so `<C-w>h`/`<C-w>l` already move
+	-- between them, and every Vim user already knows that.
 	vim.api.nvim_create_autocmd("BufEnter", {
 		group = group,
 		callback = function()
 			local buf = vim.api.nvim_get_current_buf()
-			local file_list_buf = self.file_list:get_handle()
-			local diff_view_buf = self.diff_view:get_handle()
+			local panels = self.diff_view:get_handles()
+			table.insert(panels, self.file_list:get_handle())
 
-			if buf == file_list_buf or buf == diff_view_buf then
-				-- Set Tab to switch between panels
-				vim.keymap.set("n", "<Tab>", function()
-					self:_toggle_focus()
-				end, { buffer = buf, desc = "Toggle panel focus" })
-
+			if vim.tbl_contains(panels, buf) then
 				-- File navigation from either panel
 				vim.keymap.set("n", "{", function()
 					self:_navigate_file(-1)
@@ -341,23 +346,6 @@ function ReviewBuffer:_on_edit_comment(comment)
 	end)
 end
 
----Toggle focus between panels
-function ReviewBuffer:_toggle_focus()
-	-- Validate windows still exist
-	if not vim.api.nvim_win_is_valid(self.file_list_win) or not vim.api.nvim_win_is_valid(self.diff_view_win) then
-		return
-	end
-
-	local current_win = vim.api.nvim_get_current_win()
-	if current_win == self.file_list_win then
-		vim.api.nvim_set_current_win(self.diff_view_win)
-		-- Position cursor on first file header (skip keybindings hint)
-		self.diff_view:jump_to_first_content()
-	else
-		vim.api.nvim_set_current_win(self.file_list_win)
-	end
-end
-
 ---Navigate to next/previous file
 ---@param delta number 1 for next, -1 for previous
 function ReviewBuffer:_navigate_file(delta)
@@ -452,10 +440,12 @@ function ReviewBuffer:refresh(opts)
 	-- Update file list
 	self.file_list:set_files(files)
 
-	-- Refresh diff view for current file
+	-- Refresh diff view for current file, in place: the cursor should not jump
+	-- back to the first hunk every time an agent saves a file underneath us.
 	local current_file = self.file_list:get_current_file()
 	if current_file then
-		self.diff_view:show_file(current_file)
+		local same = self.diff_view.current_file and self.diff_view.current_file.path == current_file.path
+		self.diff_view:show_file(current_file, { keep_cursor = same })
 	end
 
 	-- The change list moves as the agent works, so the watch set moves with it.

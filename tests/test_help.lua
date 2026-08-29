@@ -102,40 +102,14 @@ _G.undocumented = undocumented
 ]]
 
 -- A repository with committed history and uncommitted changes on top, so review
--- mode has something to show. Built with a neutral git configuration for the
--- same reason test_vcs_hermetic.lua does it: the child inherits this
--- environment, and a developer's own config should not reach the assertions.
-local MAKE_REPO = [[
-function _G.make_repo()
-	local dir = vim.fn.tempname()
-	vim.fn.mkdir(dir, "p")
-	local script = table.concat({
-		"cd " .. vim.fn.shellescape(dir),
-		"export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null",
-		"export GIT_AUTHOR_NAME=T GIT_AUTHOR_EMAIL=t@example.com",
-		"export GIT_COMMITTER_NAME=T GIT_COMMITTER_EMAIL=t@example.com",
-		"git init --quiet --initial-branch=main",
-		"mkdir -p src",
-		"printf 'one\\ntwo\\n' > src/kept.lua",
-		"git add -A",
-		"git commit --quiet -m init",
-		"printf 'one\\nTWO\\n' > src/kept.lua",
-	}, "\n")
-	local out = vim.fn.system({ "bash", "-euo", "pipefail", "-c", script })
-	assert(vim.v.shell_error == 0, "repo setup failed: " .. out)
-
-	-- scripts/minimal_init.lua puts `deps/plenary.nvim` on the runtimepath
-	-- relatively, so changing directory would make `require("plenary.job")`
-	-- fail. Pin the entries to absolute paths before moving.
-	local project = vim.fn.getcwd()
-	for _, path in ipairs({ project, project .. "/deps/plenary.nvim", project .. "/deps/mini.nvim" }) do
-		vim.opt.runtimepath:append(path)
-	end
-
-	vim.cmd("cd " .. vim.fn.fnameescape(dir))
-	return dir
-end
-]]
+-- mode has something to show.
+local MAKE_REPO = require("tests.helpers.git_repo")({
+	"mkdir -p src",
+	"printf 'one\\ntwo\\n' > src/kept.lua",
+	"git add -A",
+	"git commit --quiet -m init",
+	"printf 'one\\nTWO\\n' > src/kept.lua",
+})
 
 ---Open a mode, focus each of its panels so the tab-level maps install, and
 ---return the keys it binds but never documents.
@@ -153,28 +127,35 @@ local function undocumented_in(mode)
 		if %q == "review" then
 			view = require("oversight.buffers.review").open()
 			text = Help.REVIEW_HELP_TEXT
-			panels = { file_list = view.file_list, diff_view = view.diff_view }
+			-- Review mode has three panels, not two: the diff is a pair of
+			-- buffers with Neovim's own diff between them, and each side carries
+			-- its own copy of the map set.
+			panels = {
+				file_list = view.file_list:get_handle(),
+				diff_base = view.diff_view.old:get_handle(),
+				diff_working = view.diff_view.new:get_handle(),
+			}
 		else
 			view = require("oversight.buffers.browse").open()
 			text = Help.BROWSE_HELP_TEXT
-			panels = { file_tree = view.file_tree, file_view = view.file_view }
+			panels = {
+				file_tree = view.file_tree:get_handle(),
+				file_view = view.file_view:get_handle(),
+			}
 		end
 		assert(view, "failed to open %s mode")
 
 		-- The tab-level maps (Tab, {, }, y, X, R, ?, q) install on BufEnter, so a
-		-- panel that has never been focused is missing them. Visit both.
-		local handles = {}
-		for label, panel in pairs(panels) do
-			local handle = panel:get_handle()
+		-- panel that has never been focused is missing them. Visit all of them.
+		for _, handle in pairs(panels) do
 			for _, win in ipairs(vim.api.nvim_list_wins()) do
 				if vim.api.nvim_win_get_buf(win) == handle then
 					vim.api.nvim_set_current_win(win)
 					vim.cmd("doautocmd BufEnter")
 				end
 			end
-			handles[label] = handle
 		end
-		return undocumented(handles, text)
+		return undocumented(panels, text)
 	end)()]],
 		mode,
 		mode

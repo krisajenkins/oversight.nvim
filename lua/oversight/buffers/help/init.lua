@@ -16,11 +16,16 @@ HelpOverlay.__index = HelpOverlay
 -- See the Keybindings section of CLAUDE.md. `tests/test_help.lua` checks the
 -- claims here that are cheap to check mechanically.
 --
--- Keys that exist in only one panel say so, because the two panels of a mode do
--- not have the same map set: `g`/`G` are file-list only, and `[`/`]`, `c`, `C`
--- and `dd` are diff-view only.
+-- Keys that exist in only one panel say so, because the panels of a mode do not
+-- have the same map set: `g`/`G` are file-list only, and `[`/`]`, `c`, `C` and
+-- `dd` are diff-view only.
+--
+-- Review mode binds no panel-switching key. Its three windows are ordinary
+-- windows, so `<C-w>h`/`<C-w>l` already do it; browse mode keeps `Tab`, because
+-- its two panels are not laid out as a thing you would navigate with `<C-w>`
+-- so much as toggle between.
 
----Review mode: file list + diff view.
+---Review mode: file list, then the two sides of Neovim's own diff.
 local REVIEW_HELP_TEXT = {
 	"oversight - Review Mode",
 	"",
@@ -32,19 +37,19 @@ local REVIEW_HELP_TEXT = {
 	"  {/}         Previous/next file",
 	"  [/]         Previous/next hunk (diff view)",
 	"  g/G         First/last file (file list)",
-	"  Tab         Switch panels",
+	"  Ctrl-w h/l  Move between the three windows",
 	"",
 	"File List:",
 	"  Enter       Select file (show diff)",
 	"  o           Open file in new tab",
 	"  r           Toggle file reviewed",
 	"",
-	"Diff View:",
-	"  Enter/o     Open file at current line",
+	"Diff View (either side):",
+	"  Enter/o     Open the working copy at this line",
 	"  r           Toggle file reviewed",
-	"  c           Add/edit line comment",
+	"  c           Add/edit a comment on this line",
 	"  C           Add file comment",
-	"  dd          Delete comment",
+	"  dd          Delete this line's comment",
 	"",
 	"Comment Dialog:",
 	"  Ctrl-s      Submit comment",

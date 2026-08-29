@@ -141,20 +141,18 @@ T["git, for real"]["parses a real repository the way the fixtures say"] = functi
 			["src/renamed_to.lua"] = "R",
 		})
 
-		local diff = backend:get_file_diff("src/edited.lua")
-		if not diff then
-			error("expected a diff for src/edited.lua")
-		end
-		expect.equality(diff.is_binary, false)
-		expect.equality(#diff.hunks, 1)
+		-- The diff view is handed whole files, so this is what has to be right:
+		-- the content at the base revision, split into lines the same way
+		-- `readfile` splits the working copy.
+		expect.equality(backend:get_file_at_base("src/edited.lua"), { "alpha", "beta" })
+		expect.equality(backend:read_file("src/edited.lua"), { "alpha", "BETA" })
 
-		-- Assert on content, not just hunk count: a parser that produced empty
-		-- hunks would otherwise pass.
-		local contents = {}
-		for _, line in ipairs(diff.hunks[1].lines) do
-			table.insert(contents, line.type .. ":" .. (line.type == "add" and line.content_new or line.content_old))
-		end
-		expect.equality(contents, { "context:alpha", "delete:beta", "add:BETA" })
+		-- A file that only exists in the working copy has no content at the base.
+		-- That is an empty file, not a failure.
+		expect.equality(backend:get_file_at_base("src/added.lua"), {})
+
+		-- A rename is read under its old name; the new one is not at HEAD.
+		expect.equality(backend:get_file_at_base("src/renamed_from.lua"), { "original" })
 	end)
 
 	cleanup()
@@ -225,21 +223,18 @@ T["jj, for real"]["parses a real repository the way the fixtures say"] = functio
 			["src/renamed_to.lua"] = "R",
 		})
 
-		-- The regression this whole file exists to catch. jj's default diff
-		-- format is color-words, which the unified-diff parser silently reduces
-		-- to zero hunks; a passing hunk count here means the backend really did
-		-- ask for git-format output.
-		local diff = backend:get_file_diff("src/edited.lua")
-		if not diff then
-			error("expected a diff for src/edited.lua")
-		end
-		expect.equality(#diff.hunks, 1)
+		expect.equality(backend:get_file_at_base("src/edited.lua"), { "alpha", "beta" })
+		expect.equality(backend:read_file("src/edited.lua"), { "alpha", "BETA" })
 
-		local contents = {}
-		for _, line in ipairs(diff.hunks[1].lines) do
-			table.insert(contents, line.type .. ":" .. (line.type == "add" and line.content_new or line.content_old))
-		end
-		expect.equality(contents, { "context:alpha", "delete:beta", "add:BETA" })
+		expect.equality(backend:get_file_at_base("src/added.lua"), {})
+		expect.equality(backend:get_file_at_base("src/renamed_from.lua"), { "original" })
+
+		-- `jj diff` still runs, for the hash that tells a review its file moved
+		-- underneath it. jj's default diff format is color-words, which carries
+		-- no `@@` header at all — so this is what catches a missing `--git`.
+		local raw = backend:get_file_diff_raw("src/edited.lua")
+		expect.equality(type(raw), "string")
+		expect.equality(raw:find("@@", 1, true) ~= nil, true)
 	end)
 
 	cleanup()

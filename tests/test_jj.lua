@@ -162,13 +162,13 @@ local function backend()
 end
 
 ---@param path string
----@return FileDiff diff
-local function diff_of(path)
-	local diff = backend():get_file_diff(path)
-	if not diff then
-		error("expected a diff for " .. path)
+---@return string[] lines
+local function base_of(path)
+	local lines = backend():get_file_at_base(path)
+	if not lines then
+		error("expected base content for " .. path)
 	end
-	return diff
+	return lines
 end
 
 T["JJ Backend"]["reads root, change ID and bookmark on construction"] = function()
@@ -178,7 +178,7 @@ T["JJ Backend"]["reads root, change ID and bookmark on construction"] = function
 	expect.equality(repo:get_root(), MOCK_ROOT)
 	-- jj's change_id template prints the full 32-character ID, not the short
 	-- prefix that `jj status` displays.
-	expect.equality(repo:get_ref(), "pskzmqyvqskkzqrslpymqmytysvosurr")
+	expect.equality(repo:get_ref(), "vzvwolxmxwkrqvzmnolsyqtwxtwqutyt")
 	expect.equality(repo:get_branch(), "main")
 end
 
@@ -225,85 +225,84 @@ T["JJ Backend"]["lists tracked files for browse mode"] = function()
 	expect.equality(files[7], { status = "", path = "src/util.lua" })
 end
 
-T["JJ Backend"]["parses a single-hunk diff"] = function()
-	local diff = diff_of("README.md")
+-- The diff view never parses a diff: it is handed the file at @- and the file
+-- now, and Neovim works out the rest. These check the first half.
 
-	expect.equality(diff.is_binary, false)
-	expect.equality(#diff.hunks, 1)
+T["JJ Backend"]["reads a modified file's content at @-"] = function()
+	expect.equality(base_of("README.md"), {
+		"# Demo",
+		"",
+		"A repository that exists only to produce test fixtures.",
+	})
 end
 
-T["JJ Backend"]["parses a diff with several hunks"] = function()
-	expect.equality(#diff_of("src/app.lua").hunks, 2)
+-- The working copy is read with `readfile`, which cannot represent a trailing
+-- newline either. If the two disagreed, every file in the repository would show
+-- a spurious last-line change.
+T["JJ Backend"]["reads a file with no trailing newline as one line"] = function()
+	expect.equality(base_of("no-newline.txt"), { "no trailing newline here" })
 end
 
-T["JJ Backend"]["parses a pure-addition diff"] = function()
-	local diff = diff_of("src/new_feature.lua")
-
-	expect.equality(#diff.hunks, 1)
-	for _, line in ipairs(diff.hunks[1].lines) do
-		expect.equality(line.type, "add")
-	end
+T["JJ Backend"]["reads a renamed file under its old path"] = function()
+	expect.equality(base_of("docs/guide.md"), { "# Guide", "", "Read this first." })
 end
 
-T["JJ Backend"]["parses a pure-deletion diff"] = function()
-	local diff = diff_of("notes.txt")
-
-	expect.equality(#diff.hunks, 1)
-	for _, line in ipairs(diff.hunks[1].lines) do
-		expect.equality(line.type, "delete")
-	end
+T["JJ Backend"]["reads a deleted file, which still exists at @-"] = function()
+	expect.equality(base_of("notes.txt"), { "Scratch notes.", "Delete me." })
 end
 
-T["JJ Backend"]["marks binary files as binary"] = function()
-	local diff = diff_of("assets/logo.bin")
+-- An added file has no content in the parent commit, and jj says so on stderr
+-- rather than printing nothing. That is a normal answer, not an error.
+T["JJ Backend"]["reports an added file as empty at @-, not as a failure"] = function()
+	local messages = capture_notifications(function()
+		expect.equality(backend():get_file_at_base("src/new_feature.lua"), {})
+	end)
 
-	expect.equality(diff.is_binary, true)
-	expect.equality(#diff.hunks, 0)
+	expect.equality(messages, {})
 end
 
-T["JJ Backend"]["drops the no-trailing-newline marker"] = function()
-	local diff = diff_of("no-newline.txt")
-
-	expect.equality(#diff.hunks, 1)
-	expect.equality(#diff.hunks[1].lines, 2)
-end
-
--- jj reports a pure rename as a header-only diff with no hunks at all. That has
--- to survive as an empty-but-valid FileDiff rather than a nil.
-T["JJ Backend"]["handles a rename with no content change"] = function()
-	local diff = diff_of("docs/manual.md")
-
-	expect.equality(diff.is_binary, false)
-	expect.equality(diff.hunks, {})
-end
-
-T["JJ Backend"]["returns nil and notifies when the diff command fails"] = function()
-	MockCli.set_failure('file:"src/util.lua"', "Error: No such path")
+T["JJ Backend"]["returns nil and notifies when reading at @- fails"] = function()
+	MockCli.set_failure('--revision @- file:"src/util.lua"', "Error: Revision @- does not exist")
 
 	local messages = capture_notifications(function()
-		expect.equality(backend():get_file_diff("src/util.lua"), nil)
+		expect.equality(backend():get_file_at_base("src/util.lua"), nil)
 	end)
 
 	expect.equality(#messages, 1)
 	expect.equality(tostring(messages[1].msg):find("src/util.lua", 1, true) ~= nil, true)
 end
 
+-- Not for display: `Session:ensure_file` hashes this to notice a file's changes
+-- moving under a review, which is what drops its comments.
+T["JJ Backend"]["hands back raw diff output for change detection"] = function()
+	local raw = backend():get_file_diff_raw("README.md")
+
+	expect.equality(type(raw), "string")
+	expect.equality(raw:find("@@", 1, true) ~= nil, true)
+end
+
+T["JJ Backend"]["returns nil raw diff when the diff command fails"] = function()
+	MockCli.set_failure('file:"src/util.lua"', "Error: No such path")
+
+	expect.equality(backend():get_file_diff_raw("src/util.lua"), nil)
+end
+
 -- Regression test for paths that look like glob patterns. The backend wraps
 -- every path in a `file:"..."` fileset literal precisely so jj does not treat
 -- the brackets as a pattern.
 T["JJ Backend"]["quotes paths as fileset literals"] = function()
-	MockCli.set('file:"[year]/[slug].astro"', { stdout = "" })
+	MockCli.set('--revision @- file:"[year]/[slug].astro"', { stdout = "" })
 
-	diff_of("[year]/[slug].astro")
+	base_of("[year]/[slug].astro")
 
 	local last = MockCli.calls[#MockCli.calls]
 	expect.equality(last.cmdline:find('file:"[year]/[slug].astro"', 1, true) ~= nil, true)
 end
 
 T["JJ Backend"]["escapes double quotes in paths"] = function()
-	MockCli.set('file:"file\\"with\\"quotes.lua"', { stdout = "" })
+	MockCli.set('--revision @- file:"file\\"with\\"quotes.lua"', { stdout = "" })
 
-	diff_of('file"with"quotes.lua')
+	base_of('file"with"quotes.lua')
 
 	local last = MockCli.calls[#MockCli.calls]
 	expect.equality(last.cmdline:find('file:"file\\"with\\"quotes.lua"', 1, true) ~= nil, true)

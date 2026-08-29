@@ -140,6 +140,21 @@ function M.check()
 		h.info("Current directory is not a version-controlled repository")
 	end
 
+	-- Check 'diffopt'. Review mode hands two buffers to Neovim's own diff, so
+	-- this global option is what draws it. The plugin deliberately never writes
+	-- to it — it is the user's, and every other diff in their editor obeys it —
+	-- but `internal` is what selects the built-in diff library, and without it
+	-- Neovim shells out to an external `diff(1)` that may not be there.
+	local diffopt = vim.o.diffopt
+	if not vim.tbl_contains(vim.split(diffopt, ",", { plain = true }), "internal") then
+		h.warn("'diffopt' does not include `internal`: " .. diffopt, {
+			"Review mode renders with Neovim's own diff, which needs it",
+			'Try: vim.opt.diffopt = "internal,filler,closeoff,linematch:60"',
+		})
+	else
+		h.ok("'diffopt' is " .. diffopt)
+	end
+
 	-- Check plenary, which lib/cli.lua depends on for every VCS invocation
 	local missing = {}
 	for _, mod in ipairs({ "plenary.job", "plenary.async" }) do

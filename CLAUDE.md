@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 oversight-nvim is a Neovim plugin for interactive code review. It has two modes:
 
-- **Review mode** (`:Oversight` or `:Oversight review`) - Two-panel interface (file list + diff view) for reviewing uncommitted VCS changes
+- **Review mode** (`:Oversight` or `:Oversight review`) - Three-window interface (file list + the two sides of a native Neovim diff) for reviewing uncommitted VCS changes
 - **Browse mode** (`:Oversight browse`) - Two-panel interface (file tree + file viewer) for browsing the full codebase and leaving notes on any file
 
 Both modes support adding comments (suggestion/issue/question) and exporting reviews to markdown. Supports both Git and Jujutsu (jj) with automatic detection.
@@ -60,16 +60,24 @@ toolchain as the dev shell.
 
 - `component.lua` - Component factory for creating render-able elements
 - `renderer.lua` - Renders component trees to buffer lines with highlights
-- `init.lua` - Pre-built components: `Ui.text()`, `Ui.row()`, `Ui.col()`, `Ui.file_item()`, `Ui.diff_line()`, etc.
+- `init.lua` - Pre-built components: `Ui.text()`, `Ui.row()`, `Ui.col()`, `Ui.file_item()`, etc.
 
 **VCS Backends** (`lib/vcs/`):
 
-- `base.lua` - Shared base class for VCS backends (defines `create_backend()`, shared `read_file()`)
+- `base.lua` - Shared base class for VCS backends (defines `create_backend()`, shared `read_file()` and `file_content_lines()`)
 - `git/cli.lua` - Fluent builder for git commands: `git.diff():flag("name-status"):arg("HEAD"):cwd(dir):call()`
-- `git/init.lua` - GitBackend: `get_diff_files()`, `get_tracked_files()`, `get_file_diff()`, etc.
+- `git/init.lua` - GitBackend: `get_changed_files()`, `get_tracked_files()`, `get_file_at_base()`, `get_file_diff_raw()`
 - `jj/cli.lua` - Fluent builder for jj commands (same pattern as git)
 - `jj/init.lua` - JjBackend: same interface as GitBackend
-- `diff.lua` - Diff parsing and hunk extraction
+
+**Nothing parses a diff.** `get_file_at_base()` returns the whole file at the
+base revision (`git show HEAD:<path>`, `jj file show -r @-`), `read_file()`
+returns the whole working copy, and Neovim's own diff does the rest.
+`get_file_diff_raw()` survives only because `Session:ensure_file` hashes it to
+notice a file's changes moving under an open review.
+
+Both sides must split lines the same way, or every file shows a spurious
+last-line change. See the note on `file_content_lines` in `base.lua`.
 
 **Watcher** (`lib/watcher.lua`): auto-refreshes open views when the repository
 changes on disk. Refcounted per repository root; disable with
@@ -98,9 +106,31 @@ to disk; `Session:save()` is a no-op that only stamps `updated_at`.
 
 **Review mode:**
 
-- `review/init.lua` - ReviewBuffer: orchestrates the review two-panel layout, singleton per repo
+- `review/init.lua` - ReviewBuffer: orchestrates the three-window layout, singleton per repo
 - `file_list/` - Left panel showing changed files with review status
-- `diff_view/` - Right panel showing side-by-side diffs with comments
+- `diff_view/` - The two right-hand panels: `oversight://old` holds the file at
+  the base revision, `oversight://new` the working copy, and both windows are
+  `:diffthis`. Syntax highlighting comes from setting `filetype`; the header is
+  a `winbar`.
+
+Three things about the diff view are load-bearing:
+
+- **`foldenable` is off.** Diff mode folds unchanged regions by default, and a
+  folded comment is an invisible comment. `]c` is how you skip context here.
+- **Every comment is placed twice.** Neovim's diff aligns the two windows with
+  filler lines and does not count `virt_lines`, so a comment on one side alone
+  pushes that side down and the panes drift. An equal-height blank block goes at
+  the counterpart line on the other side. `tests/test_diff_view.lua` asserts the
+  invariant, with a negative control.
+- **The counterpart is found from `diff_filler`, not from a diff.** A line's
+  display row is its number plus every filler above it, and two lines sharing a
+  display row are counterparts. A line with none — one side of a pure addition
+  or deletion — falls back to the nearest line above, which puts the mirror a
+  row or two early inside that hunk and back in step below it.
+
+A file-level comment hangs off the *last* line, not above the first:
+`virt_lines_above` on line 1 has no screen row to draw in, and Neovim omits it
+in silence.
 
 **Browse mode:**
 
@@ -112,6 +142,9 @@ to disk; `Session:save()` is a no-op that only stamps `updated_at`.
 
 - `comment/init.lua` - Floating window for adding comments
 - `help/init.lua` - Help overlay
+- `lib/binary.lua` - Binary detection, shared by both modes. Note the trap it
+  documents: `vim.fn.readfile` turns every NUL into a newline, so its output can
+  never be asked whether a file was binary. Sniff the bytes on disk.
 
 ### Data Flow
 
@@ -145,6 +178,10 @@ end
 return T
 ```
 
+`tests/helpers/git_repo.lua` builds a throwaway git repository inside a child
+Neovim, for the tests that need a real one: the help audit, the diff
+screenshots, and the pane-alignment checks.
+
 VCS behaviour is tested against **frozen captures** of real `git` and `jj`
 output in `tests/fixtures/`, replayed by `tests/helpers/mock_cli.lua` — not
 against the repository the tests happen to be living in.
@@ -156,6 +193,24 @@ what keeps those captures honest. Regenerate them deliberately with
 swapping `package.loaded` is not enough to mock the CLI, why a test must never
 skip by returning early, and why a real-binary test has to neutralise the
 developer's own git/jj configuration.
+
+## The README screenshot
+
+`screenshot.png` is generated, not captured:
+
+```bash
+nix shell nixpkgs#vhs -c vhs scripts/demo/screenshot.tape
+```
+
+`scripts/demo/setup.sh` builds a throwaway repository and a Neovim config, and
+the tape drives review mode through real keystrokes. Two things in there are not
+decoration:
+
+- **The semicolon terminfo.** Neovim emits truecolor in the colon form, which
+  VHS's terminal misparses — colours come out dim with the blue channel crushed,
+  which reads as a bad colorscheme rather than as a bug.
+- **Esc, not Ctrl-S, submits the comment.** Ctrl-S is XOFF to a PTY and the
+  recording terminal swallows it. Esc saves a non-empty comment anyway.
 
 ## Keybindings
 
@@ -177,13 +232,18 @@ suite; 3 and 4 are prose and stay a manual step.
 
 Two things make this easy to get wrong:
 
-- **The two panels of a mode do not share a map set.** `g`/`G` are file
-  list/tree only; `[`/`]`, `c`, `C` and `dd` are diff/file view only. A flat
-  "these are the review mode keys" table is wrong, and was.
+- **The panels of a mode do not share a map set.** `g`/`G` are file list/tree
+  only; `[`/`]`, `c`, `C` and `dd` are diff/file view only. A flat "these are
+  the review mode keys" table is wrong, and was. Review mode has *three*
+  panels: both sides of the diff carry the same maps, and `test_help.lua`
+  checks both.
+- **Review mode binds no panel-switching key; browse mode binds `Tab`.** The
+  review layout is three ordinary windows, so `<C-w>h`/`<C-w>l` already do it.
+  Do not "restore" `Tab` there.
 - **The tab-level maps install on `BufEnter`, not at open.** A panel you have
-  never focused genuinely has no `Tab`, `y`, `X`, `R`, `?` or `q` yet, so
+  never focused genuinely has no `{`, `}`, `y`, `X`, `R`, `?` or `q` yet, so
   reading its keymaps before visiting it under-reports. `test_help.lua` visits
-  both panels first; do the same when investigating by hand.
+  every panel first; do the same when investigating by hand.
 
 Each mode must pass its own text to `HelpOverlay.show()`. The overlay's default
 is the review text, and browse mode silently inherited it for a while — hunk

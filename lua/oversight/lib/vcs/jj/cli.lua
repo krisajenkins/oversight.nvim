@@ -49,6 +49,15 @@ function M.file_list()
 	return jj():arg("file"):arg("list"):flag("no-pager")
 end
 
+---Create a jj file show builder
+---
+---Reads one file's content at a revision. `--no-pager` for the same reason as
+---everywhere else here; the revision and the fileset are the caller's business.
+---@return CliBuilder builder CLI builder
+function M.file_show()
+	return jj():arg("file"):arg("show"):flag("no-pager")
+end
+
 ---Create a raw jj builder
 ---@return CliBuilder builder CLI builder
 function M.raw()

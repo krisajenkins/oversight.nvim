@@ -74,4 +74,36 @@ T["Health"]["reports the discovered git version and path"] = function()
 	expect.equality(tostring(git_line):match("%d+%.%d+%.%d+") ~= nil, true)
 end
 
+-- Review mode is drawn by Neovim's own diff, so 'diffopt' is load-bearing —
+-- and it is the user's option, not the plugin's, which is exactly why this
+-- reports on it rather than overwriting it.
+T["Health"]["warns when 'diffopt' has no internal diff"] = function()
+	local original = vim.o.diffopt
+
+	vim.o.diffopt = "filler,closeoff"
+	local warned = check_with_stub(MODERN)
+
+	vim.o.diffopt = "internal,filler,closeoff"
+	local fine = check_with_stub(MODERN)
+
+	vim.o.diffopt = original
+
+	---@param calls table[]
+	---@param fn string
+	---@return string|nil
+	local function line_about_diffopt(calls, fn)
+		for _, call in ipairs(calls) do
+			if call.fn == fn and call.msg:find("diffopt", 1, true) then
+				return call.msg
+			end
+		end
+		return nil
+	end
+
+	expect.no_equality(line_about_diffopt(warned, "warn"), nil)
+	expect.equality(line_about_diffopt(warned, "ok"), nil)
+	expect.no_equality(line_about_diffopt(fine, "ok"), nil)
+	expect.equality(line_about_diffopt(fine, "warn"), nil)
+end
+
 return T

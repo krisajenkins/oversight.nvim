@@ -132,6 +132,34 @@ function GitBackend:get_file_diff_raw(file_path)
 	return result.stdout
 end
 
+---Read a file's contents as they are at the base revision (HEAD).
+---
+---Not a diff: the native diff view is handed two whole files and lets Neovim
+---work out what moved. Renames pass their `old_path`, because that is the name
+---the content had at HEAD.
+---@param file_path string File path relative to repo root, as it was at HEAD
+---@return string[]|nil lines File lines, {} when the path is not in HEAD at all
+---(a newly added file), nil on error
+function GitBackend:get_file_at_base(file_path)
+	local git = get_git()
+	local result = git.show():arg("HEAD:" .. file_path):cwd(self.root):call()
+
+	-- git spells "not at this revision" two ways depending on whether the path
+	-- exists in the working copy, and both are a normal answer here rather than a
+	-- failure: an added file simply has no content at HEAD.
+	local absent = not result.success
+		and (
+			result.stderr:find("does not exist in", 1, true) ~= nil
+			or result.stderr:find("exists on disk, but not in", 1, true) ~= nil
+		)
+
+	if not result.success and not absent then
+		logger.error("Failed to read %s at HEAD: %s", file_path, result.stderr)
+	end
+
+	return base.file_content_lines(result, absent)
+end
+
 ---Get list of all tracked files in the repository
 ---@return VcsFileChange[] files List of tracked files (status is empty string)
 function GitBackend:get_tracked_files()
@@ -155,6 +183,5 @@ function GitBackend:get_tracked_files()
 end
 
 -- Create augmented class with shared backend methods (instance, get_root,
--- get_ref, get_branch, has_changes, get_file_diff, get_all_diffs,
--- clear_cache, get_head)
+-- get_ref, get_branch, has_changes, read_file, clear_cache, get_head)
 return base.create_backend(GitBackend)

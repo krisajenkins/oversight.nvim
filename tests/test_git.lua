@@ -103,15 +103,16 @@ local function backend()
 	return instance
 end
 
----Fetch a parsed diff, failing the test rather than the assertion if it is nil.
+---Fetch a file's base content, failing the test rather than the assertion if it
+---is nil.
 ---@param path string
----@return FileDiff diff
-local function diff_of(path)
-	local diff = backend():get_file_diff(path)
-	if not diff then
-		error("expected a diff for " .. path)
+---@return string[] lines
+local function base_of(path)
+	local lines = backend():get_file_at_base(path)
+	if not lines then
+		error("expected base content for " .. path)
 	end
-	return diff
+	return lines
 end
 
 T["Git Backend"]["reads root, ref and branch on construction"] = function()
@@ -194,88 +195,68 @@ T["Git Backend"]["lists tracked files for browse mode"] = function()
 	expect.equality(files[7], { status = "", path = "src/util.lua" })
 end
 
-T["Git Backend"]["parses a single-hunk diff"] = function()
-	local diff = diff_of("README.md")
+-- The diff view never parses a diff: it is handed the file at the base revision
+-- and the file now, and Neovim works out the rest. These check the first half.
 
-	expect.equality(diff.is_binary, false)
-	expect.equality(#diff.hunks, 1)
-	expect.equality(diff.hunks[1].old_start, 1)
+T["Git Backend"]["reads a modified file's content at HEAD"] = function()
+	expect.equality(base_of("README.md"), {
+		"# Demo",
+		"",
+		"A repository that exists only to produce test fixtures.",
+	})
 end
 
-T["Git Backend"]["parses a diff with several hunks"] = function()
-	expect.equality(#diff_of("src/app.lua").hunks, 2)
+-- The working copy is read with `readfile`, which cannot represent a trailing
+-- newline either. If the two disagreed, every file in the repository would show
+-- a spurious last-line change.
+T["Git Backend"]["reads a file with no trailing newline as one line"] = function()
+	expect.equality(base_of("no-newline.txt"), { "no trailing newline here" })
 end
 
-T["Git Backend"]["parses a pure-addition diff"] = function()
-	local diff = diff_of("src/new_feature.lua")
-
-	expect.equality(#diff.hunks, 1)
-	for _, line in ipairs(diff.hunks[1].lines) do
-		expect.equality(line.type, "add")
-	end
+-- A rename is read under its OLD name: that is what the content was called at
+-- HEAD, and the new name does not exist there.
+T["Git Backend"]["reads a renamed file under its old path"] = function()
+	expect.equality(base_of("docs/guide.md"), { "# Guide", "", "Read this first." })
 end
 
-T["Git Backend"]["parses a pure-deletion diff"] = function()
-	local diff = diff_of("notes.txt")
-
-	expect.equality(#diff.hunks, 1)
-	for _, line in ipairs(diff.hunks[1].lines) do
-		expect.equality(line.type, "delete")
-	end
+T["Git Backend"]["reads a deleted file, which still exists at HEAD"] = function()
+	expect.equality(base_of("notes.txt"), { "Scratch notes.", "Delete me." })
 end
 
-T["Git Backend"]["marks binary files as binary"] = function()
-	local diff = diff_of("assets/logo.bin")
+-- An added file has no content at HEAD, and git says so on stderr rather than
+-- printing nothing. That is a normal answer, not an error: empty lines, not nil.
+T["Git Backend"]["reports an added file as empty at HEAD, not as a failure"] = function()
+	local messages = capture_notifications(function()
+		expect.equality(backend():get_file_at_base("src/new_feature.lua"), {})
+	end)
 
-	expect.equality(diff.is_binary, true)
-	expect.equality(#diff.hunks, 0)
+	expect.equality(messages, {})
 end
 
--- The capture carries two "\ No newline at end of file" markers. They are git
--- commentary, not content, so the hunk holds exactly the one deletion and one
--- addition — not four lines, and no line whose text is the marker.
-T["Git Backend"]["drops the no-trailing-newline marker"] = function()
-	local diff = diff_of("no-newline.txt")
-
-	expect.equality(diff.is_binary, false)
-	expect.equality(#diff.hunks, 1)
-	expect.equality(#diff.hunks[1].lines, 2)
-	expect.equality(diff.hunks[1].lines[1].content_old, "no trailing newline here")
-	expect.equality(diff.hunks[1].lines[2].content_new, "still no trailing newline")
-end
-
-T["Git Backend"]["returns an empty diff when the file is unchanged"] = function()
-	MockCli.set("-- src/util.lua", { stdout = "" })
-
-	local diff = diff_of("src/util.lua")
-
-	expect.equality(diff.hunks, {})
-	expect.equality(diff.is_binary, false)
-end
-
-T["Git Backend"]["returns nil and notifies when the diff command fails"] = function()
-	MockCli.set_failure("-- src/util.lua", "fatal: bad revision")
+T["Git Backend"]["returns nil and notifies when reading at HEAD fails"] = function()
+	MockCli.set_failure("HEAD:src/util.lua", "fatal: bad object HEAD", 128)
 
 	local messages = capture_notifications(function()
-		expect.equality(backend():get_file_diff("src/util.lua"), nil)
+		expect.equality(backend():get_file_at_base("src/util.lua"), nil)
 	end)
 
 	expect.equality(#messages, 1)
 	expect.equality(tostring(messages[1].msg):find("src/util.lua", 1, true) ~= nil, true)
 end
 
-T["Git Backend"]["get_all_diffs carries status and old_path through"] = function()
-	local diffs = backend():get_all_diffs()
+-- Not for display: `Session:ensure_file` hashes this to notice a file's changes
+-- moving under a review, which is what drops its comments.
+T["Git Backend"]["hands back raw diff output for change detection"] = function()
+	local raw = backend():get_file_diff_raw("README.md")
 
-	expect.equality(#diffs, 7)
+	expect.equality(type(raw), "string")
+	expect.equality(raw:find("@@", 1, true) ~= nil, true)
+end
 
-	local renamed = {}
-	for _, diff in ipairs(diffs) do
-		if diff.status == "R" then
-			table.insert(renamed, { path = diff.path, old_path = diff.old_path })
-		end
-	end
-	expect.equality(renamed, { { path = "docs/manual.md", old_path = "docs/guide.md" } })
+T["Git Backend"]["returns nil raw diff when the diff command fails"] = function()
+	MockCli.set_failure("-- src/util.lua", "fatal: bad revision")
+
+	expect.equality(backend():get_file_diff_raw("src/util.lua"), nil)
 end
 
 T["Git Backend"]["instance() caches per directory"] = function()

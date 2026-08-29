@@ -1,6 +1,20 @@
 # Plan: native Neovim diff mode for review view
 
-Date: 2026-08-28. Status: proposed, not started.
+Date: 2026-08-28. Status: **implemented, 2026-08-29.** Kept as the record of
+why the diff view looks like this; `CLAUDE.md` describes what it actually does
+now. Two things turned out differently in the building, both noted inline below.
+
+Reality departed from the plan in two places:
+
+- **File-level comments do not anchor above line 1.** `virt_lines_above` on the
+  first line of a buffer has no screen row to draw in, and Neovim omits it in
+  silence rather than complaining. They hang off the *last* line instead, which
+  is where the old renderer put them.
+- **A one-sided line has no counterpart to mirror at.** The plan assumed every
+  anchor has a matching line on the other side; an added or deleted line's
+  counterpart is filler, which is not addressable. The mirror falls back to the
+  nearest line above, which puts the blank block a row or two early inside that
+  hunk. Both sides gain the same height, so they are back in step below it.
 
 ## Summary
 

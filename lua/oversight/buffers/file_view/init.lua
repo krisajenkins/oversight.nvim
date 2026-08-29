@@ -3,6 +3,7 @@
 
 local Buffer = require("oversight.lib.buffer")
 local EventEmitter = require("oversight.lib.events")
+local Binary = require("oversight.lib.binary")
 local FileViewUI = require("oversight.buffers.file_view.ui")
 
 -- Events emitted by FileViewBuffer:
@@ -49,24 +50,6 @@ function FileViewBuffer.new(opts)
 	instance:_setup_mappings()
 
 	return instance
-end
-
----Check if content appears to be binary (null bytes in first 8KB)
----@param lines string[] File lines
----@return boolean is_binary
-local function is_binary(lines)
-	local bytes_checked = 0
-	local limit = 8192
-	for _, line in ipairs(lines) do
-		if bytes_checked >= limit then
-			break
-		end
-		if line:find("%z") then
-			return true
-		end
-		bytes_checked = bytes_checked + #line + 1
-	end
-	return false
 end
 
 ---Setup keymappings for the buffer
@@ -189,8 +172,9 @@ function FileViewBuffer:render()
 	-- File header
 	table.insert(components, FileViewUI.create_file_header(self.current_file.path, reviewed))
 
-	-- Binary detection
-	if is_binary(lines) then
+	-- Binary detection. Sniffed on disk rather than over `lines`, because the
+	-- readfile those came from has already turned every NUL into a newline.
+	if Binary.file_is_binary(self.repo:get_root() .. "/" .. self.current_file.path) then
 		table.insert(components, FileViewUI.create_binary_notice(self.current_file.path))
 		self.buffer:render(components)
 		return

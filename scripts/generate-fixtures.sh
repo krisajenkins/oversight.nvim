@@ -198,6 +198,17 @@ capture_git diff-deleted.txt diff --no-color HEAD -- notes.txt
 capture_git diff-renamed.txt diff --no-color HEAD -- docs/manual.md
 capture_git diff-no-trailing-newline.txt diff --no-color HEAD -- no-newline.txt
 capture_git diff-binary.txt diff --no-color HEAD -- assets/logo.bin
+# Whole-file content at HEAD. The diff view is handed these and the working
+# copy, and lets Neovim compute the diff; nothing here is parsed. The renamed
+# file is captured under its OLD name, because that is what the content was
+# called at HEAD.
+capture_git show-head-modified.txt show --no-color HEAD:README.md
+capture_git show-head-multiple-hunks.txt show --no-color HEAD:src/app.lua
+capture_git show-head-deleted.txt show --no-color HEAD:notes.txt
+capture_git show-head-renamed.txt show --no-color HEAD:docs/guide.md
+capture_git show-head-no-trailing-newline.txt show --no-color HEAD:no-newline.txt
+capture_git show-head-binary.txt show --no-color HEAD:assets/logo.bin
+
 capture_git ls-files.txt ls-files
 capture_git rev-parse-head.txt rev-parse HEAD
 capture_git branch-show-current.txt branch --show-current
@@ -238,6 +249,14 @@ capture_jj diff-deleted.txt diff --no-pager --color never --git 'file:"notes.txt
 capture_jj diff-renamed.txt diff --no-pager --color never --git 'file:"docs/manual.md"'
 capture_jj diff-no-trailing-newline.txt diff --no-pager --color never --git 'file:"no-newline.txt"'
 capture_jj diff-binary.txt diff --no-pager --color never --git 'file:"assets/logo.bin"'
+# Whole-file content at @-, the counterpart of the git captures above.
+capture_jj file-show-modified.txt file show --no-pager --revision @- 'file:"README.md"'
+capture_jj file-show-multiple-hunks.txt file show --no-pager --revision @- 'file:"src/app.lua"'
+capture_jj file-show-deleted.txt file show --no-pager --revision @- 'file:"notes.txt"'
+capture_jj file-show-renamed.txt file show --no-pager --revision @- 'file:"docs/guide.md"'
+capture_jj file-show-no-trailing-newline.txt file show --no-pager --revision @- 'file:"no-newline.txt"'
+capture_jj file-show-binary.txt file show --no-pager --revision @- 'file:"assets/logo.bin"'
+
 capture_jj file-list.txt file list --no-pager
 
 # ---------------------------------------------------------------------------

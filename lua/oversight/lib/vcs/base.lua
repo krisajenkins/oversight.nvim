@@ -1,24 +1,50 @@
 -- Base VCS backend class
 -- Provides shared logic for all VCS backends (git, jj, etc.)
 
-local logger = require("oversight.logger")
-local Diff = require("oversight.lib.diff")
-
 local M = {}
+
+---Turn a command's stdout into buffer lines.
+---
+---The two sides of the diff view have to agree on where the lines fall, and
+---they arrive by different routes: the working copy through `vim.fn.readfile`,
+---the base revision through a CLI's stdout. `lib/cli.lua` builds that stdout
+---the way plenary hands it over — the process's output split on newlines and
+---rejoined with them, with no trailing one — so a plain split agrees with
+---`readfile` both for a file that ends in a newline and for one that does not.
+---
+---The single case the string form cannot express is an empty file versus a file
+---holding one empty line: both arrive as "". Empty wins, because that is what a
+---file which does not exist at the base revision looks like, and that case is
+---far commoner than a file whose entire content is a newline.
+---@param result CliResult The finished command
+---@param absent boolean True when the failure means "no such path at the base"
+---@return string[]|nil lines File lines, {} when absent or empty, nil on error
+function M.file_content_lines(result, absent)
+	if absent then
+		return {}
+	end
+	if not result.success then
+		return nil
+	end
+	if result.stdout == "" then
+		return {}
+	end
+	return vim.split(result.stdout, "\n", { plain = true })
+end
 
 ---Create a backend class with shared behavior.
 ---Returns a new class table that inherits from BackendClass via __index,
 ---without mutating the original.
 ---
 ---The returned class provides: new(), instance(), get_root(), get_ref(),
----get_branch(), has_changes(), get_file_diff(), get_all_diffs(),
----clear_cache(), get_head.
+---get_branch(), has_changes(), read_file(), clear_cache(), get_head.
 ---
 ---The backend must implement:
 ---  .new(dir) → instance|nil  (sets self.type, self.root, self.ref, self.branch)
 ---  :refresh()                 (re-fetches ref and branch)
 ---  :get_changed_files()       (returns VcsFileChange[])
 ---  :get_file_diff_raw(path)   (returns raw diff string or nil)
+---  :get_file_at_base(path)    (returns the file's lines at the base revision)
 ---
 ---@param BackendClass table The backend class table (e.g. GitBackend or JjBackend)
 ---@return table Class A new class table augmented with shared methods
@@ -88,71 +114,7 @@ function M.create_backend(BackendClass)
 		return #files > 0
 	end
 
-	---Get diff for a specific file
-	---Uses get_file_diff_raw() (which the backend must implement) and handles
-	---empty output, binary detection, and hunk parsing.
-	---@param file_path string File path relative to repo root
-	---@return FileDiff|nil diff File diff or nil on error
-	function Class:get_file_diff(file_path)
-		local raw = self:get_file_diff_raw(file_path)
-
-		if raw == nil then
-			logger.error("Failed to get diff for %s", file_path)
-			return nil
-		end
-
-		if raw == "" then
-			return {
-				path = file_path,
-				old_path = nil,
-				status = "M",
-				hunks = {},
-				is_binary = false,
-			}
-		end
-
-		-- Check for binary file
-		if raw:match("\nBinary files [^\n]+ differ") or raw:match("^Binary files [^\n]+ differ") then
-			return {
-				path = file_path,
-				old_path = nil,
-				status = "M",
-				hunks = {},
-				is_binary = true,
-			}
-		end
-
-		local lines = vim.split(raw, "\n")
-		local hunks = Diff.parse_unified_diff(lines)
-
-		return {
-			path = file_path,
-			old_path = nil,
-			status = "M",
-			hunks = hunks,
-			is_binary = false,
-		}
-	end
-
-	---Get all file diffs in the repository
-	---@return FileDiff[] diffs List of file diffs
-	function Class:get_all_diffs()
-		local files = self:get_changed_files()
-		local diffs = {}
-
-		for _, file in ipairs(files) do
-			local diff = self:get_file_diff(file.path)
-			if diff then
-				diff.status = file.status
-				diff.old_path = file.old_path
-				table.insert(diffs, diff)
-			end
-		end
-
-		return diffs
-	end
-
-	---Read a file from the repository
+	---Read a file from the repository working copy
 	---@param file_path string File path relative to repo root
 	---@return string[]|nil lines File lines or nil on error
 	function Class:read_file(file_path)

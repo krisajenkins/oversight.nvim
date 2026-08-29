@@ -179,6 +179,29 @@ function JjBackend:get_file_diff_raw(file_path)
 	return result.stdout
 end
 
+---Read a file's contents as they are at the base revision (@-).
+---
+---Not a diff: the native diff view is handed two whole files and lets Neovim
+---work out what moved. Renames pass their `old_path`, because that is the name
+---the content had in the parent commit.
+---@param file_path string File path relative to repo root, as it was at @-
+---@return string[]|nil lines File lines, {} when the path is not in @- at all
+---(a newly added file), nil on error
+function JjBackend:get_file_at_base(file_path)
+	local jj = get_jj()
+	local result = jj.file_show():option("revision", "@-"):arg(fileset_literal(file_path)):cwd(self.root):call()
+
+	-- A file that does not exist in the parent commit is a normal answer here,
+	-- not a failure: that is exactly what an added file looks like.
+	local absent = not result.success and result.stderr:find("No such path", 1, true) ~= nil
+
+	if not result.success and not absent then
+		logger.error("Failed to read %s at @-: %s", file_path, result.stderr)
+	end
+
+	return base.file_content_lines(result, absent)
+end
+
 ---Get list of all tracked files in the repository
 ---@return VcsFileChange[] files List of tracked files (status is empty string)
 function JjBackend:get_tracked_files()
@@ -202,8 +225,7 @@ function JjBackend:get_tracked_files()
 end
 
 -- Create augmented class with shared backend methods (instance, get_root,
--- get_ref, get_branch, has_changes, get_file_diff, get_all_diffs,
--- clear_cache, get_head)
+-- get_ref, get_branch, has_changes, read_file, clear_cache, get_head)
 local Backend = base.create_backend(JjBackend)
 
 -- Export internal function for testing (underscore prefix indicates testing-only export)

@@ -43,6 +43,21 @@ The changes are **staged** in the git repository. `git diff HEAD` — which is
 what the backend runs — only reports added and renamed files once they are in
 the index, so an unstaged capture would silently lose the `A` and `R` cases.
 
+## What is captured
+
+Two families of output, for the two things the plugin asks a VCS:
+
+- `name-status-*` / `status-*` / `*-list` / `rev-parse-*` / `log-*` — the change
+  list and the repository's identity.
+- `diff-*` — raw diff text. **Nothing parses these any more.** The diff view is
+  handed whole files and lets Neovim compute the diff; the raw output survives
+  only because `Session:ensure_file` hashes it to notice a file's changes moving
+  underneath an open review.
+- `show-head-*` (git) and `file-show-*` (jj) — a whole file's content at the
+  base revision, which is one of the two sides the diff view displays. The
+  renamed file is captured under its **old** name, because that is what the
+  content was called at the base.
+
 ## Hand-authored fixtures
 
 These are **not** produced by the generator and must not be deleted by it. Each
