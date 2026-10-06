@@ -96,8 +96,8 @@ function Buffer:_setup_buffer()
 		sidescrolloff = 5,
 	}
 
-	-- A caller with different needs (the diff view wants `number` on and folds
-	-- off, because Neovim's diff mode draws both) overrides individual entries
+	-- A caller with different needs (the diff view wants `number` on, because
+	-- Neovim's diff mode draws it) overrides individual entries
 	-- rather than replacing the set. These are re-applied on every BufWinEnter,
 	-- so an override has to live here or it is undone the next time the window
 	-- is entered.

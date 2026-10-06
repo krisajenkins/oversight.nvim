@@ -115,8 +115,9 @@ to disk; `Session:save()` is a no-op that only stamps `updated_at`.
 
 Three things about the diff view are load-bearing:
 
-- **`foldenable` is off.** Diff mode folds unchanged regions by default, and a
-  folded comment is an invisible comment. `]c` is how you skip context here.
+- **Diff mode's folds are kept.** Unchanged regions fold as in any `:diffthis`
+  window, so a comment inside a closed fold is hidden until the fold is opened.
+  Do not put `foldenable` back into `DIFF_WINDOW_OPTS`; `foldcolumn` stays `0`.
 - **Every comment is placed twice.** Neovim's diff aligns the two windows with
   filler lines and does not count `virt_lines`, so a comment on one side alone
   pushes that side down and the panes drift. An equal-height blank block goes at

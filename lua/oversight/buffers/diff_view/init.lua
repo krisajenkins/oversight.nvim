@@ -52,11 +52,9 @@ local COMMENT_NS = vim.api.nvim_create_namespace("oversight_comments")
 
 ---Window options that must survive `:diffthis`, which sets its own.
 ---
----`foldenable` is the one that matters: diff mode folds every unchanged region
----by default, and a folded comment is an invisible comment. `]c` is how you
----skip the context here.
+---Folding is deliberately absent: diff mode's own folds over unchanged regions
+---are kept, so a comment on a folded line is hidden until the fold is opened.
 local DIFF_WINDOW_OPTS = {
-	foldenable = false,
 	foldcolumn = "0",
 	wrap = false,
 	number = true,
