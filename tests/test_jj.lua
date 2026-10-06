@@ -272,6 +272,20 @@ T["JJ Backend"]["returns nil and notifies when reading at @- fails"] = function(
 	expect.equality(tostring(messages[1].msg):find("src/util.lua", 1, true) ~= nil, true)
 end
 
+-- On a merge commit `@-` is several revisions and `jj file show` will not pick
+-- one. The base is their merged tree instead; test_vcs_hermetic.lua proves the
+-- real binary produces it, this pins down when it is asked for.
+T["JJ Backend"]["falls back to the merged parents when @ is a merge"] = function()
+	MockCli.set_failure('--revision @- file:"README.md"', "Error: Revset `@-` resolved to more than one revision")
+	MockCli.set('--tool oversight-show-left file:"README.md"', { stdout = "merged\nbase" })
+
+	local messages = capture_notifications(function()
+		expect.equality(base_of("README.md"), { "merged", "base" })
+	end)
+
+	expect.equality(messages, {})
+end
+
 -- Not for display: `Session:ensure_file` hashes this to notice a file's changes
 -- moving under a review, which is what drops its comments.
 T["JJ Backend"]["hands back raw diff output for change detection"] = function()

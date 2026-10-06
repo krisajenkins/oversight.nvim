@@ -16,6 +16,7 @@
 
 local T = MiniTest.new_set()
 local expect = MiniTest.expect
+local capture_notifications = require("tests.helpers.notify")
 
 -- These tests must talk to the real CLI, so drop anything a previously-run test
 -- file left swapped into package.loaded.
@@ -238,6 +239,71 @@ T["jj, for real"]["parses a real repository the way the fixtures say"] = functio
 	end)
 
 	cleanup()
+	if not ok then
+		error(err)
+	end
+end
+
+-- A merge commit has several parents, so `@-` is several revisions and
+-- `jj file show -r @-` refuses outright. The base is the parents merged
+-- together, which is what `jj diff` compares against. `shared.txt` is changed
+-- on both sides, in different places, so its base exists in no single parent
+-- and only a real merge of the trees can produce it.
+T["jj, for real"]["reads the merged parents of a merge commit as its base"] = function()
+	if vim.fn.executable("jj") ~= 1 then
+		MiniTest.skip("jj is not on PATH")
+	end
+
+	local dir = vim.fn.tempname()
+	vim.fn.mkdir(dir .. "/repo", "p")
+	local config = dir .. "/jj-config.toml"
+	vim.fn.writefile({ "[user]", 'name = "Hermetic Test"', 'email = "test@example.com"' }, config)
+	local restore_config = push_env("JJ_CONFIG", config)
+	local repo = dir .. "/repo"
+
+	local ok, err = pcall(function()
+		sh(
+			repo,
+			[[
+jj git init . > /dev/null
+printf 'one\ntwo\nthree\nfour\nfive\n' > shared.txt
+jj commit --quiet -m 'Base'
+jj bookmark create --quiet base --revision @-
+jj describe --quiet -m 'Left'
+printf 'ONE\ntwo\nthree\nfour\nfive\n' > shared.txt
+printf 'left\n' > left.txt
+jj bookmark create --quiet left --revision @
+jj new --quiet base -m 'Right'
+printf 'one\ntwo\nthree\nfour\nFIVE\n' > shared.txt
+jj new --quiet left @
+printf 'ONE\ntwo\nTHREE\nfour\nFIVE\n' > shared.txt
+printf 'left, edited\n' > left.txt
+printf 'new\n' > added.txt
+]]
+		)
+
+		local backend = require("oversight.lib.vcs").instance(vim.fn.resolve(repo))
+		if not backend then
+			error("expected a jj backend for " .. repo)
+		end
+
+		expect.equality(status_by_path(backend:get_changed_files()), {
+			["added.txt"] = "A",
+			["left.txt"] = "M",
+			["shared.txt"] = "M",
+		})
+
+		expect.equality(backend:get_file_at_base("shared.txt"), { "ONE", "two", "three", "four", "FIVE" })
+		expect.equality(backend:get_file_at_base("left.txt"), { "left" })
+
+		local messages = capture_notifications(function()
+			expect.equality(backend:get_file_at_base("added.txt"), {})
+		end)
+		expect.equality(messages, {})
+	end)
+
+	restore_config()
+	vim.fn.delete(dir, "rf")
 	if not ok then
 		error(err)
 	end

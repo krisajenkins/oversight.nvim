@@ -58,6 +58,27 @@ function M.file_show()
 	return jj():arg("file"):arg("show"):flag("no-pager")
 end
 
+---Create a builder that prints files as they are in the parents of @, merged.
+---
+---For a merge commit `@-` names several revisions, and `jj file show` takes
+---exactly one. What `jj diff` compares @ against is none of them: it is the
+---parents' trees merged together, and no command prints that directly. A diff
+---tool is the one place jj hands it over, so this defines one on the spot. jj
+---materialises the left side of the diff into `$left`, limited to the fileset,
+---and `find` cats whatever landed there — nothing at all for an added file.
+---
+---Not combinable with `diff()`: jj refuses `--tool` alongside `--git`.
+---@return CliBuilder builder CLI builder
+function M.merged_parents_show()
+	return jj()
+		:arg("diff")
+		:flag("no-pager")
+		:option("color", "never")
+		:option("config", 'merge-tools.oversight-show-left.program="find"')
+		:option("config", 'merge-tools.oversight-show-left.diff-args=["$left","-type","f","-exec","cat","{}","+"]')
+		:option("tool", "oversight-show-left")
+end
+
 ---Create a raw jj builder
 ---@return CliBuilder builder CLI builder
 function M.raw()

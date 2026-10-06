@@ -183,13 +183,22 @@ end
 ---
 ---Not a diff: the native diff view is handed two whole files and lets Neovim
 ---work out what moved. Renames pass their `old_path`, because that is the name
----the content had in the parent commit.
+---the content had in the parent commit. When @ is a merge, the base is its
+---parents' merged tree: the same thing `jj diff` compares against.
 ---@param file_path string File path relative to repo root, as it was at @-
 ---@return string[]|nil lines File lines, {} when the path is not in @- at all
 ---(a newly added file), nil on error
 function JjBackend:get_file_at_base(file_path)
 	local jj = get_jj()
-	local result = jj.file_show():option("revision", "@-"):arg(fileset_literal(file_path)):cwd(self.root):call()
+	local fileset = fileset_literal(file_path)
+	local result = jj.file_show():option("revision", "@-"):arg(fileset):cwd(self.root):call()
+
+	-- @ is a merge, so @- is several commits and the base is their merged tree.
+	-- Asked for lazily rather than up front: the ordinary case costs nothing,
+	-- and there is no parent count to keep in step with a changing repository.
+	if not result.success and result.stderr:find("resolved to more than one revision", 1, true) then
+		result = jj.merged_parents_show():arg(fileset):cwd(self.root):call()
+	end
 
 	-- A file that does not exist in the parent commit is a normal answer here,
 	-- not a failure: that is exactly what an added file looks like.
